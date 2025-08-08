@@ -69,11 +69,25 @@ async def require_role(required_roles: list):
     return role_checker
 
 # Role-specific dependencies
-async def get_super_admin(current_user=Depends(require_role([UserRole.SUPER_ADMIN]))):
-    return current_user
+def get_super_admin():
+    def role_checker(current_user=Depends(get_current_user)):
+        if current_user["role"] != UserRole.SUPER_ADMIN:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Super admin access required",
+            )
+        return current_user
+    return Depends(role_checker)
 
-async def get_business_admin_or_super(current_user=Depends(require_role([UserRole.SUPER_ADMIN, UserRole.BUSINESS_ADMIN]))):
-    return current_user
+def get_business_admin_or_super():
+    def role_checker(current_user=Depends(get_current_user)):
+        if current_user["role"] not in [UserRole.SUPER_ADMIN, UserRole.BUSINESS_ADMIN]:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin access required",
+            )
+        return current_user
+    return Depends(role_checker)
 
-async def get_any_authenticated_user(current_user=Depends(get_current_user)):
-    return current_user
+def get_any_authenticated_user():
+    return Depends(get_current_user)
