@@ -14,7 +14,9 @@ import {
   PaperAirplaneIcon,
   XMarkIcon,
   BanknotesIcon,
-  CreditCardIcon
+  CreditCardIcon,
+  EyeIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline';
 import LoadingSpinner, { InlineSpinner } from '../../components/LoadingSpinner';
 
@@ -31,12 +33,11 @@ const POSInterface = () => {
   // Cart state
   const [cart, setCart] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [newCustomer, setNewCustomer] = useState({ name: '', email: '', phone: '' });
+  const [showNewCustomerForm, setShowNewCustomerForm] = useState(false);
   
   // Transaction state
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [transactionMode, setTransactionMode] = useState('sale'); // 'sale' or 'invoice'
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [receivedAmount, setReceivedAmount] = useState('');
@@ -46,6 +47,14 @@ const POSInterface = () => {
   const [taxRate, setTaxRate] = useState(0);
   const [discountAmount, setDiscountAmount] = useState(0);
   
+  // Receipt preview state
+  const [showReceiptPreview, setShowReceiptPreview] = useState(false);
+  const [previewReceiptData, setPreviewReceiptData] = useState(null);
+  
+  // Hold orders state
+  const [heldOrders, setHeldOrders] = useState([]);
+  const [selectedHeldOrder, setSelectedHeldOrder] = useState(null);
+  
   const barcodeInputRef = useRef(null);
 
   useEffect(() => {
@@ -54,6 +63,12 @@ const POSInterface = () => {
     // Focus barcode input on load
     if (barcodeInputRef.current) {
       barcodeInputRef.current.focus();
+    }
+
+    // Load held orders from localStorage
+    const saved = localStorage.getItem('pos-held-orders');
+    if (saved) {
+      setHeldOrders(JSON.parse(saved));
     }
   }, []);
 
@@ -174,6 +189,8 @@ const POSInterface = () => {
     setDiscountAmount(0);
     setNotes('');
     setReceivedAmount('');
+    setShowNewCustomerForm(false);
+    setNewCustomer({ name: '', email: '', phone: '' });
   };
 
   const calculateTotals = () => {
@@ -199,12 +216,73 @@ const POSInterface = () => {
       const response = await customersAPI.createCustomer(newCustomer);
       setSelectedCustomer(response.data);
       setCustomers(prev => [...prev, response.data]);
-      setShowCustomerModal(false);
+      setShowNewCustomerForm(false);
       setNewCustomer({ name: '', email: '', phone: '' });
       toast.success('Customer created successfully');
     } catch (error) {
       toast.error('Failed to create customer');
     }
+  };
+
+  const holdOrder = () => {
+    if (cart.length === 0) {
+      toast.error('Cart is empty');
+      return;
+    }
+
+    const heldOrder = {
+      id: Date.now(),
+      timestamp: new Date().toISOString(),
+      cart: [...cart],
+      customer: selectedCustomer,
+      discountAmount,
+      notes,
+      totals: calculateTotals()
+    };
+
+    const updated = [...heldOrders, heldOrder];
+    setHeldOrders(updated);
+    localStorage.setItem('pos-held-orders', JSON.stringify(updated));
+    
+    clearCart();
+    toast.success('Order held successfully');
+  };
+
+  const resumeHeldOrder = (heldOrder) => {
+    setCart(heldOrder.cart);
+    setSelectedCustomer(heldOrder.customer);
+    setDiscountAmount(heldOrder.discountAmount);
+    setNotes(heldOrder.notes);
+    
+    // Remove from held orders
+    const updated = heldOrders.filter(order => order.id !== heldOrder.id);
+    setHeldOrders(updated);
+    localStorage.setItem('pos-held-orders', JSON.stringify(updated));
+    
+    setSelectedHeldOrder(null);
+    toast.success('Order resumed');
+  };
+
+  const generateReceiptPreview = () => {
+    const totals = calculateTotals();
+    const receiptData = {
+      business: business,
+      transaction_number: `PREVIEW-${Date.now()}`,
+      timestamp: new Date(),
+      customer: selectedCustomer,
+      items: cart,
+      subtotal: totals.subtotal,
+      tax_amount: totals.taxAmount,
+      discount_amount: discountAmount,
+      total_amount: totals.total,
+      payment_method: paymentMethod,
+      received_amount: receivedAmount,
+      change_amount: totals.change,
+      notes: notes
+    };
+    
+    setPreviewReceiptData(receiptData);
+    setShowReceiptPreview(true);
   };
 
   const handleTransaction = async () => {
@@ -245,9 +323,9 @@ const POSInterface = () => {
         toast.success(`Invoice created! Invoice #${response.data.invoice_number}`);
       }
 
-      // Clear cart and close modal
+      // Clear cart
       clearCart();
-      setShowCheckoutModal(false);
+      setShowReceiptPreview(false);
       
       // Refresh product data to update stock
       fetchData();
@@ -267,18 +345,18 @@ const POSInterface = () => {
   }
 
   return (
-    <div className="h-screen flex bg-gray-100">
-      {/* Left Panel - Products */}
-      <div className="flex-1 flex flex-col bg-white border-r">
+    <div className="h-screen flex bg-gray-100 overflow-hidden">
+      {/* Left Panel - Products (40%) */}
+      <div className="w-2/5 flex flex-col bg-white border-r">
         {/* Search and Barcode */}
-        <div className="p-4 border-b bg-gray-50">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="p-3 border-b bg-gray-50 flex-shrink-0">
+          <div className="space-y-2">
             <div className="relative">
               <input
                 ref={barcodeInputRef}
                 type="text"
-                className="form-input pl-10"
-                placeholder="Scan barcode or search..."
+                className="form-input text-sm pl-8"
+                placeholder="Scan barcode or search products..."
                 value={barcodeInput || searchTerm}
                 onChange={(e) => {
                   if (barcodeInput) {
@@ -296,42 +374,44 @@ const POSInterface = () => {
                   }
                 }}
               />
-              <MagnifyingGlassIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+              <MagnifyingGlassIcon className="absolute left-2 top-2 h-4 w-4 text-gray-400" />
             </div>
             
-            <select
-              className="form-input"
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-            >
-              <option value="">All Categories</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-            
-            <button onClick={handleProductSearch} className="btn-primary">
-              Search
-            </button>
+            <div className="flex space-x-2">
+              <select
+                className="form-input text-sm flex-1"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+              >
+                <option value="">All Categories</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+              
+              <button onClick={handleProductSearch} className="btn-primary text-sm px-3">
+                Search
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Category Tabs */}
-        <div className="p-4 border-b">
-          <div className="flex space-x-2 overflow-x-auto">
+        <div className="p-2 border-b flex-shrink-0">
+          <div className="flex space-x-1 overflow-x-auto">
             <button
               onClick={() => setSelectedCategory('')}
-              className={`category-tab whitespace-nowrap ${!selectedCategory ? 'active' : ''}`}
+              className={`category-tab text-xs whitespace-nowrap ${!selectedCategory ? 'active' : ''}`}
             >
-              All Products
+              All
             </button>
-            {categories.map((category) => (
+            {categories.slice(0, 4).map((category) => (
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`category-tab whitespace-nowrap ${selectedCategory === category.id ? 'active' : ''}`}
+                className={`category-tab text-xs whitespace-nowrap ${selectedCategory === category.id ? 'active' : ''}`}
               >
                 {category.name}
               </button>
@@ -340,36 +420,34 @@ const POSInterface = () => {
         </div>
 
         {/* Products Grid */}
-        <div className="flex-1 p-4 overflow-y-auto">
+        <div className="flex-1 p-3 overflow-y-auto">
           {products.length > 0 ? (
-            <div className="pos-grid">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {products.map((product) => (
                 <div
                   key={product.id}
-                  className="product-card"
+                  className="product-card text-center p-2 cursor-pointer"
                   onClick={() => addToCart(product)}
                 >
-                  <div className="flex items-center mb-2">
+                  <div className="mb-1">
                     {product.image_url ? (
-                      <img src={product.image_url} alt={product.name} className="w-8 h-8 rounded mr-2" />
+                      <img src={product.image_url} alt={product.name} className="w-12 h-12 mx-auto rounded" />
                     ) : (
-                      <CubeIcon className="w-8 h-8 text-gray-400 mr-2" />
+                      <CubeIcon className="w-12 h-12 mx-auto text-gray-400" />
                     )}
-                    <div className="flex-1">
-                      <h3 className="font-medium text-sm text-gray-900 truncate">{product.name}</h3>
-                      <p className="text-xs text-gray-500">{product.sku}</p>
-                    </div>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-lg font-bold text-primary-600">${product.price}</span>
-                    <span className={`text-xs px-2 py-1 rounded ${
-                      product.quantity > 10 ? 'bg-green-100 text-green-600' : 
-                      product.quantity > 0 ? 'bg-yellow-100 text-yellow-600' : 
-                      'bg-red-100 text-red-600'
-                    }`}>
-                      {product.quantity > 0 ? `${product.quantity} left` : 'Out of stock'}
-                    </span>
+                  <h3 className="font-medium text-xs text-gray-900 truncate">{product.name}</h3>
+                  <p className="text-xs text-gray-500 truncate">{product.sku}</p>
+                  <div className="mt-1">
+                    <span className="text-sm font-bold text-primary-600">${product.price}</span>
                   </div>
+                  <span className={`text-xs px-1 py-0.5 rounded ${
+                    product.quantity > 10 ? 'bg-green-100 text-green-600' : 
+                    product.quantity > 0 ? 'bg-yellow-100 text-yellow-600' : 
+                    'bg-red-100 text-red-600'
+                  }`}>
+                    {product.quantity > 0 ? `${product.quantity} left` : 'Out'}
+                  </span>
                 </div>
               ))}
             </div>
@@ -382,81 +460,148 @@ const POSInterface = () => {
         </div>
       </div>
 
-      {/* Right Panel - Cart */}
-      <div className="w-96 bg-white flex flex-col">
+      {/* Middle Panel - Cart & Checkout (35%) */}
+      <div className="w-1/3 bg-white flex flex-col border-r">
         {/* Cart Header */}
-        <div className="p-4 border-b">
+        <div className="p-3 border-b bg-gray-50 flex-shrink-0">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-semibold">Cart ({cart.length})</h2>
-            {cart.length > 0 && (
-              <button onClick={clearCart} className="text-red-600 hover:text-red-700">
-                <TrashIcon className="h-5 w-5" />
-              </button>
-            )}
+            <h2 className="text-sm font-semibold">Cart ({cart.length})</h2>
+            <div className="flex space-x-1">
+              {cart.length > 0 && (
+                <>
+                  <button onClick={holdOrder} className="text-blue-600 hover:text-blue-700 p-1" title="Hold Order">
+                    <ClockIcon className="h-4 w-4" />
+                  </button>
+                  <button onClick={clearCart} className="text-red-600 hover:text-red-700 p-1" title="Clear Cart">
+                    <TrashIcon className="h-4 w-4" />
+                  </button>
+                </>
+              )}
+            </div>
           </div>
+          
+          {/* Held Orders */}
+          {heldOrders.length > 0 && (
+            <div className="mt-2">
+              <select
+                className="form-input text-xs w-full"
+                value=""
+                onChange={(e) => {
+                  const order = heldOrders.find(o => o.id.toString() === e.target.value);
+                  if (order) resumeHeldOrder(order);
+                }}
+              >
+                <option value="">Resume held order ({heldOrders.length})</option>
+                {heldOrders.map((order) => (
+                  <option key={order.id} value={order.id}>
+                    {new Date(order.timestamp).toLocaleTimeString()} - ${order.totals.total}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         {/* Customer Selection */}
-        <div className="p-4 border-b bg-gray-50">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-gray-700">Customer:</label>
-            <button
-              onClick={() => setShowCustomerModal(true)}
-              className="text-primary-600 hover:text-primary-700"
-            >
-              <UserPlusIcon className="h-5 w-5" />
-            </button>
+        <div className="p-3 border-b bg-gray-50 flex-shrink-0">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-medium text-gray-700">Customer:</label>
+              <button
+                onClick={() => setShowNewCustomerForm(!showNewCustomerForm)}
+                className="text-primary-600 hover:text-primary-700"
+              >
+                <UserPlusIcon className="h-4 w-4" />
+              </button>
+            </div>
+            
+            {!showNewCustomerForm ? (
+              <select
+                className="form-input text-xs"
+                value={selectedCustomer?.id || ''}
+                onChange={(e) => {
+                  const customer = customers.find(c => c.id === e.target.value);
+                  setSelectedCustomer(customer || null);
+                }}
+              >
+                <option value="">Walk-in Customer</option>
+                {customers.map((customer) => (
+                  <option key={customer.id} value={customer.id}>
+                    {customer.name} {customer.email && `(${customer.email})`}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  className="form-input text-xs"
+                  placeholder="Customer name*"
+                  value={newCustomer.name}
+                  onChange={(e) => setNewCustomer(prev => ({...prev, name: e.target.value}))}
+                />
+                <div className="flex space-x-1">
+                  <input
+                    type="email"
+                    className="form-input text-xs flex-1"
+                    placeholder="Email"
+                    value={newCustomer.email}
+                    onChange={(e) => setNewCustomer(prev => ({...prev, email: e.target.value}))}
+                  />
+                  <input
+                    type="tel"
+                    className="form-input text-xs flex-1"
+                    placeholder="Phone"
+                    value={newCustomer.phone}
+                    onChange={(e) => setNewCustomer(prev => ({...prev, phone: e.target.value}))}
+                  />
+                </div>
+                <div className="flex space-x-1">
+                  <button onClick={handleCreateCustomer} className="btn-primary text-xs px-2 py-1 flex-1">
+                    Add
+                  </button>
+                  <button onClick={() => setShowNewCustomerForm(false)} className="btn-secondary text-xs px-2 py-1">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-          <select
-            className="form-input mt-1"
-            value={selectedCustomer?.id || ''}
-            onChange={(e) => {
-              const customer = customers.find(c => c.id === e.target.value);
-              setSelectedCustomer(customer || null);
-            }}
-          >
-            <option value="">Walk-in Customer</option>
-            {customers.map((customer) => (
-              <option key={customer.id} value={customer.id}>
-                {customer.name} {customer.email && `(${customer.email})`}
-              </option>
-            ))}
-          </select>
         </div>
 
         {/* Cart Items */}
         <div className="flex-1 overflow-y-auto">
           {cart.length > 0 ? (
-            <div className="p-4 space-y-3">
+            <div className="p-3 space-y-2">
               {cart.map((item) => (
-                <div key={item.product_id} className="bg-gray-50 rounded-lg p-3">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-medium text-sm text-gray-900">{item.product_name}</h3>
+                <div key={item.product_id} className="bg-gray-50 rounded p-2">
+                  <div className="flex justify-between items-start mb-1">
+                    <h3 className="font-medium text-xs text-gray-900 truncate flex-1">{item.product_name}</h3>
                     <button
                       onClick={() => removeFromCart(item.product_id)}
-                      className="text-red-500 hover:text-red-700"
+                      className="text-red-500 hover:text-red-700 ml-1"
                     >
-                      <XMarkIcon className="h-4 w-4" />
+                      <XMarkIcon className="h-3 w-3" />
                     </button>
                   </div>
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-1">
                       <button
                         onClick={() => updateCartItemQuantity(item.product_id, item.quantity - 1)}
-                        className="w-6 h-6 rounded bg-gray-200 flex items-center justify-center hover:bg-gray-300"
+                        className="w-5 h-5 rounded bg-gray-200 flex items-center justify-center hover:bg-gray-300"
                       >
-                        <MinusIcon className="h-3 w-3" />
+                        <MinusIcon className="h-2 w-2" />
                       </button>
-                      <span className="w-8 text-center">{item.quantity}</span>
+                      <span className="w-6 text-center text-xs">{item.quantity}</span>
                       <button
                         onClick={() => updateCartItemQuantity(item.product_id, item.quantity + 1)}
-                        className="w-6 h-6 rounded bg-gray-200 flex items-center justify-center hover:bg-gray-300"
+                        className="w-5 h-5 rounded bg-gray-200 flex items-center justify-center hover:bg-gray-300"
                       >
-                        <PlusIcon className="h-3 w-3" />
+                        <PlusIcon className="h-2 w-2" />
                       </button>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-semibold">${item.total_price.toFixed(2)}</div>
+                      <div className="text-xs font-semibold">${item.total_price.toFixed(2)}</div>
                       <div className="text-xs text-gray-500">${item.unit_price}/each</div>
                     </div>
                   </div>
@@ -464,34 +609,42 @@ const POSInterface = () => {
               ))}
             </div>
           ) : (
-            <div className="flex-1 flex items-center justify-center p-8">
+            <div className="flex-1 flex items-center justify-center p-4">
               <div className="text-center">
-                <CubeIcon className="mx-auto h-12 w-12 text-gray-400 mb-2" />
-                <p className="text-gray-500">Cart is empty</p>
-                <p className="text-sm text-gray-400">Add products to start</p>
+                <CubeIcon className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                <p className="text-gray-500 text-xs">Cart is empty</p>
+                <p className="text-xs text-gray-400">Add products to start</p>
               </div>
             </div>
           )}
         </div>
 
-        {/* Cart Summary */}
+        {/* Cart Summary & Payment */}
         {cart.length > 0 && (
-          <div className="border-t p-4 space-y-4">
-            {/* Discount */}
-            <div className="flex justify-between items-center">
-              <label className="text-sm text-gray-600">Discount ($):</label>
-              <input
-                type="number"
-                className="w-20 px-2 py-1 border rounded text-sm text-right"
-                value={discountAmount}
-                onChange={(e) => setDiscountAmount(parseFloat(e.target.value) || 0)}
-                min="0"
-                step="0.01"
+          <div className="border-t p-3 space-y-3 bg-gray-50 flex-shrink-0">
+            {/* Discount & Notes */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <label className="text-xs text-gray-600">Discount ($):</label>
+                <input
+                  type="number"
+                  className="w-16 px-1 py-0.5 border rounded text-xs text-right"
+                  value={discountAmount}
+                  onChange={(e) => setDiscountAmount(parseFloat(e.target.value) || 0)}
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              <textarea
+                className="form-input text-xs w-full h-8 resize-none"
+                placeholder="Notes..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
               />
             </div>
 
             {/* Totals */}
-            <div className="space-y-1 text-sm">
+            <div className="space-y-1 text-xs border-t pt-2">
               <div className="flex justify-between">
                 <span>Subtotal:</span>
                 <span>${totals.subtotal}</span>
@@ -508,188 +661,70 @@ const POSInterface = () => {
                   <span>-${discountAmount.toFixed(2)}</span>
                 </div>
               )}
-              <div className="flex justify-between font-bold text-lg pt-2 border-t">
+              <div className="flex justify-between font-bold text-sm pt-1 border-t">
                 <span>Total:</span>
                 <span>${totals.total}</span>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => {
-                  setTransactionMode('invoice');
-                  setShowCheckoutModal(true);
-                }}
-                className="btn-secondary flex items-center justify-center text-sm"
-              >
-                <DocumentTextIcon className="h-4 w-4 mr-1" />
-                Invoice
-              </button>
-              <button
-                onClick={() => {
-                  setTransactionMode('sale');
-                  setShowCheckoutModal(true);
-                }}
-                className="btn-primary flex items-center justify-center text-sm"
-              >
-                <BanknotesIcon className="h-4 w-4 mr-1" />
-                Pay Now
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Customer Modal */}
-      {showCustomerModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium text-gray-900">Add New Customer</h3>
-              <button
-                onClick={() => setShowCustomerModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="form-label">Name *</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  value={newCustomer.name}
-                  onChange={(e) => setNewCustomer(prev => ({...prev, name: e.target.value}))}
-                />
+            {/* Payment Method */}
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-1">
+                <button
+                  onClick={() => setTransactionMode('sale')}
+                  className={`text-xs py-1 px-2 rounded border ${
+                    transactionMode === 'sale' ? 'bg-green-100 border-green-500 text-green-700' : 'border-gray-300'
+                  }`}
+                >
+                  Sale
+                </button>
+                <button
+                  onClick={() => setTransactionMode('invoice')}
+                  className={`text-xs py-1 px-2 rounded border ${
+                    transactionMode === 'invoice' ? 'bg-blue-100 border-blue-500 text-blue-700' : 'border-gray-300'
+                  }`}
+                >
+                  Invoice
+                </button>
               </div>
-              <div>
-                <label className="form-label">Email</label>
-                <input
-                  type="email"
-                  className="form-input"
-                  value={newCustomer.email}
-                  onChange={(e) => setNewCustomer(prev => ({...prev, email: e.target.value}))}
-                />
-              </div>
-              <div>
-                <label className="form-label">Phone</label>
-                <input
-                  type="tel"
-                  className="form-input"
-                  value={newCustomer.phone}
-                  onChange={(e) => setNewCustomer(prev => ({...prev, phone: e.target.value}))}
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end space-x-4 mt-6">
-              <button
-                onClick={() => setShowCustomerModal(false)}
-                className="btn-secondary"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateCustomer}
-                className="btn-primary"
-              >
-                Create Customer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Checkout Modal */}
-      {showCheckoutModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-10 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                {transactionMode === 'sale' ? 'Complete Sale' : 'Create Invoice'}
-              </h3>
-              <button
-                onClick={() => setShowCheckoutModal(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XMarkIcon className="h-6 w-6" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {/* Order Summary */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium mb-2">Order Summary</h4>
-                <div className="space-y-1 text-sm">
-                  <div className="flex justify-between">
-                    <span>Items ({cart.length}):</span>
-                    <span>${totals.subtotal}</span>
-                  </div>
-                  {taxRate > 0 && (
-                    <div className="flex justify-between">
-                      <span>Tax:</span>
-                      <span>${totals.taxAmount}</span>
-                    </div>
-                  )}
-                  {discountAmount > 0 && (
-                    <div className="flex justify-between text-green-600">
-                      <span>Discount:</span>
-                      <span>-${discountAmount.toFixed(2)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between font-bold text-lg pt-2 border-t">
-                    <span>Total:</span>
-                    <span>${totals.total}</span>
-                  </div>
-                </div>
-              </div>
-
+              
               {transactionMode === 'sale' && (
                 <>
-                  {/* Payment Method */}
-                  <div>
-                    <label className="form-label">Payment Method</label>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        onClick={() => setPaymentMethod('cash')}
-                        className={`p-3 border rounded-lg flex items-center justify-center ${
-                          paymentMethod === 'cash' ? 'border-primary-500 bg-primary-50' : 'border-gray-300'
-                        }`}
-                      >
-                        <BanknotesIcon className="h-5 w-5 mr-2" />
-                        Cash
-                      </button>
-                      <button
-                        onClick={() => setPaymentMethod('card')}
-                        className={`p-3 border rounded-lg flex items-center justify-center ${
-                          paymentMethod === 'card' ? 'border-primary-500 bg-primary-50' : 'border-gray-300'
-                        }`}
-                      >
-                        <CreditCardIcon className="h-5 w-5 mr-2" />
-                        Card
-                      </button>
-                    </div>
+                  <div className="grid grid-cols-2 gap-1">
+                    <button
+                      onClick={() => setPaymentMethod('cash')}
+                      className={`text-xs py-1 px-2 rounded border flex items-center justify-center ${
+                        paymentMethod === 'cash' ? 'bg-primary-100 border-primary-500 text-primary-700' : 'border-gray-300'
+                      }`}
+                    >
+                      <BanknotesIcon className="h-3 w-3 mr-1" />
+                      Cash
+                    </button>
+                    <button
+                      onClick={() => setPaymentMethod('card')}
+                      className={`text-xs py-1 px-2 rounded border flex items-center justify-center ${
+                        paymentMethod === 'card' ? 'bg-primary-100 border-primary-500 text-primary-700' : 'border-gray-300'
+                      }`}
+                    >
+                      <CreditCardIcon className="h-3 w-3 mr-1" />
+                      Card
+                    </button>
                   </div>
-
-                  {/* Cash Payment */}
+                  
                   {paymentMethod === 'cash' && (
-                    <div>
-                      <label className="form-label">Amount Received</label>
+                    <div className="space-y-1">
                       <input
                         type="number"
-                        className="form-input text-right"
-                        placeholder="0.00"
+                        className="form-input text-xs text-right w-full"
+                        placeholder="Amount received"
                         value={receivedAmount}
                         onChange={(e) => setReceivedAmount(parseFloat(e.target.value) || '')}
                         step="0.01"
                         min="0"
                       />
                       {receivedAmount && (
-                        <div className="mt-2 text-right">
-                          <span className="text-lg font-bold text-green-600">
+                        <div className="text-right">
+                          <span className="text-xs font-bold text-green-600">
                             Change: ${totals.change}
                           </span>
                         </div>
@@ -698,58 +733,44 @@ const POSInterface = () => {
                   )}
                 </>
               )}
-
-              {/* Notes */}
-              <div>
-                <label className="form-label">Notes (Optional)</label>
-                <textarea
-                  className="form-input"
-                  rows="2"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Order notes or special instructions"
-                />
-              </div>
-
-              {selectedCustomer && (
-                <div className="bg-blue-50 p-3 rounded-lg">
-                  <h4 className="font-medium text-blue-900">Customer:</h4>
-                  <p className="text-blue-800">{selectedCustomer.name}</p>
-                  {selectedCustomer.email && (
-                    <p className="text-blue-600 text-sm">{selectedCustomer.email}</p>
-                  )}
-                </div>
-              )}
             </div>
 
-            <div className="flex justify-end space-x-4 mt-6">
+            {/* Action Buttons */}
+            <div className="grid grid-cols-3 gap-1">
               <button
-                onClick={() => setShowCheckoutModal(false)}
-                className="btn-secondary"
+                onClick={generateReceiptPreview}
+                className="btn-secondary flex items-center justify-center text-xs py-2"
+                disabled={cart.length === 0}
               >
-                Cancel
+                <EyeIcon className="h-3 w-3 mr-1" />
+                Preview
+              </button>
+              <button
+                onClick={holdOrder}
+                className="btn-secondary flex items-center justify-center text-xs py-2"
+                disabled={cart.length === 0}
+              >
+                <ClockIcon className="h-3 w-3 mr-1" />
+                Hold
               </button>
               <button
                 onClick={handleTransaction}
-                disabled={isProcessing}
-                className="btn-primary flex items-center"
+                disabled={isProcessing || cart.length === 0}
+                className="btn-primary flex items-center justify-center text-xs py-2"
               >
                 {isProcessing ? (
-                  <>
-                    <InlineSpinner />
-                    <span className="ml-2">Processing...</span>
-                  </>
+                  <InlineSpinner />
                 ) : (
                   <>
                     {transactionMode === 'sale' ? (
                       <>
-                        <BanknotesIcon className="h-4 w-4 mr-2" />
-                        Complete Sale
+                        <BanknotesIcon className="h-3 w-3 mr-1" />
+                        Pay
                       </>
                     ) : (
                       <>
-                        <DocumentTextIcon className="h-4 w-4 mr-2" />
-                        Create Invoice
+                        <DocumentTextIcon className="h-3 w-3 mr-1" />
+                        Invoice
                       </>
                     )}
                   </>
@@ -757,8 +778,118 @@ const POSInterface = () => {
               </button>
             </div>
           </div>
+        )}
+      </div>
+
+      {/* Right Panel - Receipt Preview (25%) */}
+      <div className="w-1/4 bg-gray-50 flex flex-col">
+        <div className="p-3 border-b bg-white flex-shrink-0">
+          <h3 className="text-sm font-semibold flex items-center">
+            <PrinterIcon className="h-4 w-4 mr-2" />
+            Receipt Preview
+          </h3>
         </div>
-      )}
+        
+        <div className="flex-1 overflow-y-auto p-3">
+          {showReceiptPreview && previewReceiptData ? (
+            <div className="bg-white border rounded-lg p-4 font-mono text-xs">
+              {/* Receipt Header */}
+              <div className="text-center border-b pb-2 mb-3">
+                <h2 className="font-bold text-sm">{previewReceiptData.business?.name || 'BUSINESS NAME'}</h2>
+                <p className="text-xs">{previewReceiptData.business?.address || 'Business Address'}</p>
+                <p className="text-xs">{previewReceiptData.business?.contact_email}</p>
+                <p className="text-xs">{previewReceiptData.business?.phone}</p>
+              </div>
+
+              {/* Transaction Details */}
+              <div className="border-b pb-2 mb-2">
+                <p>Receipt: {previewReceiptData.transaction_number}</p>
+                <p>Date: {previewReceiptData.timestamp.toLocaleString()}</p>
+                {previewReceiptData.customer && (
+                  <p>Customer: {previewReceiptData.customer.name}</p>
+                )}
+                <p>Cashier: Staff</p>
+              </div>
+
+              {/* Items */}
+              <div className="border-b pb-2 mb-2">
+                {previewReceiptData.items.map((item, index) => (
+                  <div key={index} className="flex justify-between mb-1">
+                    <div>
+                      <p className="truncate">{item.product_name}</p>
+                      <p className="text-xs text-gray-600">
+                        {item.quantity} x ${item.unit_price.toFixed(2)}
+                      </p>
+                    </div>
+                    <p>${item.total_price.toFixed(2)}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Totals */}
+              <div className="border-b pb-2 mb-2">
+                <div className="flex justify-between">
+                  <span>Subtotal:</span>
+                  <span>${previewReceiptData.subtotal}</span>
+                </div>
+                {parseFloat(previewReceiptData.tax_amount) > 0 && (
+                  <div className="flex justify-between">
+                    <span>Tax:</span>
+                    <span>${previewReceiptData.tax_amount}</span>
+                  </div>
+                )}
+                {parseFloat(previewReceiptData.discount_amount) > 0 && (
+                  <div className="flex justify-between">
+                    <span>Discount:</span>
+                    <span>-${previewReceiptData.discount_amount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-bold border-t pt-1">
+                  <span>TOTAL:</span>
+                  <span>${previewReceiptData.total_amount}</span>
+                </div>
+                {transactionMode === 'sale' && paymentMethod === 'cash' && (
+                  <>
+                    <div className="flex justify-between">
+                      <span>Paid:</span>
+                      <span>${previewReceiptData.received_amount}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Change:</span>
+                      <span>${previewReceiptData.change_amount}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="text-center text-xs">
+                <p>Thank you for your business!</p>
+                {previewReceiptData.notes && (
+                  <p className="mt-2 text-gray-600">Note: {previewReceiptData.notes}</p>
+                )}
+              </div>
+
+              {/* Print Actions */}
+              <div className="mt-4 pt-4 border-t space-y-2">
+                <button className="w-full btn-primary text-xs py-2">
+                  <PrinterIcon className="h-3 w-3 mr-1 inline" />
+                  Print Receipt
+                </button>
+                <button className="w-full btn-secondary text-xs py-1">
+                  Save as PDF
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-20">
+              <PrinterIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <p className="text-gray-500 text-xs">Receipt preview will appear here</p>
+              <p className="text-xs text-gray-400">Add items and click Preview</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
