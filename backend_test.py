@@ -128,7 +128,19 @@ class POSAPITester:
                 self.log(f"  - {business.get('name')} (subdomain: {business.get('subdomain')})")
         return success
 
-    def create_test_business(self):
+    def list_business_users(self, business_id):
+        """List users for a specific business"""
+        success, response = self.run_test(
+            "List Business Users",
+            "GET",
+            f"/api/super-admin/businesses/{business_id}/users",
+            200
+        )
+        if success and isinstance(response, list):
+            self.log(f"Found {len(response)} users for business:")
+            for user in response:
+                self.log(f"  - {user.get('email')} ({user.get('role')})")
+        return success
         business_data = {
             "name": "Prints & Cuts Tagum",
             "description": "Test business for API testing",
