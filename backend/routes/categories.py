@@ -11,7 +11,7 @@ router = APIRouter()
 @router.post("/", response_model=CategoryResponse)
 async def create_category(
     category: CategoryCreate,
-    current_user=get_business_admin_or_super()
+    current_user=Depends(get_business_admin_or_super)
 ):
     categories_collection = await get_collection("categories")
     
