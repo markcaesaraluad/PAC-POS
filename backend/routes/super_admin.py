@@ -89,7 +89,7 @@ async def create_business(
     )
 
 @router.get("/businesses", response_model=List[BusinessResponse])
-async def list_businesses(current_user=get_super_admin()):
+async def list_businesses(current_user=Depends(get_super_admin)):
     businesses_collection = await get_collection("businesses")
     businesses_cursor = businesses_collection.find({})
     businesses = await businesses_cursor.to_list(length=None)
