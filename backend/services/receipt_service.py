@@ -315,6 +315,76 @@ class ReceiptService:
 </html>
         """
 
+    def _calculate_receipt_width(self, paper_size: str, chars_per_line: int) -> str:
+        """Calculate receipt width based on paper size and characters per line"""
+        if paper_size == "58":
+            return "200px"
+        elif paper_size == "80":
+            return "300px"
+        else:  # Custom or other sizes
+            # Approximate width based on characters (assuming ~8px per character)
+            width = chars_per_line * 8
+            return f"{width}px"
+    
+    def _get_font_size_px(self, font_size: str) -> str:
+        """Convert font size setting to pixel value"""
+        size_map = {
+            "small": "10px",
+            "normal": "12px",
+            "large": "14px"
+        }
+        return size_map.get(font_size, "12px")
+
+    async def _create_receipt_html(
+        self,
+        transaction_type: str,
+        transaction_data: dict,
+        business_data: dict,
+        customer_data: dict = None,
+        cashier_data: dict = None,
+        receipt_width: str = "300px",
+        font_size_px: str = "12px",
+        chars_per_line: int = 32
+    ) -> str:
+        """Create receipt HTML with dynamic sizing"""
+        # This will use the existing generate_receipt_html method but with dynamic styling
+        html_content = self.generate_receipt_html(
+            transaction_data=transaction_data,
+            business_data=business_data,
+            customer_data=customer_data,
+            cashier_data=cashier_data
+        )
+        
+        # Apply dynamic styling by replacing the body max-width and font-size
+        html_content = html_content.replace(
+            "max-width: 300px;",
+            f"max-width: {receipt_width};"
+        ).replace(
+            "font-size: 12px;",
+            f"font-size: {font_size_px};"
+        )
+        
+        return html_content
+
+    async def _generate_receipt_pdf(self, html_content: str, paper_size: str = "80") -> bytes:
+        """Generate PDF with appropriate sizing for thermal printers"""
+        try:
+            # Set CSS for thermal printer paper sizes
+            if paper_size == "58":
+                css_string = "@page { size: 58mm 200mm; margin: 2mm; }"
+            elif paper_size == "80":
+                css_string = "@page { size: 80mm 200mm; margin: 3mm; }"
+            else:
+                css_string = "@page { size: A4; margin: 10mm; }"
+            
+            html_doc = HTML(string=html_content)
+            css = CSS(string=css_string)
+            pdf_bytes = html_doc.write_pdf(stylesheets=[css])
+            return pdf_bytes
+        except Exception as e:
+            logger.error(f"Error generating PDF: {e}")
+            return b""
+
     def generate_receipt_html(
         self,
         transaction_data: Dict[str, Any],
