@@ -20,6 +20,7 @@ import CategoryManagement from './pages/business/CategoryManagement';
 import CustomerManagement from './pages/business/CustomerManagement';
 import UserManagement from './pages/business/UserManagement';
 import BusinessSettings from './pages/business/Settings';
+import Reports from './pages/business/Reports';
 
 // POS Pages
 import POSInterface from './pages/pos/POSInterface';
