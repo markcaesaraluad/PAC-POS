@@ -360,10 +360,34 @@ const BusinessSettings = () => {
                         <li>80mm printers provide more space for detailed receipts (32 characters/line)</li>
                         <li>Test print after changing settings to ensure proper formatting</li>
                         <li>Enable auto-cut for cleaner receipt presentation</li>
+                        <li>Auto-print saves time by printing immediately after each sale</li>
                       </ul>
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Printer Test Section */}
+              <div className="border-t pt-4">
+                <h4 className="font-medium text-gray-900 mb-2">Printer Testing</h4>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handlePrinterTest()}
+                    className="btn-primary text-sm"
+                  >
+                    <PrinterIcon className="h-4 w-4 mr-2" />
+                    Test Printer Connection
+                  </button>
+                  <button
+                    onClick={() => handleTestReceipt()}
+                    className="btn-secondary text-sm"
+                  >
+                    Print Sample Receipt
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Use these buttons to test your printer setup and receipt formatting
+                </p>
               </div>
             </div>
           </div>
