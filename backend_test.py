@@ -533,6 +533,273 @@ class POSAPITester:
 
         return success
 
+    def test_reports_functionality(self):
+        """Test comprehensive reports functionality"""
+        self.log("Starting Reports Testing", "INFO")
+        
+        # Test 1: Sales Report - Excel format (default)
+        success, response = self.run_test(
+            "Generate Sales Report (Excel - Default)",
+            "GET",
+            "/api/reports/sales",
+            200
+        )
+        
+        # Test 2: Sales Report - Excel format with date range
+        from datetime import datetime, timedelta
+        start_date = (datetime.now() - timedelta(days=30)).isoformat()
+        end_date = datetime.now().isoformat()
+        
+        success, response = self.run_test(
+            "Generate Sales Report (Excel - Date Range)",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={
+                "format": "excel",
+                "start_date": start_date,
+                "end_date": end_date
+            }
+        )
+        
+        # Test 3: Sales Report - PDF format
+        success, response = self.run_test(
+            "Generate Sales Report (PDF)",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={
+                "format": "pdf",
+                "start_date": start_date,
+                "end_date": end_date
+            }
+        )
+        
+        # Test 4: Inventory Report - Excel format (default)
+        success, response = self.run_test(
+            "Generate Inventory Report (Excel - Default)",
+            "GET",
+            "/api/reports/inventory",
+            200
+        )
+        
+        # Test 5: Inventory Report - PDF format
+        success, response = self.run_test(
+            "Generate Inventory Report (PDF)",
+            "GET",
+            "/api/reports/inventory",
+            200,
+            params={"format": "pdf"}
+        )
+        
+        # Test 6: Inventory Report - Low stock only
+        success, response = self.run_test(
+            "Generate Inventory Report (Low Stock Only)",
+            "GET",
+            "/api/reports/inventory",
+            200,
+            params={
+                "format": "excel",
+                "low_stock_only": "true"
+            }
+        )
+        
+        # Test 7: Inventory Report - Include inactive products
+        success, response = self.run_test(
+            "Generate Inventory Report (Include Inactive)",
+            "GET",
+            "/api/reports/inventory",
+            200,
+            params={
+                "format": "excel",
+                "include_inactive": "true"
+            }
+        )
+        
+        # Test 8: Customers Report - Excel format
+        success, response = self.run_test(
+            "Generate Customers Report (Excel)",
+            "GET",
+            "/api/reports/customers",
+            200,
+            params={"format": "excel"}
+        )
+        
+        # Test 9: Customers Report - Top 25 customers
+        success, response = self.run_test(
+            "Generate Customers Report (Top 25)",
+            "GET",
+            "/api/reports/customers",
+            200,
+            params={
+                "format": "excel",
+                "top_customers": "25"
+            }
+        )
+        
+        # Test 10: Daily Summary Report - Today
+        success, response = self.run_test(
+            "Get Daily Summary Report (Today)",
+            "GET",
+            "/api/reports/daily-summary",
+            200
+        )
+        if success:
+            self.log(f"Daily summary data: {json.dumps(response, indent=2)}")
+        
+        # Test 11: Daily Summary Report - Specific date
+        specific_date = (datetime.now() - timedelta(days=1)).date().isoformat()
+        success, response = self.run_test(
+            "Get Daily Summary Report (Specific Date)",
+            "GET",
+            "/api/reports/daily-summary",
+            200,
+            params={"date": specific_date}
+        )
+        
+        # Test 12: Error handling - Invalid format
+        success, response = self.run_test(
+            "Sales Report Invalid Format (Should Fail)",
+            "GET",
+            "/api/reports/sales",
+            422,  # Validation error expected
+            params={"format": "invalid"}
+        )
+        
+        # Test 13: Error handling - Invalid date format
+        success, response = self.run_test(
+            "Sales Report Invalid Date (Should Fail)",
+            "GET",
+            "/api/reports/sales",
+            422,  # Validation error expected
+            params={
+                "format": "excel",
+                "start_date": "invalid-date"
+            }
+        )
+        
+        # Test 14: Customers Report - PDF format (should return message)
+        success, response = self.run_test(
+            "Generate Customers Report (PDF - Not Implemented)",
+            "GET",
+            "/api/reports/customers",
+            200,
+            params={"format": "pdf"}
+        )
+        
+        self.log("Reports Testing Completed", "INFO")
+        return success
+
+    def test_reports_authentication(self):
+        """Test reports authentication requirements"""
+        self.log("Testing Reports Authentication", "INFO")
+        
+        # Store current token
+        original_token = self.token
+        
+        # Test without authentication
+        self.token = None
+        success, response = self.run_test(
+            "Sales Report Without Auth (Should Fail)",
+            "GET",
+            "/api/reports/sales",
+            401  # Unauthorized expected
+        )
+        
+        # Test with invalid token
+        self.token = "invalid_token"
+        success, response = self.run_test(
+            "Sales Report Invalid Token (Should Fail)",
+            "GET",
+            "/api/reports/sales",
+            401  # Unauthorized expected
+        )
+        
+        # Restore valid token
+        self.token = original_token
+        
+        # Test with valid token
+        success, response = self.run_test(
+            "Sales Report With Valid Auth",
+            "GET",
+            "/api/reports/sales",
+            200
+        )
+        
+        self.log("Reports Authentication Testing Completed", "INFO")
+        return success
+
+    def test_reports_file_headers(self):
+        """Test that reports return proper file headers and MIME types"""
+        self.log("Testing Reports File Headers", "INFO")
+        
+        # Test Excel file headers
+        url = f"{self.base_url}/api/reports/sales?format=excel"
+        headers = {'Authorization': f'Bearer {self.token}'}
+        
+        try:
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
+                content_type = response.headers.get('content-type', '')
+                content_disposition = response.headers.get('content-disposition', '')
+                
+                self.log(f"Excel Content-Type: {content_type}")
+                self.log(f"Excel Content-Disposition: {content_disposition}")
+                
+                # Check MIME type
+                expected_excel_mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                if expected_excel_mime in content_type:
+                    self.log("✅ Excel MIME type correct", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ Excel MIME type incorrect. Expected: {expected_excel_mime}, Got: {content_type}", "FAIL")
+                
+                # Check filename in Content-Disposition
+                if "attachment" in content_disposition and "filename=" in content_disposition:
+                    self.log("✅ Excel Content-Disposition header correct", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ Excel Content-Disposition header incorrect: {content_disposition}", "FAIL")
+                
+                self.tests_run += 2
+        except Exception as e:
+            self.log(f"❌ Error testing Excel headers: {str(e)}", "ERROR")
+            self.tests_run += 2
+        
+        # Test PDF file headers
+        url = f"{self.base_url}/api/reports/sales?format=pdf"
+        
+        try:
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
+                content_type = response.headers.get('content-type', '')
+                content_disposition = response.headers.get('content-disposition', '')
+                
+                self.log(f"PDF Content-Type: {content_type}")
+                self.log(f"PDF Content-Disposition: {content_disposition}")
+                
+                # Check MIME type
+                if "application/pdf" in content_type:
+                    self.log("✅ PDF MIME type correct", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ PDF MIME type incorrect. Expected: application/pdf, Got: {content_type}", "FAIL")
+                
+                # Check filename in Content-Disposition
+                if "attachment" in content_disposition and "filename=" in content_disposition:
+                    self.log("✅ PDF Content-Disposition header correct", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ PDF Content-Disposition header incorrect: {content_disposition}", "FAIL")
+                
+                self.tests_run += 2
+        except Exception as e:
+            self.log(f"❌ Error testing PDF headers: {str(e)}", "ERROR")
+            self.tests_run += 2
+        
+        self.log("Reports File Headers Testing Completed", "INFO")
+        return True
+
     def cleanup_test_data(self):
         """Clean up test data"""
         self.log("Cleaning up test data...")
