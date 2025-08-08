@@ -9,3 +9,10 @@ pillow==10.1.0
 pydantic==2.5.0
 email-validator==2.1.0
 motor==3.3.2
+# Phase 4 - Receipt Generation & Email Dependencies
+jinja2==3.1.2
+aiosmtplib==3.0.1
+email-validator==2.1.0
+weasyprint==61.2
+html2text==2020.1.16
+
