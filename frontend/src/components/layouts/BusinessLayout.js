@@ -9,7 +9,8 @@ import {
   UsersIcon,
   CogIcon,
   ArrowRightOnRectangleIcon,
-  BuildingOfficeIcon
+  BuildingOfficeIcon,
+  ChartBarIcon
 } from '@heroicons/react/24/outline';
 
 const BusinessLayout = ({ children }) => {
