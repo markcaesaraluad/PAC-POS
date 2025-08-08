@@ -55,7 +55,7 @@ async def create_category(
     )
 
 @router.get("/", response_model=List[CategoryResponse])
-async def get_categories(current_user=get_any_authenticated_user()):
+async def get_categories(current_user=Depends(get_any_authenticated_user)):
     categories_collection = await get_collection("categories")
     products_collection = await get_collection("products")
     
