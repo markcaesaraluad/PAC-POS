@@ -9,7 +9,7 @@ from datetime import datetime
 router = APIRouter()
 
 @router.get("/info", response_model=BusinessResponse)
-async def get_business_info(current_user=Depends(get_business_admin_or_super)):
+async def get_business_info(current_user=get_business_admin_or_super()):
     businesses_collection = await get_collection("businesses")
     
     if current_user["role"] == "super_admin":
@@ -43,7 +43,7 @@ async def get_business_info(current_user=Depends(get_business_admin_or_super)):
 @router.put("/settings")
 async def update_business_settings(
     settings: BusinessSettings,
-    current_user=Depends(get_business_admin_or_super)
+    current_user=get_business_admin_or_super()
 ):
     businesses_collection = await get_collection("businesses")
     
@@ -75,7 +75,7 @@ async def update_business_settings(
 @router.post("/users", response_model=UserResponse)
 async def create_cashier(
     user_data: UserCreate,
-    current_user=Depends(get_business_admin_or_super)
+    current_user=get_business_admin_or_super()
 ):
     users_collection = await get_collection("users")
     
@@ -119,7 +119,7 @@ async def create_cashier(
     )
 
 @router.get("/users", response_model=List[UserResponse])
-async def get_business_users(current_user=Depends(get_business_admin_or_super)):
+async def get_business_users(current_user=get_business_admin_or_super()):
     users_collection = await get_collection("users")
     
     if current_user["role"] != "business_admin":
@@ -148,7 +148,7 @@ async def get_business_users(current_user=Depends(get_business_admin_or_super)):
 async def toggle_user_status(
     user_id: str,
     status_data: dict,
-    current_user=Depends(get_business_admin_or_super)
+    current_user=get_business_admin_or_super()
 ):
     users_collection = await get_collection("users")
     

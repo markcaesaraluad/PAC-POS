@@ -11,7 +11,7 @@ router = APIRouter()
 @router.post("/", response_model=CategoryResponse)
 async def create_category(
     category: CategoryCreate,
-    current_user=Depends(get_business_admin_or_super)
+    current_user=get_business_admin_or_super()
 ):
     categories_collection = await get_collection("categories")
     
@@ -131,7 +131,7 @@ async def get_category(
 async def update_category(
     category_id: str,
     category_update: CategoryCreate,
-    current_user=Depends(get_business_admin_or_super)
+    current_user=get_business_admin_or_super()
 ):
     categories_collection = await get_collection("categories")
     products_collection = await get_collection("products")
@@ -195,7 +195,7 @@ async def update_category(
 @router.delete("/{category_id}")
 async def delete_category(
     category_id: str,
-    current_user=Depends(get_business_admin_or_super)
+    current_user=get_business_admin_or_super()
 ):
     categories_collection = await get_collection("categories")
     products_collection = await get_collection("products")
