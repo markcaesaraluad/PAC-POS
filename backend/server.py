@@ -66,6 +66,7 @@ app.include_router(categories.router, prefix="/api/categories", tags=["Categorie
 app.include_router(customers.router, prefix="/api/customers", tags=["Customers"])
 app.include_router(sales.router, prefix="/api/sales", tags=["Sales"])
 app.include_router(invoices.router, prefix="/api/invoices", tags=["Invoices"])
+app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
 
 @app.get("/api/health")
 async def health_check():
