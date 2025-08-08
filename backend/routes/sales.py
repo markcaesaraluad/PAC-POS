@@ -3,6 +3,9 @@ from typing import List, Optional
 from models import SaleCreate, SaleResponse, SaleItem
 from auth_utils import get_any_authenticated_user
 from database import get_collection
+from services.receipt_service import receipt_service
+from services.email_service import email_service
+from services.print_service import print_service
 from bson import ObjectId
 from datetime import datetime
 import uuid
