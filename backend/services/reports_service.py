@@ -513,9 +513,8 @@ class ReportsService:
         
         # Generate PDF
         try:
-            pdf_bytes = HTML(string=html_content).write_pdf()
-            filename = f"inventory_report_{datetime.now().strftime('%Y%m%d')}.pdf"
-            return pdf_bytes, filename
+            # Temporary workaround for WeasyPrint compatibility issue
+            raise Exception("PDF generation temporarily disabled due to system compatibility issues. Please use Excel format.")
         except Exception as e:
             logger.error(f"Error generating inventory PDF: {e}")
             raise
