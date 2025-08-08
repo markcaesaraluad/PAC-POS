@@ -53,7 +53,13 @@ const BusinessSettings = () => {
 
   useEffect(() => {
     loadBusinessInfo();
+    checkPrinterStatus();
   }, []);
+
+  const checkPrinterStatus = () => {
+    const status = bluetoothPrinterService.getStatus();
+    setPrinterStatus(status);
+  };
 
   const loadBusinessInfo = async () => {
     try {
