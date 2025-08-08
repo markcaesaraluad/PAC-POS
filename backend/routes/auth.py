@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status, Depends, Request
 from models import UserLogin, Token, UserResponse, BusinessResponse
-from auth_utils import verify_password, create_access_token, get_current_user
+from auth_utils import verify_password, create_access_token, get_any_authenticated_user
 from database import get_collection
 from bson import ObjectId
 from datetime import datetime
