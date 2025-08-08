@@ -18,6 +18,7 @@ const BusinessSettings = () => {
   const [activeTab, setActiveTab] = useState('general');
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoPreview, setLogoPreview] = useState(null);
+  const [printerStatus, setPrinterStatus] = useState(null);
   
   const [settings, setSettings] = useState({
     currency: 'USD',
