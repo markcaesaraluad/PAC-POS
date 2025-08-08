@@ -102,11 +102,25 @@ const BusinessSettings = () => {
   const handlePrinterTest = async () => {
     try {
       setSaving(true);
-      // Simulate printer connection test
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      toast.success('Printer connection test successful! POS-9200-L detected.');
+      
+      if (!bluetoothPrinterService.isBluetoothSupported()) {
+        toast.error('Bluetooth is not supported in this browser. Use Chrome, Edge, or Opera.');
+        return;
+      }
+
+      if (!printerStatus?.isConnected) {
+        toast.info('Connecting to POS-9200-L printer...');
+        const result = await bluetoothPrinterService.connect();
+        toast.success(result.message);
+        checkPrinterStatus();
+      }
+
+      // Test printer
+      const testResult = await bluetoothPrinterService.testPrinter();
+      toast.success(testResult.message);
+      
     } catch (error) {
-      toast.error('Printer test failed. Check connection and settings.');
+      toast.error(error.message);
     } finally {
       setSaving(false);
     }
@@ -115,11 +129,81 @@ const BusinessSettings = () => {
   const handleTestReceipt = async () => {
     try {
       setSaving(true);
-      // Simulate printing a test receipt
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      toast.success('Sample receipt sent to printer successfully');
+      
+      if (!printerStatus?.isConnected) {
+        toast.error('Please connect to printer first');
+        return;
+      }
+
+      // Generate sample receipt data
+      const sampleReceipt = {
+        business: businessInfo,
+        transaction_number: 'TEST-001',
+        transaction_type: 'SALE',
+        timestamp: new Date(),
+        customer: { name: 'Sample Customer' },
+        items: [
+          {
+            product_name: 'Sample Product',
+            quantity: 2,
+            unit_price: 10.00,
+            total_price: 20.00
+          },
+          {
+            product_name: 'Test Item',
+            quantity: 1,
+            unit_price: 5.50,
+            total_price: 5.50
+          }
+        ],
+        subtotal: 25.50,
+        tax_amount: 2.55,
+        discount_amount: 0.00,
+        total_amount: 28.05,
+        payment_method: 'cash',
+        received_amount: 30.00,
+        change_amount: 1.95,
+        notes: 'Sample receipt for testing'
+      };
+
+      await bluetoothPrinterService.printReceipt(sampleReceipt, settings.printer_settings);
+      toast.success('Sample receipt printed successfully');
+      
     } catch (error) {
-      toast.error('Failed to print test receipt');
+      toast.error(`Print failed: ${error.message}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleConnectPrinter = async () => {
+    try {
+      setSaving(true);
+      
+      if (!bluetoothPrinterService.isBluetoothSupported()) {
+        toast.error('Bluetooth is not supported in this browser. Please use Chrome, Edge, or Opera.');
+        return;
+      }
+
+      const result = await bluetoothPrinterService.connect();
+      toast.success(result.message);
+      checkPrinterStatus();
+      
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDisconnectPrinter = async () => {
+    try {
+      setSaving(true);
+      const result = await bluetoothPrinterService.disconnect();
+      toast.success(result.message);
+      checkPrinterStatus();
+    } catch (error) {
+      toast.error(error.message);
     } finally {
       setSaving(false);
     }
