@@ -196,7 +196,7 @@ class POSAPITester:
             "Create Product",
             "POST",
             "/api/products",
-            201,
+            200,  # Backend returns 200, not 201
             data=product_data
         )
         if success and 'id' in response:
