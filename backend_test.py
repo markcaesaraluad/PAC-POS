@@ -45,6 +45,8 @@ class POSAPITester:
 
         self.tests_run += 1
         self.log(f"Testing {name}...")
+        self.log(f"URL: {url}")
+        self.log(f"Headers: {test_headers}")
         
         try:
             if method == 'GET':
@@ -63,7 +65,7 @@ class POSAPITester:
             else:
                 self.log(f"❌ {name} - Expected {expected_status}, got {response.status_code}", "FAIL")
                 if response.text:
-                    self.log(f"Response: {response.text[:200]}", "ERROR")
+                    self.log(f"Response: {response.text[:500]}", "ERROR")
 
             try:
                 response_data = response.json() if response.text else {}
