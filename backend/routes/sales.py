@@ -12,7 +12,7 @@ import uuid
 
 router = APIRouter()
 
-@router.post("/", response_model=SaleResponse)
+@router.post("", response_model=SaleResponse)
 async def create_sale(
     sale: SaleCreate,
     current_user=Depends(get_any_authenticated_user)
