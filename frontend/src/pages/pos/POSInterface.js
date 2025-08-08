@@ -965,11 +965,17 @@ const POSInterface = () => {
 
               {/* Print Actions */}
               <div className="mt-4 pt-4 border-t space-y-2">
-                <button className="w-full btn-primary text-xs py-2">
+                <button 
+                  onClick={() => handlePrintReceipt()}
+                  className="w-full btn-primary text-xs py-2"
+                >
                   <PrinterIcon className="h-3 w-3 mr-1 inline" />
-                  Print Receipt
+                  Print to POS-9200-L
                 </button>
-                <button className="w-full btn-secondary text-xs py-1">
+                <button 
+                  onClick={() => handleSavePDF()}
+                  className="w-full btn-secondary text-xs py-1"
+                >
                   Save as PDF
                 </button>
               </div>
