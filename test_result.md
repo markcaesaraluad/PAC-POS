@@ -342,9 +342,21 @@ metadata:
         agent: "testing"
         comment: "✅ COMPREHENSIVE PRINTER SETTINGS FRONTEND TESTING COMPLETED SUCCESSFULLY: Business Settings page fully implemented with no 'Coming Soon' message. All three tabs present and functional: General, Printer Settings, Receipts. Business info card displays correctly showing 'Prints & Cuts Tagum'. Paper size configuration working perfectly (58mm=24chars, 80mm=32chars, 112mm=48chars with auto-update). Font size options functional (small, normal, large). All print options checkboxes working (logo, barcode, auto-cut, cash drawer). Printer name configuration input working. Receipt header/footer text areas functional. Receipt preview displays correctly with dynamic styling. General settings working (currency dropdown with USD/EUR/GBP/PHP/JPY, tax rate input, low stock threshold). Settings persistence and save functionality working with businessAPI integration. Complete frontend implementation matches backend functionality perfectly."
 
+  - task: "NEW Receipt Features and Auto-Print Toggle"
+    implemented: true
+    working: true
+    file: "frontend/src/pages/pos/SalesHistory.js, frontend/src/pages/business/Settings.js, frontend/src/pages/pos/POSInterface.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ COMPREHENSIVE RECEIPT FEATURES TESTING COMPLETED SUCCESSFULLY: Auto-Print Toggle Settings fully functional in Business Settings > Printer Settings tab with checkbox for 'Auto-print receipts after sale completion' working correctly. Reprint Receipt Functionality implemented in Sales History page with printer icons for both Sales (10 records) and Invoices (4 records) tabs. Reprint modal opens with receipt preview showing business details, transaction info, items, totals, and REPRINT timestamp indicator. Print Receipt and Save as PDF buttons functional. Single-Frame POS Layout verified with three-panel structure (Left 40% Products, Middle 35% Cart, Right 25% Receipt Preview). Receipt Preview Panel generates real-time preview with business details and print/save options. All printer settings (paper size, font size, characters per line) configurable and saving correctly. Settings persistence working with 'Settings saved successfully' confirmation. Code analysis confirms complete implementation of receipt services, printer configuration, and reprint functionality."
+
 test_plan:
   current_focus:
-    - "NEW Single-Frame POS Layout Testing"
+    - "NEW Receipt Features and Auto-Print Toggle"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
