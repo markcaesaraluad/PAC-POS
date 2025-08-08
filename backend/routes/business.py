@@ -119,7 +119,7 @@ async def create_cashier(
     )
 
 @router.get("/users", response_model=List[UserResponse])
-async def get_business_users(current_user=get_business_admin_or_super()):
+async def get_business_users(current_user=Depends(get_business_admin_or_super)):
     users_collection = await get_collection("users")
     
     if current_user["role"] != "business_admin":
