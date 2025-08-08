@@ -11,7 +11,7 @@ router = APIRouter()
 @router.post("/", response_model=ProductResponse)
 async def create_product(
     product: ProductCreate,
-    current_user=get_business_admin_or_super()
+    current_user=Depends(get_business_admin_or_super)
 ):
     products_collection = await get_collection("products")
     
