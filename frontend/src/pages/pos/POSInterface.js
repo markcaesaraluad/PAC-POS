@@ -424,7 +424,7 @@ const POSInterface = () => {
                 ref={barcodeInputRef}
                 type="text"
                 className="form-input text-sm pl-8"
-                placeholder="Scan barcode or search products..."
+                placeholder={scannerActive ? "Ready for barcode scan or manual search..." : "Manual search only..."}
                 value={barcodeInput || searchTerm}
                 onChange={(e) => {
                   if (barcodeInput) {
@@ -443,6 +443,19 @@ const POSInterface = () => {
                 }}
               />
               <MagnifyingGlassIcon className="absolute left-2 top-2 h-4 w-4 text-gray-400" />
+              <div className="absolute right-2 top-1">
+                <button
+                  onClick={() => setScannerActive(!scannerActive)}
+                  className={`text-xs px-2 py-1 rounded ${
+                    scannerActive 
+                      ? 'bg-green-100 text-green-700 border border-green-300' 
+                      : 'bg-gray-100 text-gray-600 border border-gray-300'
+                  }`}
+                  title={scannerActive ? "Barcode scanner active" : "Barcode scanner disabled"}
+                >
+                  {scannerActive ? '🔍 Scanner ON' : '🔍 Scanner OFF'}
+                </button>
+              </div>
             </div>
             
             <div className="flex space-x-2">
@@ -462,6 +475,17 @@ const POSInterface = () => {
               <button onClick={handleProductSearch} className="btn-primary text-sm px-3">
                 Search
               </button>
+            </div>
+            
+            {/* Scanner Status */}
+            <div className="flex items-center justify-between text-xs">
+              <span className={`flex items-center ${scannerActive ? 'text-green-600' : 'text-gray-500'}`}>
+                <span className={`w-2 h-2 rounded-full mr-1 ${scannerActive ? 'bg-green-500' : 'bg-gray-400'}`}></span>
+                Barcode Scanner {scannerActive ? 'Ready' : 'Disabled'}
+              </span>
+              {barcodeBuffer && (
+                <span className="text-blue-600">Scanning: {barcodeBuffer}</span>
+              )}
             </div>
           </div>
         </div>
