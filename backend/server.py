@@ -9,7 +9,7 @@ from decouple import config
 import asyncio
 
 # Import route modules
-from routes import auth, super_admin, business, products, categories, customers, sales, invoices
+from routes import auth, super_admin, business, products, categories, customers, sales, invoices, reports
 from database import connect_to_mongo, close_mongo_connection
 
 app = FastAPI(title="Modern POS System", version="1.0.0")
