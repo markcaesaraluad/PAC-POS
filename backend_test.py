@@ -865,6 +865,13 @@ class POSAPITester:
         self.test_sales_operations()
         self.test_business_operations()
 
+        # NEW: Comprehensive Reports Testing
+        self.log("=== STARTING REPORTS FUNCTIONALITY TESTING ===", "INFO")
+        self.test_reports_authentication()
+        self.test_reports_functionality()
+        self.test_reports_file_headers()
+        self.log("=== REPORTS FUNCTIONALITY TESTING COMPLETED ===", "INFO")
+
         # Cleanup
         self.cleanup_test_data()
 
