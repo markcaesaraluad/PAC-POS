@@ -55,17 +55,26 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         try {
           const response = await authAPI.getCurrentUser();
+          
+          // For Super Admin, no business context needed
+          const business = response.data.role === 'super_admin' ? null : state.business;
+          
           dispatch({
             type: 'LOGIN_SUCCESS',
             payload: {
               access_token: token,
               user: response.data,
-              business: null, // Will be set during login if applicable
+              business: business,
             },
           });
         } catch (error) {
           console.error('Auth check failed:', error);
-          dispatch({ type: 'LOGOUT' });
+          // Only logout on 401, not on network errors
+          if (error.response?.status === 401) {
+            dispatch({ type: 'LOGOUT' });
+          } else {
+            dispatch({ type: 'SET_LOADING', payload: false });
+          }
         }
       } else {
         dispatch({ type: 'SET_LOADING', payload: false });
