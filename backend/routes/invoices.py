@@ -74,7 +74,7 @@ async def create_invoice(
         converted_at=invoice_doc["converted_at"]
     )
 
-@router.get("/", response_model=List[InvoiceResponse])
+@router.get("", response_model=List[InvoiceResponse])
 async def get_invoices(
     status_filter: Optional[str] = Query(None),
     customer_id: Optional[str] = Query(None),
