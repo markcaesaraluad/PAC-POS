@@ -93,7 +93,7 @@ async def get_categories(current_user=Depends(get_any_authenticated_user)):
 @router.get("/{category_id}", response_model=CategoryResponse)
 async def get_category(
     category_id: str,
-    current_user=get_any_authenticated_user()
+    current_user=Depends(get_any_authenticated_user)
 ):
     categories_collection = await get_collection("categories")
     products_collection = await get_collection("products")
