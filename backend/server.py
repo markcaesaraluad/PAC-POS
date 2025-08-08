@@ -38,16 +38,21 @@ async def shutdown_event():
 # Middleware for multi-tenant support
 @app.middleware("http")
 async def add_business_context(request: Request, call_next):
-    # Extract subdomain from host
-    host = request.headers.get("host", "").lower()
-    if "." in host:
-        subdomain = host.split(".")[0]
-        if subdomain not in ["www", "api"]:
-            request.state.business_subdomain = subdomain
+    # For API calls, don't set business context from subdomain
+    # Let the authentication endpoints handle business context from request body
+    if request.url.path.startswith("/api/"):
+        request.state.business_subdomain = None
+    else:
+        # Extract subdomain from host for non-API requests
+        host = request.headers.get("host", "").lower()
+        if "." in host:
+            subdomain = host.split(".")[0]
+            if subdomain not in ["www", "api"]:
+                request.state.business_subdomain = subdomain
+            else:
+                request.state.business_subdomain = None
         else:
             request.state.business_subdomain = None
-    else:
-        request.state.business_subdomain = None
     
     response = await call_next(request)
     return response
