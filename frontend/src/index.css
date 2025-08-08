@@ -72,4 +72,30 @@
   .category-tab.active {
     @apply bg-blue-600 text-white border-blue-600;
   }
+
+  /* Barcode scanner specific styles */
+  .scanner-ready {
+    @apply ring-2 ring-green-300 ring-opacity-50;
+  }
+
+  .scanner-success {
+    @apply bg-green-100 ring-2 ring-green-400 ring-opacity-75;
+  }
+
+  .scanner-error {
+    @apply bg-red-100 ring-2 ring-red-400 ring-opacity-75;
+  }
+
+  .scanner-pulse {
+    animation: scanner-pulse 1s infinite;
+  }
+
+  @keyframes scanner-pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
 }
