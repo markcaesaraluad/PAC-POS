@@ -55,6 +55,11 @@ const POSInterface = () => {
   const [heldOrders, setHeldOrders] = useState([]);
   const [selectedHeldOrder, setSelectedHeldOrder] = useState(null);
   
+  // Barcode scanner state
+  const [barcodeBuffer, setBarcodeBuffer] = useState('');
+  const [lastBarcodeTime, setLastBarcodeTime] = useState(0);
+  const [scannerActive, setScannerActive] = useState(true);
+  
   const barcodeInputRef = useRef(null);
 
   useEffect(() => {
