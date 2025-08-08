@@ -77,10 +77,8 @@ const POSInterface = () => {
   useEffect(() => {
     fetchData();
     
-    // Focus barcode input on load
-    if (barcodeInputRef.current) {
-      barcodeInputRef.current.focus();
-    }
+    // Auto-focus search input on load
+    focusSearchInput();
 
     // Load held orders from localStorage
     const saved = localStorage.getItem('pos-held-orders');
@@ -88,42 +86,76 @@ const POSInterface = () => {
       setHeldOrders(JSON.parse(saved));
     }
 
-    // Barcode scanner listener
+    // Enhanced barcode scanner listener
     const handleKeyDown = (event) => {
       if (!scannerActive) return;
       
       const currentTime = Date.now();
       const timeDiff = currentTime - lastBarcodeTime;
       
-      // If it's been more than 100ms since last input, reset buffer
-      if (timeDiff > 100) {
+      // If it's been more than 50ms since last input, reset buffer (faster detection)
+      if (timeDiff > 50) {
         setBarcodeBuffer('');
+        setIsScanning(false);
       }
       
-      // Handle Enter key (end of barcode)
-      if (event.key === 'Enter') {
+      // Handle Enter key or sufficient gap (end of barcode)
+      if (event.key === 'Enter' || (barcodeBuffer.length >= 8 && timeDiff > 100)) {
         event.preventDefault();
         if (barcodeBuffer.length > 0) {
           handleBarcodeScanned(barcodeBuffer);
           setBarcodeBuffer('');
+          setIsScanning(false);
         }
         return;
       }
       
-      // Handle regular characters
-      if (event.key.length === 1) {
+      // Handle regular characters (alphanumeric and common barcode characters)
+      if (event.key.length === 1 && /[A-Za-z0-9\-_]/.test(event.key)) {
+        setIsScanning(true);
         setBarcodeBuffer(prev => prev + event.key);
         setLastBarcodeTime(currentTime);
+        
+        // Auto-submit after reasonable barcode length with timing
+        if (barcodeBuffer.length >= 7) {
+          setTimeout(() => {
+            const now = Date.now();
+            if (now - currentTime > 200) { // If no new input for 200ms
+              if (barcodeBuffer.length > 0) {
+                handleBarcodeScanned(barcodeBuffer + event.key);
+                setBarcodeBuffer('');
+                setIsScanning(false);
+              }
+            }
+          }, 250);
+        }
       }
     };
 
     // Add global keydown listener for barcode scanner
     document.addEventListener('keydown', handleKeyDown);
     
+    // Focus management - refocus when clicking away
+    const handleWindowClick = (event) => {
+      if (!event.target.closest('input') && !event.target.closest('button') && !event.target.closest('select')) {
+        focusSearchInput();
+      }
+    };
+    
+    document.addEventListener('click', handleWindowClick);
+    
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('click', handleWindowClick);
     };
   }, [scannerActive, lastBarcodeTime, barcodeBuffer]);
+
+  // Auto-focus after transactions
+  useEffect(() => {
+    if (!isProcessing) {
+      focusSearchInput();
+    }
+  }, [isProcessing]);
 
   useEffect(() => {
     if (business?.settings?.tax_rate) {
@@ -132,28 +164,52 @@ const POSInterface = () => {
   }, [business]);
 
   const handleBarcodeScanned = async (barcode) => {
+    if (!barcode || barcode.length < 3) return; // Minimum barcode length
+    
     try {
+      setIsScanning(false);
       const response = await productsAPI.getProductByBarcode(barcode.trim());
       addToCart(response.data);
-      toast.success(`Scanned: ${response.data.name} added to cart`);
       
-      // Visual feedback
+      // Visual and audio feedback for successful scan
+      toast.success(`✅ Scanned: ${response.data.name} added to cart`, {
+        duration: 2000,
+        position: 'top-center'
+      });
+      
+      // Visual feedback on input
       if (barcodeInputRef.current) {
         barcodeInputRef.current.style.backgroundColor = '#d4edda';
+        barcodeInputRef.current.value = `✓ ${response.data.name}`;
         setTimeout(() => {
-          barcodeInputRef.current.style.backgroundColor = '';
-        }, 500);
+          if (barcodeInputRef.current) {
+            barcodeInputRef.current.style.backgroundColor = '';
+            barcodeInputRef.current.value = '';
+            focusSearchInput();
+          }
+        }, 1500);
       }
       
     } catch (error) {
-      toast.error(`Product not found for barcode: ${barcode}`);
+      setIsScanning(false);
       
-      // Error feedback
+      // Clear error message with specific barcode info
+      toast.error(`❌ Product not found: ${barcode}`, {
+        duration: 3000,
+        position: 'top-center'
+      });
+      
+      // Visual error feedback
       if (barcodeInputRef.current) {
         barcodeInputRef.current.style.backgroundColor = '#f8d7da';
+        barcodeInputRef.current.value = `✗ Not found: ${barcode}`;
         setTimeout(() => {
-          barcodeInputRef.current.style.backgroundColor = '';
-        }, 500);
+          if (barcodeInputRef.current) {
+            barcodeInputRef.current.style.backgroundColor = '';
+            barcodeInputRef.current.value = '';
+            focusSearchInput();
+          }
+        }, 2000);
       }
     }
   };
