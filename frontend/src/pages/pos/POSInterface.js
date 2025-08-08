@@ -471,6 +471,11 @@ const POSInterface = () => {
       clearCart();
       setShowReceiptPreview(false);
       
+      // Auto-focus search input after transaction
+      setTimeout(() => {
+        focusSearchInput();
+      }, 1000);
+      
       // Refresh product data to update stock
       fetchData();
       
