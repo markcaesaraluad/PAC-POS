@@ -128,4 +128,9 @@ export const reportsAPI = {
   getDailySummary: (params = {}) => apiClient.get('/api/reports/daily-summary', { params }),
 };
 
+export const businessAPI = {
+  getInfo: () => apiClient.get('/api/business/info'),
+  updateSettings: (settings) => apiClient.put('/api/business/settings', settings),
+};
+
 export default apiClient;
