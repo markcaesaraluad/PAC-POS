@@ -60,7 +60,7 @@ async def create_customer(
         created_at=customer_doc["created_at"]
     )
 
-@router.get("/", response_model=List[CustomerResponse])
+@router.get("", response_model=List[CustomerResponse])
 async def get_customers(
     search: Optional[str] = Query(None),
     limit: int = Query(50, le=100),
