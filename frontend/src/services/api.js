@@ -92,4 +92,15 @@ export const salesAPI = {
   getDailySummary: (date) => apiClient.get('/api/sales/daily-summary/stats', { params: { date } }),
 };
 
+export const invoicesAPI = {
+  getInvoices: (params = {}) => apiClient.get('/api/invoices', { params }),
+  getInvoice: (id) => apiClient.get(`/api/invoices/${id}`),
+  createInvoice: (invoiceData) => apiClient.post('/api/invoices', invoiceData),
+  updateInvoice: (id, invoiceData) => apiClient.put(`/api/invoices/${id}`, invoiceData),
+  deleteInvoice: (id) => apiClient.delete(`/api/invoices/${id}`),
+  convertToSale: (id, paymentMethod = 'cash') => apiClient.post(`/api/invoices/${id}/convert-to-sale`, { payment_method: paymentMethod }),
+  sendInvoice: (id) => apiClient.post(`/api/invoices/${id}/send`),
+  exportInvoice: (id, options) => apiClient.post(`/api/invoices/${id}/export`, options),
+};
+
 export default apiClient;
