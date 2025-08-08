@@ -6,7 +6,7 @@ Debug login issue
 import requests
 import json
 
-base_url = "https://ed6f9d7f-7152-4de2-a3e7-301ed414aea4.preview.emergentagent.com"
+base_url = "https://b3786809-e7a6-4054-a6f1-57c413252394.preview.emergentagent.com"
 
 # Test business admin login with detailed error info
 login_data = {
