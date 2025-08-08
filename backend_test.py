@@ -512,6 +512,11 @@ class POSAPITester:
             self.log("❌ Health check failed - stopping tests", "CRITICAL")
             return False
 
+        # Super admin setup and business creation
+        if not self.test_super_admin_setup():
+            self.log("❌ Super admin setup failed - stopping tests", "CRITICAL")
+            return False
+
         # Authentication tests
         if not self.test_business_admin_login():
             self.log("❌ Business admin login failed - stopping tests", "CRITICAL")
