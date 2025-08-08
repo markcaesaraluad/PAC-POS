@@ -219,13 +219,44 @@ const BusinessSettings = () => {
         <div className="card">
           <div className="card-body">
             <div className="flex items-center space-x-4">
-              <BuildingOfficeIcon className="h-12 w-12 text-blue-500" />
-              <div>
+              <div className="flex-shrink-0">
+                {businessInfo.logo_url || logoPreview ? (
+                  <img 
+                    src={logoPreview || businessInfo.logo_url} 
+                    alt="Business Logo" 
+                    className="w-16 h-16 rounded-lg object-cover border"
+                  />
+                ) : (
+                  <BuildingOfficeIcon className="h-16 w-16 text-blue-500" />
+                )}
+              </div>
+              <div className="flex-1">
                 <h2 className="text-xl font-semibold text-gray-900">{businessInfo.name}</h2>
                 <p className="text-gray-600">{businessInfo.description}</p>
                 <p className="text-sm text-gray-500">
                   Contact: {businessInfo.contact_email} | Phone: {businessInfo.phone || 'Not set'}
                 </p>
+              </div>
+              <div className="flex flex-col space-y-2">
+                <label className="btn-primary text-xs px-3 py-1 cursor-pointer relative overflow-hidden">
+                  {logoUploading ? 'Uploading...' : 'Upload Logo'}
+                  <input
+                    type="file"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    accept="image/*"
+                    onChange={handleLogoUpload}
+                    disabled={logoUploading}
+                  />
+                </label>
+                {(businessInfo.logo_url || logoPreview) && (
+                  <button
+                    onClick={handleRemoveLogo}
+                    className="btn-secondary text-xs px-3 py-1"
+                    disabled={saving}
+                  >
+                    Remove Logo
+                  </button>
+                )}
               </div>
             </div>
           </div>
