@@ -70,6 +70,6 @@
   }
   
   .category-tab.active {
-    @apply bg-primary-600 text-white border-primary-600;
+    @apply bg-blue-600 text-white border-blue-600;
   }
 }
