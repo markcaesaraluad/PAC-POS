@@ -131,7 +131,7 @@ async def get_category(
 async def update_category(
     category_id: str,
     category_update: CategoryCreate,
-    current_user=get_business_admin_or_super()
+    current_user=Depends(get_business_admin_or_super)
 ):
     categories_collection = await get_collection("categories")
     products_collection = await get_collection("products")
