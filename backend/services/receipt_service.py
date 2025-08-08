@@ -376,6 +376,10 @@ class ReceiptService:
 
     async def _generate_receipt_pdf(self, html_content: str, paper_size: str = "80") -> bytes:
         """Generate PDF with appropriate sizing for thermal printers"""
+        if not WEASYPRINT_AVAILABLE:
+            logger.error("WeasyPrint not available for PDF generation")
+            return b""
+            
         try:
             # Set CSS for thermal printer paper sizes
             if paper_size == "58":
