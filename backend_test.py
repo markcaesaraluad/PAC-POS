@@ -180,8 +180,26 @@ class POSAPITester:
 
     def test_business_admin_login(self):
         """Test business admin login with subdomain context"""
+        # First try without subdomain in body
         success, response = self.run_test(
-            "Business Admin Login",
+            "Business Admin Login (no subdomain)",
+            "POST",
+            "/api/auth/login",
+            200,
+            data={
+                "email": "admin@printsandcuts.com",
+                "password": "admin123456"
+            }
+        )
+        if success and 'access_token' in response:
+            self.business_admin_token = response['access_token']
+            self.token = self.business_admin_token
+            self.log("Business admin token obtained")
+            return True
+        
+        # Try with subdomain in body
+        success, response = self.run_test(
+            "Business Admin Login (with subdomain)",
             "POST",
             "/api/auth/login",
             200,
