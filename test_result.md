@@ -284,9 +284,16 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Reports Functionality"
+    - "Authentication & Login System"
+    - "Super Admin Dashboard & Business Management"
+    - "Business Admin Dashboard & Management"
+    - "Product Management Interface"
+    - "Category Management Interface"
+    - "Customer Management Interface"
+    - "POS Interface & Sales Processing"
+    - "Reports Functionality Frontend"
   stuck_tasks: []
-  test_all: false
+  test_all: true
   test_priority: "high_first"
 
 agent_communication:
