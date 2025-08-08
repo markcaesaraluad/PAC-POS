@@ -29,12 +29,24 @@ async def generate_sales_report(
     if not start_date:
         start_dt = datetime.now() - timedelta(days=30)
     else:
-        start_dt = datetime.fromisoformat(start_date)
+        try:
+            start_dt = datetime.fromisoformat(start_date)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid start_date format. Use ISO format (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS)"
+            )
     
     if not end_date:
         end_dt = datetime.now()
     else:
-        end_dt = datetime.fromisoformat(end_date)
+        try:
+            end_dt = datetime.fromisoformat(end_date)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid end_date format. Use ISO format (YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS)"
+            )
     
     # Get sales data from database
     sales_collection = await get_collection("sales")
