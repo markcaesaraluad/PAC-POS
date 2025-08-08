@@ -107,9 +107,6 @@ class POSAPITester:
 
     def test_business_admin_login(self):
         """Test business admin login with subdomain context"""
-        # Set subdomain header for multi-tenant support
-        headers = {'Host': 'prints-cuts-tagum.preview.emergentagent.com'}
-        
         success, response = self.run_test(
             "Business Admin Login",
             "POST",
@@ -117,9 +114,9 @@ class POSAPITester:
             200,
             data={
                 "email": "admin@printsandcuts.com",
-                "password": "admin123456"
-            },
-            headers=headers
+                "password": "admin123456",
+                "business_subdomain": "prints-cuts-tagum"
+            }
         )
         if success and 'access_token' in response:
             self.business_admin_token = response['access_token']
