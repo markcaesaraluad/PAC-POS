@@ -117,6 +117,68 @@ const BusinessSettings = () => {
     }
   };
 
+  const handleLogoUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Please upload a valid image file (JPEG, PNG, GIF)');
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image size must be less than 2MB');
+      return;
+    }
+
+    try {
+      setLogoUploading(true);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setLogoPreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+
+      // Simulate upload (in production, this would upload to server/cloud storage)
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Update business info with new logo URL (simulated)
+      const logoUrl = URL.createObjectURL(file);
+      setBusinessInfo(prev => ({ ...prev, logo_url: logoUrl }));
+      
+      toast.success('Business logo uploaded successfully');
+      
+    } catch (error) {
+      toast.error('Failed to upload logo');
+    } finally {
+      setLogoUploading(false);
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    try {
+      setSaving(true);
+      
+      // Simulate logo removal
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setBusinessInfo(prev => ({ ...prev, logo_url: null }));
+      setLogoPreview(null);
+      
+      toast.success('Business logo removed successfully');
+      
+    } catch (error) {
+      toast.error('Failed to remove logo');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const updatePrinterSetting = (key, value) => {
     setSettings(prev => ({
       ...prev,
