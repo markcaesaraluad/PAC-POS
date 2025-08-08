@@ -155,6 +155,18 @@ backend:
         agent: "testing"
         comment: "✅ FIXED: Receipt services accessible through invoice operations. Invoice to sale conversion working, indicating receipt generation pipeline is functional."
 
+  - task: "Printer Settings Functionality"
+    implemented: true
+    working: true
+    file: "backend/routes/business.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ COMPREHENSIVE PRINTER SETTINGS TESTING COMPLETED: All printer settings functionality working perfectly. Business settings API (GET /api/business/info, PUT /api/business/settings) fully functional. Successfully tested 58mm paper size configuration (24 chars/line, small font), 80mm paper size configuration (32 chars/line, normal font), and large font configuration (28 chars/line, large font). Settings persistence verified across all configurations. Receipt service integration confirmed with dynamic styling based on printer settings. Currency, tax rate, receipt headers/footers all updating correctly. Printer settings include paper_size, characters_per_line, font_size, enable_logo, cut_paper, and printer_name - all working as expected."
+
   - task: "Reports Functionality"
     implemented: true
     working: true
