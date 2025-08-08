@@ -1,0 +1,166 @@
+from pydantic import BaseModel, EmailStr, Field
+from typing import Optional, List, Dict
+from datetime import datetime
+from enum import Enum
+import uuid
+
+class UserRole(str, Enum):
+    SUPER_ADMIN = "super_admin"
+    BUSINESS_ADMIN = "business_admin"
+    CASHIER = "cashier"
+
+class BusinessStatus(str, Enum):
+    ACTIVE = "active"
+    SUSPENDED = "suspended"
+    INACTIVE = "inactive"
+
+# User Models
+class UserBase(BaseModel):
+    email: EmailStr
+    full_name: str
+    role: UserRole
+
+class UserCreate(UserBase):
+    password: str
+    business_id: Optional[str] = None
+
+class UserResponse(UserBase):
+    id: str
+    business_id: Optional[str] = None
+    is_active: bool
+    created_at: datetime
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+    business_subdomain: Optional[str] = None
+
+# Business Models
+class BusinessBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    subdomain: str
+    contact_email: EmailStr
+    phone: Optional[str] = None
+    address: Optional[str] = None
+
+class BusinessCreate(BusinessBase):
+    admin_name: str
+    admin_email: EmailStr
+    admin_password: str
+
+class BusinessResponse(BusinessBase):
+    id: str
+    status: BusinessStatus
+    logo_url: Optional[str] = None
+    settings: Optional[Dict] = None
+    created_at: datetime
+    updated_at: datetime
+
+class BusinessSettings(BaseModel):
+    currency: str = "USD"
+    tax_rate: float = 0.0
+    receipt_header: Optional[str] = None
+    receipt_footer: Optional[str] = None
+    low_stock_threshold: int = 10
+    printer_settings: Optional[Dict] = None
+
+# Product Models
+class ProductBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    sku: str
+    barcode: Optional[str] = None
+    category_id: Optional[str] = None
+    price: float
+    cost: Optional[float] = None
+    quantity: int = 0
+    image_url: Optional[str] = None
+
+class ProductCreate(ProductBase):
+    pass
+
+class ProductUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    sku: Optional[str] = None
+    barcode: Optional[str] = None
+    category_id: Optional[str] = None
+    price: Optional[float] = None
+    cost: Optional[float] = None
+    quantity: Optional[int] = None
+    image_url: Optional[str] = None
+
+class ProductResponse(ProductBase):
+    id: str
+    business_id: str
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+# Category Models
+class CategoryBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+    color: Optional[str] = "#3B82F6"
+
+class CategoryCreate(CategoryBase):
+    pass
+
+class CategoryResponse(CategoryBase):
+    id: str
+    business_id: str
+    product_count: int = 0
+    created_at: datetime
+
+# Customer Models
+class CustomerBase(BaseModel):
+    name: str
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+
+class CustomerCreate(CustomerBase):
+    pass
+
+class CustomerResponse(CustomerBase):
+    id: str
+    business_id: str
+    total_spent: float = 0.0
+    visit_count: int = 0
+    created_at: datetime
+
+# Sale Models
+class SaleItem(BaseModel):
+    product_id: str
+    product_name: str
+    quantity: int
+    unit_price: float
+    total_price: float
+
+class SaleBase(BaseModel):
+    customer_id: Optional[str] = None
+    items: List[SaleItem]
+    subtotal: float
+    tax_amount: float = 0.0
+    discount_amount: float = 0.0
+    total_amount: float
+    payment_method: str = "cash"
+
+class SaleCreate(SaleBase):
+    pass
+
+class SaleResponse(SaleBase):
+    id: str
+    business_id: str
+    cashier_id: str
+    sale_number: str
+    status: str = "completed"
+    created_at: datetime
+
+# Token Models
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    user: UserResponse
+    business: Optional[BusinessResponse] = None
