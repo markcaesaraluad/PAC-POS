@@ -100,7 +100,7 @@ async def login(user_credentials: UserLogin, request: Request):
     )
 
 @router.get("/me", response_model=UserResponse)
-async def get_current_user_info(current_user=Depends(get_current_user)):
+async def get_current_user_info(current_user=get_any_authenticated_user()):
     return UserResponse(
         id=str(current_user["_id"]),
         email=current_user["email"],
