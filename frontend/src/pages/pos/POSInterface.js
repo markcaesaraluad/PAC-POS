@@ -666,11 +666,14 @@ const POSInterface = () => {
             {/* Scanner Status */}
             <div className="flex items-center justify-between text-xs">
               <span className={`flex items-center ${scannerActive ? 'text-green-600' : 'text-gray-500'}`}>
-                <span className={`w-2 h-2 rounded-full mr-1 ${scannerActive ? 'bg-green-500' : 'bg-gray-400'}`}></span>
-                Barcode Scanner {scannerActive ? 'Ready' : 'Disabled'}
+                <span className={`w-2 h-2 rounded-full mr-1 ${scannerActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></span>
+                Scanner {scannerActive ? 'READY' : 'OFF'}
+                {isScanning && <span className="ml-2 text-blue-600 animate-pulse">📡 Scanning...</span>}
               </span>
               {barcodeBuffer && (
-                <span className="text-blue-600">Scanning: {barcodeBuffer}</span>
+                <span className="text-blue-600 font-mono text-xs">
+                  Buffer: {barcodeBuffer} ({barcodeBuffer.length})
+                </span>
               )}
             </div>
           </div>
