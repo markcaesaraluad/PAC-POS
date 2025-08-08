@@ -86,8 +86,9 @@ class POSAPITester:
         )
         return success
 
-    def test_super_admin_login(self):
-        """Test super admin login"""
+    def test_super_admin_setup(self):
+        """Test super admin setup and business creation"""
+        # Try super admin login first
         success, response = self.run_test(
             "Super Admin Login",
             "POST",
@@ -102,8 +103,38 @@ class POSAPITester:
             self.super_admin_token = response['access_token']
             self.token = self.super_admin_token
             self.log("Super admin token obtained")
+            
+            # Create business if it doesn't exist
+            self.create_test_business()
             return True
-        return False
+        else:
+            self.log("❌ Super admin not found or login failed", "ERROR")
+            return False
+
+    def create_test_business(self):
+        """Create test business for testing"""
+        business_data = {
+            "name": "Prints & Cuts Tagum",
+            "description": "Test business for API testing",
+            "subdomain": "prints-cuts-tagum",
+            "contact_email": "contact@printsandcuts.com",
+            "phone": "+1234567890",
+            "address": "123 Test Street, Tagum City",
+            "admin_name": "Business Admin",
+            "admin_email": "admin@printsandcuts.com",
+            "admin_password": "admin123456"
+        }
+        
+        success, response = self.run_test(
+            "Create Test Business",
+            "POST",
+            "/api/super-admin/businesses",
+            200,
+            data=business_data
+        )
+        if success:
+            self.log("Test business created successfully")
+        return success
 
     def test_business_admin_login(self):
         """Test business admin login with subdomain context"""
