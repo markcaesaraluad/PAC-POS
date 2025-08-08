@@ -127,7 +127,8 @@ class POSAPITester:
             for business in response:
                 self.log(f"  - {business.get('name')} (subdomain: {business.get('subdomain')})")
         return success
-        """Create test business for testing"""
+
+    def create_test_business(self):
         business_data = {
             "name": "Prints & Cuts Tagum",
             "description": "Test business for API testing",
