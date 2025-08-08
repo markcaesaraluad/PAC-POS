@@ -4,6 +4,9 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 import base64
 import io
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ReceiptService:
     def __init__(self):
