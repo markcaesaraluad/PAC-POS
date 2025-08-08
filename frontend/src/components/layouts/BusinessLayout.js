@@ -22,6 +22,7 @@ const BusinessLayout = ({ children }) => {
     { name: 'Products', href: '/business/products', icon: CubeIcon },
     { name: 'Categories', href: '/business/categories', icon: TagIcon },
     { name: 'Customers', href: '/business/customers', icon: UserGroupIcon },
+    { name: 'Reports', href: '/business/reports', icon: ChartBarIcon },
     { name: 'Staff', href: '/business/users', icon: UsersIcon },
     { name: 'Settings', href: '/business/settings', icon: CogIcon },
   ];
