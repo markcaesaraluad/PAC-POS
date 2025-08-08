@@ -56,6 +56,11 @@ async def get_current_user(token_data=Depends(verify_token)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
         )
+    
+    # Add business_id from token to user object if present
+    if token_data.get("business_id"):
+        user["business_id"] = token_data["business_id"]
+    
     return user
 
 async def require_role(required_roles: list):
