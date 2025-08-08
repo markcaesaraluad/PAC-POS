@@ -62,7 +62,7 @@
   }
   
   .product-card:hover {
-    @apply border-primary-300;
+    @apply border-blue-300;
   }
   
   .category-tab {
