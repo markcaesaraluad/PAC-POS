@@ -148,7 +148,7 @@ async def get_products(
 @router.get("/{product_id}", response_model=ProductResponse)
 async def get_product(
     product_id: str,
-    current_user=get_any_authenticated_user()
+    current_user=Depends(get_any_authenticated_user)
 ):
     products_collection = await get_collection("products")
     
