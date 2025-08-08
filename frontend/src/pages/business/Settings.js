@@ -27,6 +27,7 @@ const BusinessSettings = () => {
       characters_per_line: 32,
       enable_logo: true,
       enable_barcode: false,
+      auto_print: false,
       font_size: 'normal', // small, normal, large
       cut_paper: true,
       open_drawer: false,
