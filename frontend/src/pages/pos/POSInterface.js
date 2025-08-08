@@ -75,13 +75,76 @@ const POSInterface = () => {
     if (saved) {
       setHeldOrders(JSON.parse(saved));
     }
-  }, []);
+
+    // Barcode scanner listener
+    const handleKeyDown = (event) => {
+      if (!scannerActive) return;
+      
+      const currentTime = Date.now();
+      const timeDiff = currentTime - lastBarcodeTime;
+      
+      // If it's been more than 100ms since last input, reset buffer
+      if (timeDiff > 100) {
+        setBarcodeBuffer('');
+      }
+      
+      // Handle Enter key (end of barcode)
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        if (barcodeBuffer.length > 0) {
+          handleBarcodeScanned(barcodeBuffer);
+          setBarcodeBuffer('');
+        }
+        return;
+      }
+      
+      // Handle regular characters
+      if (event.key.length === 1) {
+        setBarcodeBuffer(prev => prev + event.key);
+        setLastBarcodeTime(currentTime);
+      }
+    };
+
+    // Add global keydown listener for barcode scanner
+    document.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [scannerActive, lastBarcodeTime, barcodeBuffer]);
 
   useEffect(() => {
     if (business?.settings?.tax_rate) {
       setTaxRate(business.settings.tax_rate);
     }
   }, [business]);
+
+  const handleBarcodeScanned = async (barcode) => {
+    try {
+      const response = await productsAPI.getProductByBarcode(barcode.trim());
+      addToCart(response.data);
+      toast.success(`Scanned: ${response.data.name} added to cart`);
+      
+      // Visual feedback
+      if (barcodeInputRef.current) {
+        barcodeInputRef.current.style.backgroundColor = '#d4edda';
+        setTimeout(() => {
+          barcodeInputRef.current.style.backgroundColor = '';
+        }, 500);
+      }
+      
+    } catch (error) {
+      toast.error(`Product not found for barcode: ${barcode}`);
+      
+      // Error feedback
+      if (barcodeInputRef.current) {
+        barcodeInputRef.current.style.backgroundColor = '#f8d7da';
+        setTimeout(() => {
+          barcodeInputRef.current.style.backgroundColor = '';
+        }, 500);
+      }
+    }
+  };
 
   const fetchData = async () => {
     try {
