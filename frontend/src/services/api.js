@@ -103,4 +103,29 @@ export const invoicesAPI = {
   exportInvoice: (id, options) => apiClient.post(`/api/invoices/${id}/export`, options),
 };
 
+export const reportsAPI = {
+  getSalesReport: (params = {}) => {
+    const config = { 
+      params,
+      responseType: 'blob' // Important for file downloads
+    };
+    return apiClient.get('/api/reports/sales', config);
+  },
+  getInventoryReport: (params = {}) => {
+    const config = { 
+      params,
+      responseType: 'blob'
+    };
+    return apiClient.get('/api/reports/inventory', config);
+  },
+  getCustomersReport: (params = {}) => {
+    const config = { 
+      params,
+      responseType: 'blob'
+    };
+    return apiClient.get('/api/reports/customers', config);
+  },
+  getDailySummary: (params = {}) => apiClient.get('/api/reports/daily-summary', { params }),
+};
+
 export default apiClient;
