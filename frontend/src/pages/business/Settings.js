@@ -310,6 +310,16 @@ const BusinessSettings = () => {
                   <label className="flex items-center">
                     <input
                       type="checkbox"
+                      checked={settings.printer_settings.auto_print}
+                      onChange={(e) => updatePrinterSetting('auto_print', e.target.checked)}
+                      className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Auto-print receipts after sale completion</span>
+                  </label>
+
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
                       checked={settings.printer_settings.enable_barcode}
                       onChange={(e) => updatePrinterSetting('enable_barcode', e.target.checked)}
                       className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
