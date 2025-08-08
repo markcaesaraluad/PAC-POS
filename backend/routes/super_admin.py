@@ -116,7 +116,7 @@ async def list_businesses(current_user=Depends(get_super_admin)):
 async def update_business_status(
     business_id: str,
     status_update: dict,
-    current_user=get_super_admin()
+    current_user=Depends(get_super_admin)
 ):
     businesses_collection = await get_collection("businesses")
     
