@@ -15,7 +15,7 @@ router = APIRouter()
 @router.post("/", response_model=SaleResponse)
 async def create_sale(
     sale: SaleCreate,
-    current_user=get_any_authenticated_user()
+    current_user=Depends(get_any_authenticated_user)
 ):
     sales_collection = await get_collection("sales")
     products_collection = await get_collection("products")
@@ -116,7 +116,7 @@ async def get_sales(
     limit: int = Query(50, le=100),
     skip: int = Query(0, ge=0),
     customer_id: Optional[str] = Query(None),
-    current_user=get_any_authenticated_user()
+    current_user=Depends(get_any_authenticated_user)
 ):
     sales_collection = await get_collection("sales")
     
@@ -162,7 +162,7 @@ async def get_sales(
 @router.get("/{sale_id}", response_model=SaleResponse)
 async def get_sale(
     sale_id: str,
-    current_user=get_any_authenticated_user()
+    current_user=Depends(get_any_authenticated_user)
 ):
     sales_collection = await get_collection("sales")
     
@@ -205,7 +205,7 @@ async def get_sale(
 @router.get("/daily-summary/stats")
 async def get_daily_sales_stats(
     date: Optional[str] = Query(None),
-    current_user=get_any_authenticated_user()
+    current_user=Depends(get_any_authenticated_user)
 ):
     sales_collection = await get_collection("sales")
     

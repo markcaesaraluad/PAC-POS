@@ -11,7 +11,7 @@ router = APIRouter()
 @router.post("/", response_model=CustomerResponse)
 async def create_customer(
     customer: CustomerCreate,
-    current_user=get_business_admin_or_super()
+    current_user=Depends(get_business_admin_or_super)
 ):
     customers_collection = await get_collection("customers")
     
@@ -65,7 +65,7 @@ async def get_customers(
     search: Optional[str] = Query(None),
     limit: int = Query(50, le=100),
     skip: int = Query(0, ge=0),
-    current_user=get_any_authenticated_user()
+    current_user=Depends(get_any_authenticated_user)
 ):
     customers_collection = await get_collection("customers")
     
@@ -107,7 +107,7 @@ async def get_customers(
 @router.get("/{customer_id}", response_model=CustomerResponse)
 async def get_customer(
     customer_id: str,
-    current_user=get_any_authenticated_user()
+    current_user=Depends(get_any_authenticated_user)
 ):
     customers_collection = await get_collection("customers")
     
@@ -140,7 +140,7 @@ async def get_customer(
 async def update_customer(
     customer_id: str,
     customer_update: CustomerCreate,
-    current_user=get_business_admin_or_super()
+    current_user=Depends(get_business_admin_or_super)
 ):
     customers_collection = await get_collection("customers")
     
@@ -206,7 +206,7 @@ async def update_customer(
 @router.delete("/{customer_id}")
 async def delete_customer(
     customer_id: str,
-    current_user=get_business_admin_or_super()
+    current_user=Depends(get_business_admin_or_super)
 ):
     customers_collection = await get_collection("customers")
     

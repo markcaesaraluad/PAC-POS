@@ -16,7 +16,7 @@ router = APIRouter()
 @router.post("/", response_model=InvoiceResponse)
 async def create_invoice(
     invoice: InvoiceCreate,
-    current_user=get_any_authenticated_user()
+    current_user=Depends(get_any_authenticated_user)
 ):
     invoices_collection = await get_collection("invoices")
     
@@ -80,7 +80,7 @@ async def get_invoices(
     customer_id: Optional[str] = Query(None),
     limit: int = Query(50, le=100),
     skip: int = Query(0, ge=0),
-    current_user=get_any_authenticated_user()
+    current_user=Depends(get_any_authenticated_user)
 ):
     invoices_collection = await get_collection("invoices")
     
@@ -134,7 +134,7 @@ async def get_invoices(
 async def convert_invoice_to_sale(
     invoice_id: str,
     payment_method: str = "cash",
-    current_user=get_any_authenticated_user()
+    current_user=Depends(get_any_authenticated_user)
 ):
     invoices_collection = await get_collection("invoices")
     sales_collection = await get_collection("sales")
@@ -217,7 +217,7 @@ async def convert_invoice_to_sale(
 async def generate_invoice_receipt(
     invoice_id: str,
     format_type: str = "html",  # html, pdf
-    current_user=get_any_authenticated_user()
+    current_user=Depends(get_any_authenticated_user)
 ):
     """Generate receipt for invoice"""
     invoices_collection = await get_collection("invoices")
@@ -287,7 +287,7 @@ async def send_invoice_email(
     invoice_id: str,
     email_address: Optional[str] = None,
     include_pdf: bool = True,
-    current_user=get_any_authenticated_user()
+    current_user=Depends(get_any_authenticated_user)
 ):
     """Send invoice via email"""
     invoices_collection = await get_collection("invoices")
@@ -387,7 +387,7 @@ async def send_invoice_email(
 async def print_invoice(
     invoice_id: str,
     printer_name: str = "default",
-    current_user=get_any_authenticated_user()
+    current_user=Depends(get_any_authenticated_user)
 ):
     """Add invoice to print queue"""
     invoices_collection = await get_collection("invoices")
@@ -451,7 +451,7 @@ async def print_invoice(
 @router.get("/print-status/{job_id}")
 async def get_print_status(
     job_id: str,
-    current_user=get_any_authenticated_user()
+    current_user=Depends(get_any_authenticated_user)
 ):
     """Get print job status"""
     status = print_service.get_job_status(job_id)
