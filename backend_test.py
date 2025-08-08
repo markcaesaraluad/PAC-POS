@@ -105,7 +105,21 @@ class POSAPITester:
             self.log("Super admin token obtained")
             
             # List existing businesses first
-            self.list_existing_businesses()
+            businesses_response = self.list_existing_businesses()
+            
+            # Get business ID and list users
+            if businesses_response:
+                # Assuming we get the business list, extract the first business ID
+                success, response = self.run_test(
+                    "List Businesses for ID",
+                    "GET",
+                    "/api/super-admin/businesses",
+                    200
+                )
+                if success and isinstance(response, list) and len(response) > 0:
+                    business_id = response[0].get('id')
+                    if business_id:
+                        self.list_business_users(business_id)
             
             # Business already exists, skip creation
             self.log("Business already exists, proceeding with login test")
