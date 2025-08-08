@@ -141,7 +141,7 @@ async def update_business_status(
 @router.get("/businesses/{business_id}/users", response_model=List[UserResponse])
 async def get_business_users(
     business_id: str,
-    current_user=Depends(get_super_admin)
+    current_user=get_super_admin()
 ):
     users_collection = await get_collection("users")
     users_cursor = users_collection.find({"business_id": ObjectId(business_id)})
