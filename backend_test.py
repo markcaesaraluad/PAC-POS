@@ -104,6 +104,9 @@ class POSAPITester:
             self.token = self.super_admin_token
             self.log("Super admin token obtained")
             
+            # List existing businesses first
+            self.list_existing_businesses()
+            
             # Create business if it doesn't exist
             self.create_test_business()
             return True
