@@ -10,6 +10,7 @@ import asyncio
 
 # Import route modules
 from routes import auth, super_admin, business, products, categories, customers, sales
+from database import connect_to_mongo, close_mongo_connection
 
 app = FastAPI(title="Modern POS System", version="1.0.0")
 
@@ -22,13 +23,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# MongoDB connection
-MONGO_URL = config("MONGO_URL", default="mongodb://localhost:27017/pos_system")
-client = AsyncIOMotorClient(MONGO_URL)
-db = client.pos_system
-
 # Security
 security = HTTPBearer()
+
+# Startup and shutdown events
+@app.on_event("startup")
+async def startup_event():
+    await connect_to_mongo()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    await close_mongo_connection()
 
 # Middleware for multi-tenant support
 @app.middleware("http")
