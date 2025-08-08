@@ -14,6 +14,12 @@ class BusinessStatus(str, Enum):
     SUSPENDED = "suspended"
     INACTIVE = "inactive"
 
+class InvoiceStatus(str, Enum):
+    DRAFT = "draft"
+    SENT = "sent"
+    CONVERTED = "converted"
+    CANCELLED = "cancelled"
+
 # User Models
 class UserBase(BaseModel):
     email: EmailStr
@@ -130,14 +136,16 @@ class CustomerResponse(CustomerBase):
     visit_count: int = 0
     created_at: datetime
 
-# Sale Models
+# Sale/Invoice Item Models
 class SaleItem(BaseModel):
     product_id: str
     product_name: str
+    product_sku: str
     quantity: int
     unit_price: float
     total_price: float
 
+# Sale Models
 class SaleBase(BaseModel):
     customer_id: Optional[str] = None
     items: List[SaleItem]
@@ -146,6 +154,7 @@ class SaleBase(BaseModel):
     discount_amount: float = 0.0
     total_amount: float
     payment_method: str = "cash"
+    notes: Optional[str] = None
 
 class SaleCreate(SaleBase):
     pass
@@ -157,6 +166,53 @@ class SaleResponse(SaleBase):
     sale_number: str
     status: str = "completed"
     created_at: datetime
+
+# Invoice Models
+class InvoiceBase(BaseModel):
+    customer_id: Optional[str] = None
+    items: List[SaleItem]
+    subtotal: float
+    tax_amount: float = 0.0
+    discount_amount: float = 0.0
+    total_amount: float
+    notes: Optional[str] = None
+    due_date: Optional[datetime] = None
+
+class InvoiceCreate(InvoiceBase):
+    pass
+
+class InvoiceUpdate(BaseModel):
+    customer_id: Optional[str] = None
+    items: Optional[List[SaleItem]] = None
+    subtotal: Optional[float] = None
+    tax_amount: Optional[float] = None
+    discount_amount: Optional[float] = None
+    total_amount: Optional[float] = None
+    notes: Optional[str] = None
+    due_date: Optional[datetime] = None
+    status: Optional[InvoiceStatus] = None
+
+class InvoiceResponse(InvoiceBase):
+    id: str
+    business_id: str
+    created_by: str
+    invoice_number: str
+    status: InvoiceStatus = InvoiceStatus.DRAFT
+    created_at: datetime
+    updated_at: datetime
+    sent_at: Optional[datetime] = None
+    converted_at: Optional[datetime] = None
+
+# Receipt/Invoice Export Models
+class ExportOptions(BaseModel):
+    format: str = "pdf"  # pdf, image
+    send_email: bool = False
+    customer_email: Optional[EmailStr] = None
+
+class ExportResponse(BaseModel):
+    success: bool
+    file_url: Optional[str] = None
+    message: str
 
 # Token Models
 class Token(BaseModel):
