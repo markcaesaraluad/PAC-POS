@@ -60,8 +60,19 @@ const POSInterface = () => {
   const [barcodeBuffer, setBarcodeBuffer] = useState('');
   const [lastBarcodeTime, setLastBarcodeTime] = useState(0);
   const [scannerActive, setScannerActive] = useState(true);
+  const [isScanning, setIsScanning] = useState(false);
   
   const barcodeInputRef = useRef(null);
+
+  // Auto-focus management
+  const focusSearchInput = () => {
+    setTimeout(() => {
+      if (barcodeInputRef.current) {
+        barcodeInputRef.current.focus();
+        barcodeInputRef.current.select(); // Select any existing text
+      }
+    }, 100);
+  };
 
   useEffect(() => {
     fetchData();
