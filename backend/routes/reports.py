@@ -341,7 +341,16 @@ async def get_daily_summary_report(
         )
     
     # Use today if no date provided
-    target_date = datetime.now().date() if not date else datetime.fromisoformat(date).date()
+    if not date:
+        target_date = datetime.now().date()
+    else:
+        try:
+            target_date = datetime.fromisoformat(date).date()
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid date format. Use ISO format (YYYY-MM-DD)"
+            )
     start_of_day = datetime.combine(target_date, datetime.min.time())
     end_of_day = datetime.combine(target_date, datetime.max.time())
     
