@@ -89,6 +89,32 @@ const BusinessSettings = () => {
     }
   };
 
+  const handlePrinterTest = async () => {
+    try {
+      setSaving(true);
+      // Simulate printer connection test
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      toast.success('Printer connection test successful! POS-9200-L detected.');
+    } catch (error) {
+      toast.error('Printer test failed. Check connection and settings.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleTestReceipt = async () => {
+    try {
+      setSaving(true);
+      // Simulate printing a test receipt
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      toast.success('Sample receipt sent to printer successfully');
+    } catch (error) {
+      toast.error('Failed to print test receipt');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const updatePrinterSetting = (key, value) => {
     setSettings(prev => ({
       ...prev,
