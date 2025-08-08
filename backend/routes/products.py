@@ -8,7 +8,7 @@ from datetime import datetime
 
 router = APIRouter()
 
-@router.post("/", response_model=ProductResponse)
+@router.post("", response_model=ProductResponse)
 async def create_product(
     product: ProductCreate,
     current_user=Depends(get_business_admin_or_super)
