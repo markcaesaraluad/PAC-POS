@@ -387,6 +387,11 @@ const POSInterface = () => {
           payment_method: paymentMethod
         });
         toast.success(`Sale completed! Sale #${response.data.sale_number}`);
+        
+        // Auto-print if enabled
+        if (business?.settings?.printer_settings?.auto_print) {
+          await handleAutoPrint(response.data, 'sale');
+        }
       } else {
         response = await invoicesAPI.createInvoice(transactionData);
         toast.success(`Invoice created! Invoice #${response.data.invoice_number}`);
@@ -405,6 +410,101 @@ const POSInterface = () => {
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleAutoPrint = async (transactionData, transactionType) => {
+    try {
+      const printerStatus = bluetoothPrinterService.getStatus();
+      if (!printerStatus.isConnected) {
+        toast.info('Printer not connected - auto-print skipped');
+        return;
+      }
+
+      const receiptData = generateReceiptData(transactionData, transactionType);
+      await bluetoothPrinterService.printReceipt(receiptData, business?.settings?.printer_settings);
+      toast.success('Receipt auto-printed successfully');
+      
+    } catch (error) {
+      console.error('Auto-print failed:', error);
+      toast.error('Auto-print failed: ' + error.message);
+    }
+  };
+
+  const handlePrintReceipt = async () => {
+    if (!previewReceiptData) {
+      toast.error('No receipt to print');
+      return;
+    }
+
+    try {
+      const printerStatus = bluetoothPrinterService.getStatus();
+      if (!printerStatus.isConnected) {
+        if (!bluetoothPrinterService.isBluetoothSupported()) {
+          toast.error('Bluetooth not supported in this browser');
+          return;
+        }
+        
+        toast.info('Connecting to POS-9200-L printer...');
+        await bluetoothPrinterService.connect();
+      }
+
+      await bluetoothPrinterService.printReceipt(previewReceiptData, business?.settings?.printer_settings);
+      toast.success('Receipt printed successfully');
+      
+    } catch (error) {
+      toast.error('Print failed: ' + error.message);
+    }
+  };
+
+  const handleSavePDF = async () => {
+    if (!previewReceiptData) {
+      toast.error('No receipt to save');
+      return;
+    }
+
+    try {
+      // Create PDF content (simplified version)
+      const pdfContent = generatePDFContent(previewReceiptData);
+      const blob = new Blob([pdfContent], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `receipt_${previewReceiptData.transaction_number}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success('Receipt saved as PDF');
+      
+    } catch (error) {
+      toast.error('Failed to save PDF');
+    }
+  };
+
+  const generateReceiptData = (transactionData, transactionType) => {
+    return {
+      business: business,
+      transaction_number: transactionType === 'sale' ? transactionData.sale_number : transactionData.invoice_number,
+      transaction_type: transactionType.toUpperCase(),
+      timestamp: new Date(transactionData.created_at || new Date()),
+      customer: selectedCustomer,
+      items: transactionData.items,
+      subtotal: transactionData.subtotal,
+      tax_amount: transactionData.tax_amount,
+      discount_amount: transactionData.discount_amount,
+      total_amount: transactionData.total_amount,
+      payment_method: transactionData.payment_method,
+      received_amount: transactionData.received_amount,
+      change_amount: transactionData.change_amount,
+      notes: transactionData.notes
+    };
+  };
+
+  const generatePDFContent = (receiptData) => {
+    // Simplified PDF generation (in production, use a proper PDF library)
+    return `Receipt: ${receiptData.transaction_number}\nDate: ${receiptData.timestamp.toLocaleString()}\nTotal: $${receiptData.total_amount.toFixed(2)}`;
   };
 
   const totals = calculateTotals();
