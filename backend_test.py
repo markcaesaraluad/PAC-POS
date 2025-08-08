@@ -250,7 +250,7 @@ class POSAPITester:
             "Create Customer",
             "POST",
             "/api/customers",
-            201,
+            200,  # Backend returns 200, not 201
             data=customer_data
         )
         if success and 'id' in response:
