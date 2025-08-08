@@ -429,51 +429,65 @@ class ReceiptService:
 
     async def generate_transaction_receipt(
         self,
-        transaction_type: str,  # 'sale' or 'invoice'
-        transaction_data: Dict[str, Any],
-        business_data: Dict[str, Any],
-        customer_data: Optional[Dict[str, Any]] = None,
-        cashier_data: Optional[Dict[str, Any]] = None,
-        format_type: str = "html"  # 'html', 'pdf'
-    ) -> tuple[str, Optional[bytes]]:
-        """
-        Generate receipt in specified format
+        transaction_type: str,  # "sale" or "invoice"
+        transaction_data: dict,
+        business_data: dict,
+        customer_data: dict = None,
+        cashier_data: dict = None,
+        format_type: str = "html"
+    ):
+        """Generate receipt HTML and optionally PDF"""
         
-        Returns:
-            tuple: (html_content, pdf_bytes) - pdf_bytes is None if format is 'html'
-        """
-        
-        # Prepare transaction data
-        receipt_data = {
-            "type": transaction_type,
-            "number": transaction_data.get("sale_number" if transaction_type == "sale" else "invoice_number"),
-            "date": transaction_data.get("created_at", datetime.now()),
-            "due_date": transaction_data.get("due_date"),
-            "items": transaction_data.get("items", []),
-            "subtotal": transaction_data.get("subtotal", 0),
-            "tax_amount": transaction_data.get("tax_amount", 0),
-            "discount_amount": transaction_data.get("discount_amount", 0),
-            "total_amount": transaction_data.get("total_amount", 0),
-            "payment_method": transaction_data.get("payment_method"),
-            "received_amount": transaction_data.get("received_amount"),
-            "change_amount": transaction_data.get("change_amount"),
-            "notes": transaction_data.get("notes")
-        }
-        
-        # Generate HTML
-        html_content = self.generate_receipt_html(
-            transaction_data=receipt_data,
-            business_data=business_data,
-            customer_data=customer_data,
-            cashier_data=cashier_data
-        )
-        
-        # Generate PDF if requested
-        pdf_bytes = None
-        if format_type == "pdf":
-            pdf_bytes = self.generate_receipt_pdf(html_content)
-        
-        return html_content, pdf_bytes
+        try:
+            # Get printer settings from business data
+            printer_settings = business_data.get("settings", {}).get("printer_settings", {})
+            paper_size = printer_settings.get("paper_size", "80")  # Default 80mm
+            chars_per_line = printer_settings.get("characters_per_line", 32)
+            font_size = printer_settings.get("font_size", "normal")
+            
+            # Calculate styling based on paper size
+            receipt_width = self._calculate_receipt_width(paper_size, chars_per_line)
+            font_size_px = self._get_font_size_px(font_size)
+            
+            # Prepare transaction data
+            receipt_data = {
+                "type": transaction_type,
+                "number": transaction_data.get("sale_number" if transaction_type == "sale" else "invoice_number"),
+                "date": transaction_data.get("created_at", datetime.now()),
+                "due_date": transaction_data.get("due_date"),
+                "items": transaction_data.get("items", []),
+                "subtotal": transaction_data.get("subtotal", 0),
+                "tax_amount": transaction_data.get("tax_amount", 0),
+                "discount_amount": transaction_data.get("discount_amount", 0),
+                "total_amount": transaction_data.get("total_amount", 0),
+                "payment_method": transaction_data.get("payment_method"),
+                "received_amount": transaction_data.get("received_amount"),
+                "change_amount": transaction_data.get("change_amount"),
+                "notes": transaction_data.get("notes")
+            }
+            
+            # Generate receipt HTML
+            html_content = await self._create_receipt_html(
+                transaction_type=transaction_type,
+                transaction_data=receipt_data,
+                business_data=business_data,
+                customer_data=customer_data,
+                cashier_data=cashier_data,
+                receipt_width=receipt_width,
+                font_size_px=font_size_px,
+                chars_per_line=chars_per_line
+            )
+            
+            if format_type == "pdf":
+                # Generate PDF with appropriate sizing
+                pdf_bytes = await self._generate_receipt_pdf(html_content, paper_size)
+                return html_content, pdf_bytes
+            else:
+                return html_content, None
+                
+        except Exception as e:
+            logger.error(f"Error generating receipt: {e}")
+            raise
 
 # Global receipt service instance
 receipt_service = ReceiptService()
