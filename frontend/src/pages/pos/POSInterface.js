@@ -599,8 +599,8 @@ const POSInterface = () => {
               <input
                 ref={barcodeInputRef}
                 type="text"
-                className="form-input text-sm pl-8"
-                placeholder={scannerActive ? "Ready for barcode scan or manual search..." : "Manual search only..."}
+                className="form-input text-sm pl-8 pr-20"
+                placeholder={scannerActive ? "🔍 READY TO SCAN - Focus here for barcode scanner" : "Manual search only..."}
                 value={barcodeInput || searchTerm}
                 onChange={(e) => {
                   if (barcodeInput) {
@@ -610,13 +610,23 @@ const POSInterface = () => {
                   }
                 }}
                 onKeyDown={handleBarcodeInput}
-                onBlur={() => setBarcodeInput('')}
+                onBlur={() => {
+                  setBarcodeInput('');
+                  // Don't lose focus completely, refocus after a short delay
+                  setTimeout(() => {
+                    if (document.activeElement !== barcodeInputRef.current) {
+                      focusSearchInput();
+                    }
+                  }, 100);
+                }}
                 onFocus={() => {
                   if (searchTerm) {
                     setBarcodeInput(searchTerm);
                     setSearchTerm('');
                   }
                 }}
+                autoComplete="off"
+                autoFocus
               />
               <MagnifyingGlassIcon className="absolute left-2 top-2 h-4 w-4 text-gray-400" />
               <div className="absolute right-2 top-1">
@@ -627,9 +637,9 @@ const POSInterface = () => {
                       ? 'bg-green-100 text-green-700 border border-green-300' 
                       : 'bg-gray-100 text-gray-600 border border-gray-300'
                   }`}
-                  title={scannerActive ? "Barcode scanner active" : "Barcode scanner disabled"}
+                  title={scannerActive ? "Barcode scanner active - Ready to scan" : "Barcode scanner disabled"}
                 >
-                  {scannerActive ? '🔍 Scanner ON' : '🔍 Scanner OFF'}
+                  {scannerActive ? '🔍 ON' : '🔍 OFF'}
                 </button>
               </div>
             </div>
