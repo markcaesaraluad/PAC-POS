@@ -75,7 +75,7 @@ async def update_business_settings(
 @router.post("/users", response_model=UserResponse)
 async def create_cashier(
     user_data: UserCreate,
-    current_user=get_business_admin_or_super()
+    current_user=Depends(get_business_admin_or_super)
 ):
     users_collection = await get_collection("users")
     
