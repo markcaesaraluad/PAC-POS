@@ -13,7 +13,7 @@ import uuid
 
 router = APIRouter()
 
-@router.post("/", response_model=InvoiceResponse)
+@router.post("", response_model=InvoiceResponse)
 async def create_invoice(
     invoice: InvoiceCreate,
     current_user=Depends(get_any_authenticated_user)
