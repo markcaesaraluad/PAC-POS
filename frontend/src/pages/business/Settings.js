@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { businessAPI } from '../../services/api';
+import bluetoothPrinterService from '../../services/bluetoothPrinter';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { 
