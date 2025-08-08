@@ -111,7 +111,7 @@ async def create_sale(
         created_at=sale_doc["created_at"]
     )
 
-@router.get("/", response_model=List[SaleResponse])
+@router.get("", response_model=List[SaleResponse])
 async def get_sales(
     limit: int = Query(50, le=100),
     skip: int = Query(0, ge=0),
