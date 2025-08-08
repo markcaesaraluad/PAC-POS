@@ -43,7 +43,7 @@ async def get_business_info(current_user=Depends(get_business_admin_or_super)):
 @router.put("/settings")
 async def update_business_settings(
     settings: BusinessSettings,
-    current_user=get_business_admin_or_super()
+    current_user=Depends(get_business_admin_or_super)
 ):
     businesses_collection = await get_collection("businesses")
     
