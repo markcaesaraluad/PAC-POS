@@ -88,7 +88,7 @@ async def get_products(
     low_stock: Optional[bool] = Query(False),
     limit: int = Query(50, le=100),
     skip: int = Query(0, ge=0),
-    current_user=Depends(get_any_authenticated_user)
+    current_user=get_any_authenticated_user()
 ):
     products_collection = await get_collection("products")
     
@@ -148,7 +148,7 @@ async def get_products(
 @router.get("/{product_id}", response_model=ProductResponse)
 async def get_product(
     product_id: str,
-    current_user=Depends(get_any_authenticated_user)
+    current_user=get_any_authenticated_user()
 ):
     products_collection = await get_collection("products")
     
@@ -185,7 +185,7 @@ async def get_product(
 @router.get("/barcode/{barcode}", response_model=ProductResponse)
 async def get_product_by_barcode(
     barcode: str,
-    current_user=Depends(get_any_authenticated_user)
+    current_user=get_any_authenticated_user()
 ):
     products_collection = await get_collection("products")
     
