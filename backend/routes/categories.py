@@ -195,7 +195,7 @@ async def update_category(
 @router.delete("/{category_id}")
 async def delete_category(
     category_id: str,
-    current_user=get_business_admin_or_super()
+    current_user=Depends(get_business_admin_or_super)
 ):
     categories_collection = await get_collection("categories")
     products_collection = await get_collection("products")
