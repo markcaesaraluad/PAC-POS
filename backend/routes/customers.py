@@ -8,7 +8,7 @@ from datetime import datetime
 
 router = APIRouter()
 
-@router.post("/", response_model=CustomerResponse)
+@router.post("", response_model=CustomerResponse)
 async def create_customer(
     customer: CustomerCreate,
     current_user=Depends(get_business_admin_or_super)
