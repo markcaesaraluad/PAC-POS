@@ -88,7 +88,7 @@ async def get_products(
     low_stock: Optional[bool] = Query(False),
     limit: int = Query(50, le=100),
     skip: int = Query(0, ge=0),
-    current_user=get_any_authenticated_user()
+    current_user=Depends(get_any_authenticated_user)
 ):
     products_collection = await get_collection("products")
     
