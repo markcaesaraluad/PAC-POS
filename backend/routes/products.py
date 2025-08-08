@@ -224,7 +224,7 @@ async def get_product_by_barcode(
 async def update_product(
     product_id: str,
     product_update: ProductUpdate,
-    current_user=get_business_admin_or_super()
+    current_user=Depends(get_business_admin_or_super)
 ):
     products_collection = await get_collection("products")
     
