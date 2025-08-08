@@ -1101,6 +1101,11 @@ class POSAPITester:
         self.test_reports_file_headers()
         self.log("=== REPORTS FUNCTIONALITY TESTING COMPLETED ===", "INFO")
 
+        # NEW: Comprehensive Printer Settings Testing
+        self.log("=== STARTING PRINTER SETTINGS FUNCTIONALITY TESTING ===", "INFO")
+        self.test_printer_settings_functionality()
+        self.log("=== PRINTER SETTINGS FUNCTIONALITY TESTING COMPLETED ===", "INFO")
+
         # Cleanup
         self.cleanup_test_data()
 
