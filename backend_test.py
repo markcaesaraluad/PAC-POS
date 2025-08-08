@@ -111,7 +111,19 @@ class POSAPITester:
             self.log("❌ Super admin not found or login failed", "ERROR")
             return False
 
-    def create_test_business(self):
+    def list_existing_businesses(self):
+        """List existing businesses to understand the setup"""
+        success, response = self.run_test(
+            "List Businesses",
+            "GET",
+            "/api/super-admin/businesses",
+            200
+        )
+        if success and isinstance(response, list):
+            self.log(f"Found {len(response)} businesses:")
+            for business in response:
+                self.log(f"  - {business.get('name')} (subdomain: {business.get('subdomain')})")
+        return success
         """Create test business for testing"""
         business_data = {
             "name": "Prints & Cuts Tagum",
