@@ -81,7 +81,7 @@ async def create_product(
         updated_at=product_doc["updated_at"]
     )
 
-@router.get("/", response_model=List[ProductResponse])
+@router.get("", response_model=List[ProductResponse])
 async def get_products(
     category_id: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
