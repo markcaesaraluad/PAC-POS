@@ -185,7 +185,7 @@ async def get_product(
 @router.get("/barcode/{barcode}", response_model=ProductResponse)
 async def get_product_by_barcode(
     barcode: str,
-    current_user=get_any_authenticated_user()
+    current_user=Depends(get_any_authenticated_user)
 ):
     products_collection = await get_collection("products")
     
