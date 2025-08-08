@@ -582,25 +582,76 @@ const BusinessSettings = () => {
 
               {/* Printer Test Section */}
               <div className="border-t pt-4">
-                <h4 className="font-medium text-gray-900 mb-2">Printer Testing</h4>
+                <h4 className="font-medium text-gray-900 mb-3">Bluetooth Printer (POS-9200-L)</h4>
+                
+                {/* Printer Status */}
+                <div className="bg-gray-50 p-3 rounded-lg mb-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <span className={`w-3 h-3 rounded-full mr-2 ${
+                        printerStatus?.isConnected ? 'bg-green-500' : 'bg-red-500'
+                      }`}></span>
+                      <span className="text-sm font-medium">
+                        {printerStatus?.isConnected ? 'Connected' : 'Disconnected'}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      {printerStatus?.device?.name || 'No device'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Connection Controls */}
+                <div className="flex space-x-2 mb-4">
+                  {!printerStatus?.isConnected ? (
+                    <button
+                      onClick={handleConnectPrinter}
+                      disabled={saving}
+                      className="btn-primary text-sm"
+                    >
+                      🔗 Connect Printer
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleDisconnectPrinter}
+                      disabled={saving}
+                      className="btn-secondary text-sm"
+                    >
+                      ❌ Disconnect
+                    </button>
+                  )}
+                </div>
+
+                {/* Test Controls */}
                 <div className="flex space-x-2">
                   <button
-                    onClick={() => handlePrinterTest()}
+                    onClick={handlePrinterTest}
+                    disabled={saving}
                     className="btn-primary text-sm"
                   >
                     <PrinterIcon className="h-4 w-4 mr-2" />
-                    Test Printer Connection
+                    {saving ? 'Testing...' : 'Test Connection'}
                   </button>
                   <button
-                    onClick={() => handleTestReceipt()}
+                    onClick={handleTestReceipt}
+                    disabled={saving || !printerStatus?.isConnected}
                     className="btn-secondary text-sm"
                   >
-                    Print Sample Receipt
+                    📄 Print Sample
                   </button>
                 </div>
+                
                 <p className="text-xs text-gray-500 mt-2">
-                  Use these buttons to test your printer setup and receipt formatting
+                  Connect to POS-9200-L thermal printer via Bluetooth for receipt printing
                 </p>
+                
+                {!bluetoothPrinterService.isBluetoothSupported() && (
+                  <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
+                    <p className="text-xs text-yellow-800">
+                      ⚠️ Bluetooth not supported. Use Chrome, Edge, or Opera browser.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
