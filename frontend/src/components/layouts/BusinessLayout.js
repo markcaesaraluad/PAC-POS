@@ -67,7 +67,7 @@ const BusinessLayout = ({ children }) => {
           <div className="mt-8 pt-8 border-t border-gray-200">
             <Link
               to="/pos"
-              className="flex items-center px-4 py-2 text-sm font-medium rounded-md bg-success-100 text-success-700 hover:bg-success-200"
+              className="flex items-center px-4 py-2 text-sm font-medium rounded-md bg-green-100 text-green-700 hover:bg-green-200"
             >
               <CubeIcon className="mr-3 h-5 w-5" />
               Open POS
