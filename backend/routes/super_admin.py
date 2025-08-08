@@ -12,7 +12,7 @@ router = APIRouter()
 @router.post("/businesses", response_model=BusinessResponse)
 async def create_business(
     business_data: BusinessCreate,
-    current_user=Depends(get_super_admin)
+    current_user=get_super_admin()
 ):
     businesses_collection = await get_collection("businesses")
     users_collection = await get_collection("users")
