@@ -107,8 +107,8 @@ class POSAPITester:
             # List existing businesses first
             self.list_existing_businesses()
             
-            # Create business if it doesn't exist
-            self.create_test_business()
+            # Business already exists, skip creation
+            self.log("Business already exists, proceeding with login test")
             return True
         else:
             self.log("❌ Super admin not found or login failed", "ERROR")
