@@ -148,7 +148,7 @@ async def get_business_users(current_user=Depends(get_business_admin_or_super)):
 async def toggle_user_status(
     user_id: str,
     status_data: dict,
-    current_user=get_business_admin_or_super()
+    current_user=Depends(get_business_admin_or_super)
 ):
     users_collection = await get_collection("users")
     
