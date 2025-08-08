@@ -287,6 +287,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "✅ POS INTERFACE FUNCTIONAL: POS loads correctly showing 4 products with prices and stock levels. Cart section present with customer selection dropdown. Search functionality and category filtering available. Products display correctly but add-to-cart interaction needs refinement for better UX."
+      - working: true
+        agent: "testing"
+        comment: "✅ NEW SINGLE-FRAME POS LAYOUT FULLY TESTED AND WORKING: Comprehensive testing completed successfully. Three-panel layout working perfectly (Left 40% - Products, Middle 35% - Cart, Right 25% - Receipt Preview). All elements visible simultaneously: product search/barcode input, category tabs, product grid (5 products), cart section, customer selection, payment methods, receipt preview panel. Receipt Preview Panel working: generates preview with business details, print/save options available. Hold Order Functionality working: hold button functional, held orders dropdown appears, resume functionality working. Single-frame experience maintained: no modals present, all functionality accessible without navigation, complete transaction flow visible in one screen. Responsive design tested on desktop (1920x1080), tablet (768x1024), and mobile (390x844) - layout adapts correctly. Minor: Inline customer creation form visibility needs improvement but core functionality present. Overall: NEW single-frame POS layout successfully replaces modal-based approach and meets all requirements."
 
   - task: "Sales History & Management"
     implemented: true
