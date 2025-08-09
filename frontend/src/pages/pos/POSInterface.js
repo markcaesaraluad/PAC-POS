@@ -483,6 +483,8 @@ const POSInterface = () => {
 
     const totals = calculateTotals();
     
+    // For sales, payment validation is already done in confirmPayment()
+    // For invoices, no payment validation needed
     if (transactionMode === 'sale' && paymentMethod === 'cash' && receivedAmount < parseFloat(totals.total)) {
       toast.error('Insufficient payment amount');
       return;
@@ -518,9 +520,11 @@ const POSInterface = () => {
         toast.success(`Invoice created! Invoice #${response.data.invoice_number}`);
       }
 
-      // Clear cart
+      // Clear cart and reset values
       clearCart();
       setShowReceiptPreview(false);
+      setReceivedAmount(''); // Reset payment values
+      setPaymentMethod('cash');
       
       // Auto-focus search input after transaction
       setTimeout(() => {
