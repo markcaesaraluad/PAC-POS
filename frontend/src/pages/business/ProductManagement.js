@@ -142,6 +142,30 @@ const ProductManagement = () => {
     setValue('category_id', product.category_id || '');
   };
 
+  const openProductDetailModal = async (product) => {
+    setViewingProduct(product);
+    setLoadingCostHistory(true);
+    try {
+      const response = await productsAPI.getProductCostHistory(product.id);
+      setCostHistory(response.data);
+    } catch (error) {
+      console.error('Failed to load cost history:', error);
+      if (error.response?.status === 403) {
+        toast.error('You need admin access to view cost history');
+      } else {
+        toast.error('Failed to load cost history');
+      }
+      setCostHistory([]);
+    } finally {
+      setLoadingCostHistory(false);
+    }
+  };
+
+  const closeProductDetailModal = () => {
+    setViewingProduct(null);
+    setCostHistory([]);
+  };
+
   const getCategoryName = (categoryId) => {
     const category = categories.find(cat => cat.id === categoryId);
     return category ? category.name : 'Uncategorized';
