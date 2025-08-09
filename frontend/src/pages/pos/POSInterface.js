@@ -985,12 +985,12 @@ const POSInterface = () => {
             <div className="space-y-1 text-xs border-t pt-2">
               <div className="flex justify-between">
                 <span>Subtotal:</span>
-                <span>${totals.subtotal}</span>
+                <span>{formatAmount(totals.subtotal)}</span>
               </div>
               {taxRate > 0 && (
                 <div className="flex justify-between">
                   <span>Tax ({taxRate}%):</span>
-                  <span>${totals.taxAmount}</span>
+                  <span>{formatAmount(totals.taxAmount)}</span>
                 </div>
               )}
               {discountAmount > 0 && (
