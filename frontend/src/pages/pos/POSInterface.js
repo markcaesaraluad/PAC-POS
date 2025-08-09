@@ -1122,23 +1122,23 @@ const POSInterface = () => {
               <div className="border-b pb-2 mb-2">
                 <div className="flex justify-between">
                   <span>Subtotal:</span>
-                  <span>${previewReceiptData.subtotal}</span>
+                  <span>{formatAmount(previewReceiptData.subtotal)}</span>
                 </div>
                 {parseFloat(previewReceiptData.tax_amount) > 0 && (
                   <div className="flex justify-between">
                     <span>Tax:</span>
-                    <span>${previewReceiptData.tax_amount}</span>
+                    <span>{formatAmount(previewReceiptData.tax_amount)}</span>
                   </div>
                 )}
                 {parseFloat(previewReceiptData.discount_amount) > 0 && (
                   <div className="flex justify-between">
                     <span>Discount:</span>
-                    <span>-${previewReceiptData.discount_amount.toFixed(2)}</span>
+                    <span>-{formatAmount(previewReceiptData.discount_amount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold border-t pt-1">
                   <span>TOTAL:</span>
-                  <span>${previewReceiptData.total_amount}</span>
+                  <span>{formatAmount(previewReceiptData.total_amount)}</span>
                 </div>
                 {transactionMode === 'sale' && paymentMethod === 'cash' && (
                   <>
