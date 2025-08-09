@@ -204,10 +204,12 @@ const POSInterface = () => {
         barcodeInputRef.current.style.backgroundColor = '#f8d7da';
         barcodeInputRef.current.value = `✗ Not found: ${barcode}`;
         setTimeout(() => {
+          // Clear error styling and search field
           if (barcodeInputRef.current) {
             barcodeInputRef.current.style.backgroundColor = '';
             barcodeInputRef.current.value = '';
           }
+          setSearchTerm('');
         }, 2000);
       }
     }
