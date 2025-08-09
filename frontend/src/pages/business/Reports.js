@@ -16,8 +16,64 @@ import {
 const Reports = () => {
   const { formatAmount } = useCurrency();
   const [dailySummary, setDailySummary] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [reportData, setReportData] = useState({
+    sales: [],
+    inventory: [],
+    customers: []
+  });
   const [downloadLoading, setDownloadLoading] = useState({});
+
+  // Filter configuration for GlobalFilter component
+  const filterConfig = {
+    category: {
+      label: 'Category',
+      placeholder: 'All categories',
+      options: categories.map(cat => ({ value: cat.id, label: cat.name })),
+    },
+    payment_method: {
+      label: 'Payment Method',
+      placeholder: 'All payment methods',
+      options: [
+        { value: 'cash', label: 'Cash' },
+        { value: 'card', label: 'Card' },
+        { value: 'bank_transfer', label: 'Bank Transfer' },
+      ],
+    },
+    status: {
+      label: 'Status',
+      placeholder: 'All statuses',
+      options: [
+        { value: 'completed', label: 'Completed' },
+        { value: 'pending', label: 'Pending' },
+        { value: 'cancelled', label: 'Cancelled' },
+      ],
+    },
+  };
+
+  // Global filter hook for managing filter state
+  const {
+    filters,
+    setFilters,
+    loading: filterLoading,
+    generateQueryParams,
+    clearFilters,
+    hasActiveFilters,
+    exportData
+  } = useGlobalFilter({
+    defaultFilters: {
+      date_preset: 'last30days'
+    },
+    persistenceKey: 'reports-filter',
+    enablePersistence: true,
+    onFilterChange: handleFilterChange
+  });
+
+  // Handle filter changes and refresh data
+  function handleFilterChange(newFilters) {
+    // Refresh all report data when filters change
+    loadFilteredReports(newFilters);
+  }
 
   // Load daily summary on component mount
   useEffect(() => {
