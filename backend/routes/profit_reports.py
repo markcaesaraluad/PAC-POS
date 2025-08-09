@@ -321,7 +321,7 @@ async def generate_profit_excel(profit_data: List[Dict], business: Dict, start_d
     
     return output.getvalue(), filename
 
-async def generate_profit_csv(profit_data: List[Dict], business: Dict, start_dt: datetime, end_dt: datetime, summary: Dict) -> tuple[bytes, str]:
+async def generate_profit_csv(profit_data: List[Dict], business: Dict, start_dt: datetime, end_dt: datetime, summary: Dict, currency: str = 'USD') -> tuple[bytes, str]:
     """Generate CSV profit report"""
     
     output = StringIO()
