@@ -627,7 +627,7 @@ const POSInterface = () => {
                 ref={barcodeInputRef}
                 type="text"
                 className="form-input text-sm pl-8 pr-20"
-                placeholder={scannerActive ? "🔍 READY TO SCAN - Focus here for barcode scanner" : "Manual search only..."}
+                placeholder={scannerActive ? "🔍 Search products or scan barcode..." : "Manual search only..."}
                 value={barcodeInput || searchTerm}
                 onChange={(e) => {
                   if (barcodeInput) {
@@ -639,12 +639,6 @@ const POSInterface = () => {
                 onKeyDown={handleBarcodeInput}
                 onBlur={() => {
                   setBarcodeInput('');
-                  // Don't lose focus completely, refocus after a short delay
-                  setTimeout(() => {
-                    if (document.activeElement !== barcodeInputRef.current) {
-                      focusSearchInput();
-                    }
-                  }, 100);
                 }}
                 onFocus={() => {
                   if (searchTerm) {
