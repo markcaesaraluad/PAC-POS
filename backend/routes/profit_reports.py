@@ -337,10 +337,11 @@ async def generate_profit_csv(profit_data: List[Dict], business: Dict, start_dt:
     
     # Summary
     writer.writerow(['SUMMARY'])
-    writer.writerow(['Gross Sales', f"${summary['gross_sales']:.2f}"])
-    writer.writerow(['Cost of Goods Sold', f"${summary['cost_of_goods_sold']:.2f}"])
-    writer.writerow(['Profit', f"${summary['profit']:.2f}"])
+    writer.writerow(['Gross Sales', format_currency(summary['gross_sales'], currency)])
+    writer.writerow(['Cost of Goods Sold', format_currency(summary['cost_of_goods_sold'], currency)])
+    writer.writerow(['Profit', format_currency(summary['profit'], currency)])
     writer.writerow(['Total Items', summary['total_items']])
+    writer.writerow(['Currency', currency])
     writer.writerow([])  # Empty row
     
     # Detailed data
