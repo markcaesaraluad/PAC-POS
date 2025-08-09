@@ -11,7 +11,9 @@ import {
   TrashIcon,
   MagnifyingGlassIcon,
   ExclamationTriangleIcon,
-  XMarkIcon
+  XMarkIcon,
+  EyeIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline';
 import LoadingSpinner, { InlineSpinner } from '../../components/LoadingSpinner';
 
