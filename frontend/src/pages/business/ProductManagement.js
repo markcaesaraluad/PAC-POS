@@ -608,7 +608,7 @@ const ProductManagement = () => {
                     <div>
                       <label className="text-sm font-medium text-gray-600">Profit Margin</label>
                       <p className="text-sm font-bold text-blue-600">
-                        ${(viewingProduct.price - (viewingProduct.product_cost || 0)).toFixed(2)} 
+                        {formatAmount(viewingProduct.price - (viewingProduct.product_cost || 0))} 
                         ({(((viewingProduct.price - (viewingProduct.product_cost || 0)) / viewingProduct.price) * 100).toFixed(1)}%)
                       </p>
                     </div>
