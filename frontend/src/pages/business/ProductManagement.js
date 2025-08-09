@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { productsAPI, categoriesAPI } from '../../services/api';
+import { useCurrency } from '../../context/CurrencyContext';
 import toast from 'react-hot-toast';
 import { 
   CubeIcon, 
