@@ -15,7 +15,7 @@ import {
 import LoadingSpinner from '../../components/LoadingSpinner';
 
 const ProfitReport = () => {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [downloadLoading, setDownloadLoading] = useState({});
   const [selectedDateRange, setSelectedDateRange] = useState('last30days');
