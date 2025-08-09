@@ -358,10 +358,10 @@ async def generate_profit_csv(profit_data: List[Dict], business: Dict, start_dt:
             item['item_name'],
             item['item_sku'],
             item['quantity'],
-            f"${item['unit_price']:.2f}",
-            f"${item['unit_cost']:.2f}",
-            f"${item['line_profit']:.2f}",
-            f"${item['line_total']:.2f}",
+            format_currency(item['unit_price'], currency),
+            format_currency(item['unit_cost'], currency),
+            format_currency(item['line_profit'], currency),
+            format_currency(item['line_total'], currency),
             item.get('cost_note', '')
         ])
     
