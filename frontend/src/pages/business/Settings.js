@@ -169,7 +169,70 @@ const BusinessSettings = () => {
     }
   };
 
-  const handleTestReceipt = async () => {
+  const handleEnhancedPrinterTest = async (testType = 'connection') => {
+    if (!selectedPrinter) {
+      toast.error('Please select a printer first');
+      return;
+    }
+
+    try {
+      setPrinterTestLoading(true);
+      setPrinterTestResults(null);
+      
+      // Configure the enhanced printer service
+      await enhancedPrinterService.configurePrinter(selectedPrinter);
+      
+      // Run the test
+      const result = await enhancedPrinterService.testPrint(testType);
+      
+      setPrinterTestResults(result);
+      toast.success(result.message);
+      
+    } catch (error) {
+      const errorMessage = error.message || 'Printer test failed';
+      toast.error(errorMessage);
+      setPrinterTestResults({
+        success: false,
+        message: errorMessage,
+        error: true
+      });
+    } finally {
+      setPrinterTestLoading(false);
+    }
+  };
+
+  const handlePrinterSelection = async (printer) => {
+    setSelectedPrinter(printer);
+    setSettings(prev => ({
+      ...prev,
+      printer_type: printer.type,
+      selected_printer: printer.id,
+      printer_settings: {
+        ...prev.printer_settings,
+        ...printer.settings
+      }
+    }));
+
+    // Clear previous test results
+    setPrinterTestResults(null);
+    
+    try {
+      await enhancedPrinterService.configurePrinter(printer);
+      toast.success(`Selected ${printer.name}`);
+    } catch (error) {
+      console.error('Failed to configure printer:', error);
+    }
+  };
+
+  const handleNetworkPrinterSettings = (key, value) => {
+    setSettings(prev => ({
+      ...prev,
+      printer_settings: {
+        ...prev.printer_settings,
+        [key]: value
+      }
+    }));
+  };
     try {
       setSaving(true);
       
