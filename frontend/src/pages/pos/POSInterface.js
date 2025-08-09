@@ -73,9 +73,6 @@ const POSInterface = () => {
 
   useEffect(() => {
     fetchData();
-    
-    // Auto-focus search input on load
-    focusSearchInput();
 
     // Load held orders from localStorage
     const saved = localStorage.getItem('pos-held-orders');
