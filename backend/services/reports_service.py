@@ -220,7 +220,7 @@ class ReportsService:
                             <td>{{ sale.sale_number }}</td>
                             <td>{{ sale.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                             <td>{{ sale.customer_name or 'Walk-in Customer' }}</td>
-                            <td class="center">{{ sale.items|length if sale.items else 0 }}</td>
+                            <td class="center">{{ sale.items|length if sale.items is iterable else 0 }}</td>
                             <td class="money">${{ "%.2f"|format(sale.total_amount) }}</td>
                             <td>{{ sale.payment_method|title }}</td>
                         </tr>
