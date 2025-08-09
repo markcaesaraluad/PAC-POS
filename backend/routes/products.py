@@ -318,3 +318,53 @@ async def update_product(
         created_at=updated_product.get("created_at", datetime.utcnow()),
         updated_at=updated_product.get("updated_at", datetime.utcnow())
     )
+
+@router.get("/{product_id}/cost-history", response_model=List[ProductCostHistoryResponse])
+async def get_product_cost_history(
+    product_id: str,
+    current_user=Depends(get_business_admin_or_super)
+):
+    """Get cost history for a product - Admin only"""
+    products_collection = await get_collection("products")
+    cost_history_collection = await get_collection("product_cost_history")
+    
+    business_id = current_user["business_id"]
+    if current_user["role"] == "super_admin":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Super admin must specify business context",
+        )
+    
+    # Verify product exists and belongs to business
+    product = await products_collection.find_one({
+        "_id": ObjectId(product_id),
+        "business_id": ObjectId(business_id)
+    })
+    
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Product not found",
+        )
+    
+    # Get cost history sorted by effective_from descending (newest first)
+    history_cursor = cost_history_collection.find({
+        "product_id": ObjectId(product_id),
+        "business_id": ObjectId(business_id)
+    }).sort("effective_from", -1)
+    
+    history_records = await history_cursor.to_list(length=None)
+    
+    return [
+        ProductCostHistoryResponse(
+            id=str(record["_id"]),
+            business_id=str(record["business_id"]),
+            product_id=str(record["product_id"]),
+            cost=record["cost"],
+            effective_from=record["effective_from"],
+            changed_by=str(record["changed_by"]),
+            notes=record.get("notes"),
+            created_at=record["created_at"]
+        )
+        for record in history_records
+    ]
