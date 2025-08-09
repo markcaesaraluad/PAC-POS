@@ -1421,12 +1421,12 @@ const POSInterface = () => {
               </button>
               <button
                 onClick={confirmPayment}
-                disabled={modalPaymentMethod === 'cash' && (!modalReceivedAmount || parseFloat(modalReceivedAmount) < parseFloat(totals.total))}
+                disabled={modalPaymentMethod === 'cash' && (!modalReceivedAmount || parseFloat(modalReceivedAmount) < parseFloat(calculateModalTotals().total))}
                 className="flex-1 px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-lg hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
                 {modalPaymentMethod === 'cash' 
                   ? `Confirm Payment - ${formatAmount(modalReceivedAmount || 0)}` 
-                  : `Confirm Card Payment - ${formatAmount(totals.total)}`
+                  : `Confirm Card Payment - ${formatAmount(calculateModalTotals().total)}`
                 }
               </button>
             </div>
