@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { businessAPI } from '../../services/api';
 import bluetoothPrinterService from '../../services/bluetoothPrinter';
+import enhancedPrinterService from '../../services/printerService';
 import { getAvailableCurrencies, getCurrencySymbol } from '../../utils/currency';
 import { useCurrency } from '../../context/CurrencyContext';
 import toast from 'react-hot-toast';
@@ -10,7 +11,12 @@ import {
   PrinterIcon, 
   CurrencyDollarIcon,
   BuildingOfficeIcon,
-  DocumentTextIcon 
+  DocumentTextIcon,
+  WifiIcon,
+  ComputerDesktopIcon,
+  DevicePhoneMobileIcon,
+  CheckCircleIcon,
+  XCircleIcon
 } from '@heroicons/react/24/outline';
 
 const BusinessSettings = () => {
