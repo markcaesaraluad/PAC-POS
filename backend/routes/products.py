@@ -149,7 +149,7 @@ async def get_products(
             barcode=product.get("barcode"),
             category_id=str(product["category_id"]) if product.get("category_id") else None,
             price=product["price"],
-            cost=product.get("cost"),
+            product_cost=product.get("product_cost"),
             quantity=product["quantity"],
             image_url=product.get("image_url"),
             is_active=product.get("is_active", True),
