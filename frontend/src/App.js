@@ -108,6 +108,7 @@ function App() {
                   <Route path="customers" element={<CustomerManagement />} />
                   <Route path="users" element={<UserManagement />} />
                   <Route path="reports" element={<Reports />} />
+                  <Route path="profit-report" element={<ProfitReport />} />
                   <Route path="settings" element={<BusinessSettings />} />
                 </Routes>
               </BusinessLayout>
