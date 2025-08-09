@@ -182,10 +182,12 @@ export const isValidCurrency = (currencyCode) => {
   return Object.keys(CURRENCY_SYMBOLS).includes(currencyCode.toUpperCase());
 };
 
-export default {
+const currencyUtils = {
   formatCurrency,
   formatCurrencyLocalized,
   getCurrencySymbol,
   getAvailableCurrencies,
   isValidCurrency
 };
+
+export default currencyUtils;
