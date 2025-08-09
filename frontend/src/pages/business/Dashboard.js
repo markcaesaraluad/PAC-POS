@@ -15,6 +15,7 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 
 const BusinessDashboard = () => {
   const { business } = useAuth();
+  const { formatAmount } = useCurrency();
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalCategories: 0,
