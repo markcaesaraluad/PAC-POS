@@ -24,13 +24,19 @@ const BusinessLayout = ({ children }) => {
     { name: 'Products', href: '/business/products', icon: CubeIcon },
     { name: 'Categories', href: '/business/categories', icon: TagIcon },
     { name: 'Customers', href: '/business/customers', icon: UserGroupIcon },
-    { name: 'Reports', href: '/business/reports', icon: ChartBarIcon },
+    { 
+      name: 'Reports', 
+      href: '/business/reports', 
+      icon: ChartBarIcon,
+      submenu: [
+        { name: 'Sales Reports', href: '/business/reports' },
+        { name: 'Profit Report', href: '/business/profit-report', adminOnly: true }
+      ]
+    },
   ];
 
-  // Add admin-only navigation items
-  const adminOnlyNavigation = [
-    { name: 'Profit Report', href: '/business/profit-report', icon: CurrencyDollarIcon },
-  ];
+  // Add admin-only navigation items (no longer needed as Profit Report is in Reports submenu)
+  const adminOnlyNavigation = [];
 
   const generalNavigation = [
     { name: 'Staff', href: '/business/users', icon: UsersIcon },
