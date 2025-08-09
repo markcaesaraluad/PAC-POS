@@ -365,7 +365,7 @@ const SalesHistory = () => {
                         {invoice.items.length} items
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                        ${invoice.total_amount.toFixed(2)}
+                        {formatAmount(invoice.total_amount)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
