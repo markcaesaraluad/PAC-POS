@@ -104,6 +104,22 @@ class ProductResponse(ProductBase):
     created_at: datetime
     updated_at: datetime
 
+# Product Cost History Models
+class ProductCostHistoryBase(BaseModel):
+    product_id: str
+    cost: float = Field(..., ge=0, description="Historical cost value")
+    effective_from: datetime = Field(default_factory=datetime.utcnow)
+    changed_by: str
+    notes: Optional[str] = None
+
+class ProductCostHistoryCreate(ProductCostHistoryBase):
+    pass
+
+class ProductCostHistoryResponse(ProductCostHistoryBase):
+    id: str
+    business_id: str
+    created_at: datetime
+
 # Category Models
 class CategoryBase(BaseModel):
     name: str
