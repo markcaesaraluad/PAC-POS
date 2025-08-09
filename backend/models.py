@@ -79,7 +79,7 @@ class ProductBase(BaseModel):
     barcode: Optional[str] = None
     category_id: Optional[str] = None
     price: float
-    cost: Optional[float] = None
+    product_cost: float = Field(..., ge=0, description="Product cost - required for profit tracking")
     quantity: int = 0
     image_url: Optional[str] = None
 
