@@ -54,7 +54,7 @@ async def create_product(
         "barcode": product.barcode,
         "category_id": ObjectId(product.category_id) if product.category_id else None,
         "price": product.price,
-        "cost": product.cost,
+        "product_cost": product.product_cost,
         "quantity": product.quantity,
         "image_url": product.image_url,
         "is_active": True,
