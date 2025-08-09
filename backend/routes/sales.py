@@ -63,7 +63,7 @@ async def create_sale(
         "cashier_id": ObjectId(current_user["_id"]),
         "customer_id": ObjectId(sale.customer_id) if sale.customer_id else None,
         "sale_number": sale_number,
-        "items": [item.dict() for item in sale.items],
+        "items": items_with_cost_snapshots,
         "subtotal": sale.subtotal,
         "tax_amount": sale.tax_amount,
         "discount_amount": sale.discount_amount,
