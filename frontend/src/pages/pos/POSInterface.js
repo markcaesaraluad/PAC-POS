@@ -195,7 +195,6 @@ const POSInterface = () => {
           if (barcodeInputRef.current) {
             barcodeInputRef.current.style.backgroundColor = '';
             barcodeInputRef.current.value = '';
-            focusSearchInput();
           }
         }, 2000);
       }
