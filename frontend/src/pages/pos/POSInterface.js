@@ -71,16 +71,6 @@ const POSInterface = () => {
   
   const barcodeInputRef = useRef(null);
 
-  // Auto-focus management
-  const focusSearchInput = () => {
-    setTimeout(() => {
-      if (barcodeInputRef.current) {
-        barcodeInputRef.current.focus();
-        barcodeInputRef.current.select(); // Select any existing text
-      }
-    }, 100);
-  };
-
   useEffect(() => {
     fetchData();
     
