@@ -392,9 +392,10 @@ metadata:
 
 test_plan:
   current_focus:
-    - "FINAL 3 REQUIREMENTS - Business Logo Upload"
-    - "FINAL 3 REQUIREMENTS - Barcode Scanner Support"
-    - "FINAL 3 REQUIREMENTS - Bluetooth Printer Integration (POS-9200-L)"
+    - "NEW PROFIT TRACKING - Product Cost Management"
+    - "NEW PROFIT TRACKING - Product Cost History"
+    - "NEW PROFIT TRACKING - Sales Cost Snapshots"
+    - "NEW PROFIT TRACKING - Profit Reports (Admin-Only)"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
