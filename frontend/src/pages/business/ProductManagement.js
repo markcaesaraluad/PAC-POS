@@ -133,7 +133,7 @@ const ProductManagement = () => {
     setValue('sku', product.sku);
     setValue('price', product.price);
     setValue('quantity', product.quantity);
-    setValue('cost', product.cost || '');
+    setValue('product_cost', product.product_cost || '');
     setValue('description', product.description || '');
     setValue('barcode', product.barcode || '');
     setValue('category_id', product.category_id || '');
