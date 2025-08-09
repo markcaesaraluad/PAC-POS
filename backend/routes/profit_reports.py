@@ -384,122 +384,156 @@ async def generate_profit_pdf(profit_data: List[Dict], business: Dict, start_dt:
     """Generate PDF profit report"""
     
     from jinja2 import Template
+    import weasyprint
+    from utils.currency import format_currency
     
     html_template = """
     <!DOCTYPE html>
     <html>
     <head>
         <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .header { text-align: center; color: #333; margin-bottom: 30px; }
+            @page { size: A4; margin: 1cm; }
+            body { font-family: Arial, sans-serif; margin: 0; }
+            .header { text-align: center; color: #333; margin-bottom: 30px; border-bottom: 2px solid #ccc; padding-bottom: 20px; }
             .business-info { text-align: center; margin-bottom: 20px; }
+            .business-logo { max-width: 150px; max-height: 80px; margin: 0 auto 10px; }
             .summary { background: #f5f5f5; padding: 20px; margin-bottom: 30px; border-radius: 5px; }
-            .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-            .summary-item { text-align: center; }
-            .summary-value { font-size: 20px; font-weight: bold; color: #2c5aa0; }
-            .summary-label { color: #666; margin-top: 5px; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 10px; }
-            th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
-            th { background-color: #4CAF50; color: white; }
+            .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+            .summary-item { text-align: center; padding: 10px; background: white; border-radius: 5px; }
+            .summary-value { font-size: 24px; font-weight: bold; color: #2c5aa0; margin-bottom: 5px; }
+            .summary-label { color: #666; font-size: 14px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 11px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #4CAF50; color: white; text-align: center; }
             .money { text-align: right; }
             .center { text-align: center; }
             .profit-positive { color: #28a745; font-weight: bold; }
             .profit-negative { color: #dc3545; font-weight: bold; }
             .totals-row { font-weight: bold; background-color: #f8f9fa; }
+            .page-footer { position: fixed; bottom: 1cm; width: 100%; text-align: center; font-size: 10px; color: #666; }
         </style>
     </head>
     <body>
         <div class="business-info">
+            {% if business.logo_url %}
+            <img src="{{ business.logo_url }}" class="business-logo" alt="Business Logo">
+            {% endif %}
             <h1>{{ business.name }}</h1>
-            <p>{{ business.address }}</p>
+            <p>{{ business.address or '' }}</p>
+            <p>{{ business.phone or '' }} | {{ business.email or '' }}</p>
         </div>
         
         <div class="header">
             <h2>Profit Report</h2>
-            <p>{{ start_date }} to {{ end_date }}</p>
+            <p><strong>Period:</strong> {{ start_date }} to {{ end_date }}</p>
+            <p><strong>Currency:</strong> {{ currency }}</p>
         </div>
         
         <div class="summary">
-            <h3>Summary</h3>
+            <h3>Executive Summary</h3>
             <div class="summary-grid">
                 <div class="summary-item">
-                    <div class="summary-value">${{ "%.2f"|format(summary.gross_sales) }}</div>
+                    <div class="summary-value">{{ format_currency(summary.gross_sales, currency) }}</div>
                     <div class="summary-label">Gross Sales</div>
                 </div>
                 <div class="summary-item">
-                    <div class="summary-value">${{ "%.2f"|format(summary.cost_of_goods_sold) }}</div>
+                    <div class="summary-value">{{ format_currency(summary.cost_of_goods_sold, currency) }}</div>
                     <div class="summary-label">Cost of Goods Sold</div>
                 </div>
                 <div class="summary-item">
-                    <div class="summary-value {% if summary.profit >= 0 %}profit-positive{% else %}profit-negative{% endif %}">${{ "%.2f"|format(summary.profit) }}</div>
-                    <div class="summary-label">Profit</div>
+                    <div class="summary-value {% if summary.profit >= 0 %}profit-positive{% else %}profit-negative{% endif %}">{{ format_currency(summary.profit, currency) }}</div>
+                    <div class="summary-label">Net Profit</div>
                 </div>
                 <div class="summary-item">
                     <div class="summary-value">{{ summary.total_items }}</div>
-                    <div class="summary-label">Total Items</div>
+                    <div class="summary-label">Total Items Sold</div>
                 </div>
             </div>
         </div>
         
         {% if profit_data %}
         <div>
-            <h3>Detailed Analysis (Top 50 Transactions)</h3>
+            <h3>Detailed Transaction Analysis</h3>
+            {% if profit_data|length > 50 %}
+            <p><em>Showing top 50 transactions (of {{ profit_data|length }} total)</em></p>
+            {% endif %}
             <table>
                 <thead>
                     <tr>
-                        <th>Date/Time</th>
-                        <th>Invoice ID</th>
-                        <th>Item Name</th>
-                        <th>SKU</th>
-                        <th class="center">Qty</th>
-                        <th class="money">Unit Price</th>
-                        <th class="money">Unit Cost</th>
-                        <th class="money">Line Profit</th>
-                        <th class="money">Line Total</th>
+                        <th style="width: 12%;">Date/Time</th>
+                        <th style="width: 10%;">Invoice ID</th>
+                        <th style="width: 25%;">Item Name</th>
+                        <th style="width: 10%;">SKU</th>
+                        <th style="width: 8%;">Qty</th>
+                        <th style="width: 10%;">Unit Price</th>
+                        <th style="width: 10%;">Unit Cost</th>
+                        <th style="width: 10%;">Line Profit</th>
+                        <th style="width: 10%;">Line Total</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in profit_data[:50] %}
                     <tr>
-                        <td>{{ item.date_time.strftime('%Y-%m-%d %H:%M') }}</td>
-                        <td>{{ item.invoice_id }}</td>
+                        <td>{{ item.date_time.strftime('%m/%d/%Y %H:%M') }}</td>
+                        <td class="center">{{ item.invoice_id }}</td>
                         <td>{{ item.item_name }}</td>
-                        <td>{{ item.item_sku }}</td>
+                        <td class="center">{{ item.item_sku }}</td>
                         <td class="center">{{ item.quantity }}</td>
-                        <td class="money">${{ "%.2f"|format(item.unit_price) }}</td>
-                        <td class="money">${{ "%.2f"|format(item.unit_cost) }}</td>
-                        <td class="money {% if item.line_profit >= 0 %}profit-positive{% else %}profit-negative{% endif %}">${{ "%.2f"|format(item.line_profit) }}</td>
-                        <td class="money">${{ "%.2f"|format(item.line_total) }}</td>
+                        <td class="money">{{ format_currency(item.unit_price, currency) }}</td>
+                        <td class="money">{{ format_currency(item.unit_cost, currency) }}</td>
+                        <td class="money {% if item.line_profit >= 0 %}profit-positive{% else %}profit-negative{% endif %}">{{ format_currency(item.line_profit, currency) }}</td>
+                        <td class="money">{{ format_currency(item.line_total, currency) }}</td>
                     </tr>
                     {% endfor %}
                     <tr class="totals-row">
-                        <td colspan="7"><strong>TOTALS:</strong></td>
-                        <td class="money {% if summary.profit >= 0 %}profit-positive{% else %}profit-negative{% endif %}"><strong>${{ "%.2f"|format(summary.profit) }}</strong></td>
-                        <td class="money"><strong>${{ "%.2f"|format(summary.gross_sales) }}</strong></td>
+                        <td colspan="7" style="text-align: right;"><strong>TOTALS:</strong></td>
+                        <td class="money {% if summary.profit >= 0 %}profit-positive{% else %}profit-negative{% endif %}"><strong>{{ format_currency(summary.profit, currency) }}</strong></td>
+                        <td class="money"><strong>{{ format_currency(summary.gross_sales, currency) }}</strong></td>
                     </tr>
                 </tbody>
             </table>
         </div>
+        {% else %}
+        <div style="text-align: center; padding: 40px; color: #666;">
+            <h3>No Transaction Data</h3>
+            <p>No sales data found for the selected date range.</p>
+        </div>
         {% endif %}
         
-        <div style="margin-top: 30px; font-size: 10px; color: #666;">
-            <p><strong>Note:</strong> Items marked with "(current cost used)" indicate historical cost data was not available and current product cost was used for calculation.</p>
+        <div class="page-footer">
+            <p>Generated on {{ generation_date }} | {{ business.name }} - Profit Report</p>
         </div>
     </body>
     </html>
     """
     
-    template = Template(html_template)
-    html_content = template.render(
-        business=business,
-        start_date=start_dt.strftime('%Y-%m-%d'),
-        end_date=end_dt.strftime('%Y-%m-%d'),
-        summary=summary,
-        profit_data=profit_data
-    )
-    
     try:
-        # For now, return a simple message since WeasyPrint has compatibility issues
-        raise Exception("PDF generation temporarily disabled due to system compatibility issues. Please use Excel or CSV format.")
+        template = Template(html_template)
+        html_content = template.render(
+            business=business,
+            start_date=start_dt.strftime('%B %d, %Y'),
+            end_date=end_dt.strftime('%B %d, %Y'),
+            currency=currency,
+            summary=summary,
+            profit_data=profit_data,
+            format_currency=lambda amount, curr: format_currency(amount, curr),
+            generation_date=datetime.now().strftime('%B %d, %Y at %I:%M %p')
+        )
+        
+        # Generate PDF using weasyprint
+        pdf_bytes = weasyprint.HTML(string=html_content).write_pdf()
+        filename = f"profit-report_{start_dt.strftime('%Y-%m-%d')}_to_{end_dt.strftime('%Y-%m-%d')}.pdf"
+        
+        return pdf_bytes, filename
+        
+    except ImportError:
+        # Fallback if weasyprint is not available
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="PDF generation service is temporarily unavailable. Please use Excel or CSV export instead."
+        )
     except Exception as e:
-        raise Exception(f"PDF generation error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"PDF generation failed: {str(e)}"
+        )
