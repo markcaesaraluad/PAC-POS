@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Backend API Testing for Modern POS System
-Tests all CRUD operations, authentication, and invoice functionality
+Backend API Testing for Modern POS System - PDF Export Focus
+Tests PDF export functionality for reports
 """
 
 import requests
