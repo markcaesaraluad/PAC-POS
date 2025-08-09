@@ -400,19 +400,27 @@ const BusinessSettings = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Currency
+                    Currency <span className="text-red-500">*</span>
                   </label>
                   <select
                     value={settings.currency}
                     onChange={(e) => setSettings({...settings, currency: e.target.value})}
-                    className="input w-full"
+                    className={`input w-full ${!settings.currency ? 'border-red-300' : ''}`}
+                    required
                   >
-                    <option value="USD">USD ($)</option>
-                    <option value="EUR">EUR (€)</option>
-                    <option value="GBP">GBP (£)</option>
-                    <option value="PHP">PHP (₱)</option>
-                    <option value="JPY">JPY (¥)</option>
+                    <option value="">Select currency...</option>
+                    {availableCurrencies.map((currency) => (
+                      <option key={currency.code} value={currency.code}>
+                        {currency.code} ({currency.symbol}) - {currency.name}
+                      </option>
+                    ))}
                   </select>
+                  {!settings.currency && (
+                    <p className="text-red-500 text-xs mt-1">Currency is required</p>
+                  )}
+                  <p className="text-gray-500 text-xs mt-1">
+                    Selected currency will be used throughout the POS system
+                  </p>
                 </div>
 
                 <div>
