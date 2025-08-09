@@ -29,6 +29,10 @@ const BusinessSettings = () => {
   const [logoPreview, setLogoPreview] = useState(null);
   const [printerStatus, setPrinterStatus] = useState(null);
   const [availableCurrencies] = useState(getAvailableCurrencies());
+  const [availablePrinters, setAvailablePrinters] = useState([]);
+  const [selectedPrinter, setSelectedPrinter] = useState(null);
+  const [printerTestLoading, setPrinterTestLoading] = useState(false);
+  const [printerTestResults, setPrinterTestResults] = useState(null);
   
   const [settings, setSettings] = useState({
     currency: 'USD',
