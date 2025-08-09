@@ -7,7 +7,6 @@ import toast from 'react-hot-toast';
 import { 
   BuildingOfficeIcon, 
   PlusIcon,
-  PencilSquareIcon,
   UserGroupIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
