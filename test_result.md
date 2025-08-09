@@ -392,10 +392,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "PHASE 3 FRONTEND - Product Management Cost Updates"
-    - "PHASE 3 FRONTEND - Product Cost History Display"
-    - "PHASE 3 FRONTEND - Profit Report Page"
-    - "PHASE 3 FRONTEND - Enhanced Business Navigation"
+    - "NEW PAYMENT MODAL IMPLEMENTATION - Barcode Scanner Auto-Focus Resolution"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
