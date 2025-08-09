@@ -939,8 +939,8 @@ const POSInterface = () => {
                       </button>
                     </div>
                     <div className="text-right">
-                      <div className="text-xs font-semibold">${item.total_price.toFixed(2)}</div>
-                      <div className="text-xs text-gray-500">${item.unit_price}/each</div>
+                      <div className="text-xs font-semibold">{formatAmount(item.total_price)}</div>
+                      <div className="text-xs text-gray-500">{formatAmount(item.unit_price)}/each</div>
                     </div>
                   </div>
                 </div>
