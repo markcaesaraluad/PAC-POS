@@ -10,7 +10,8 @@ import {
   CogIcon,
   ArrowRightOnRectangleIcon,
   BuildingOfficeIcon,
-  ChartBarIcon
+  ChartBarIcon,
+  CurrencyDollarIcon
 } from '@heroicons/react/24/outline';
 
 const BusinessLayout = ({ children }) => {
