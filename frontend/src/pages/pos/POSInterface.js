@@ -1330,6 +1330,69 @@ const POSInterface = () => {
                 </div>
               )}
 
+              {/* Discount Section */}
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-700">Discount (Optional)</label>
+                <div className="flex space-x-2">
+                  <div className="flex bg-gray-100 rounded-lg p-1">
+                    <button
+                      onClick={() => setModalDiscountType('amount')}
+                      className={`px-3 py-1 text-sm rounded ${
+                        modalDiscountType === 'amount' 
+                          ? 'bg-white text-primary-600 shadow-sm' 
+                          : 'text-gray-600'
+                      }`}
+                    >
+                      Amount ({getCurrencySymbol(currency)})
+                    </button>
+                    <button
+                      onClick={() => setModalDiscountType('percentage')}
+                      className={`px-3 py-1 text-sm rounded ${
+                        modalDiscountType === 'percentage' 
+                          ? 'bg-white text-primary-600 shadow-sm' 
+                          : 'text-gray-600'
+                      }`}
+                    >
+                      Percentage (%)
+                    </button>
+                  </div>
+                  <input
+                    type="number"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 text-right"
+                    placeholder={modalDiscountType === 'percentage' ? '0' : '0.00'}
+                    value={modalDiscountAmount}
+                    onChange={(e) => setModalDiscountAmount(e.target.value)}
+                    step={modalDiscountType === 'percentage' ? '1' : '0.01'}
+                    min="0"
+                    max={modalDiscountType === 'percentage' ? '100' : undefined}
+                  />
+                </div>
+                
+                {/* Discount Preview */}
+                {modalDiscountAmount && parseFloat(modalDiscountAmount) > 0 && (
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-2">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-orange-800">Discount Applied:</span>
+                      <span className="font-medium text-orange-800">
+                        -{formatAmount(calculateModalTotals().discount)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Notes Section */}
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-700">Notes (Optional)</label>
+                <textarea
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 resize-none"
+                  placeholder="Add any notes for this transaction..."
+                  value={modalNotes}
+                  onChange={(e) => setModalNotes(e.target.value)}
+                  rows={2}
+                />
+              </div>
+
               {/* Card Payment Message */}
               {modalPaymentMethod === 'card' && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
