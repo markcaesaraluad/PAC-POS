@@ -130,7 +130,7 @@ async def generate_sales_report(
 
 @router.get("/inventory")
 async def generate_inventory_report(
-    format: str = Query("excel", regex="^(excel|pdf)$"),
+    format: str = Query("excel", pattern="^(excel|pdf)$"),
     include_inactive: bool = Query(False),
     low_stock_only: bool = Query(False),
     current_user=Depends(get_business_admin_or_super)
