@@ -40,6 +40,8 @@ const BusinessSettings = () => {
     receipt_header: '',
     receipt_footer: '',
     low_stock_threshold: 10,
+    printer_type: 'bluetooth', // local, network, bluetooth
+    selected_printer: null,
     printer_settings: {
       paper_size: '80', // mm
       characters_per_line: 32,
@@ -49,7 +51,12 @@ const BusinessSettings = () => {
       font_size: 'normal', // small, normal, large
       cut_paper: true,
       open_drawer: false,
-      printer_name: 'default'
+      printer_name: 'default',
+      // Network printer specific
+      ip_address: '192.168.1.100',
+      port: 9100,
+      // Bluetooth specific
+      device_name: 'POS-9200-L'
     }
   });
 
