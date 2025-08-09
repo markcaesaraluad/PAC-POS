@@ -24,7 +24,7 @@ import {
 import LoadingSpinner, { InlineSpinner } from '../../components/LoadingSpinner';
 
 const POSInterface = () => {
-  const { user, business } = useAuth();
+  const { business } = useAuth();
   const { formatAmount, currency } = useCurrency();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
