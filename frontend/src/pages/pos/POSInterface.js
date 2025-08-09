@@ -43,6 +43,17 @@ const POSInterface = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [modalPaymentMethod, setModalPaymentMethod] = useState('cash');
   const [modalReceivedAmount, setModalReceivedAmount] = useState('');
+  const [modalDiscountAmount, setModalDiscountAmount] = useState('');
+  const [modalDiscountType, setModalDiscountType] = useState('amount'); // 'amount' or 'percentage'
+  const [modalNotes, setModalNotes] = useState('');
+  
+  // UI state
+  const [receiptCollapsed, setReceiptCollapsed] = useState(() => {
+    // Default: expanded on desktop, collapsed on mobile
+    const saved = localStorage.getItem('pos-receipt-collapsed');
+    if (saved !== null) return JSON.parse(saved);
+    return window.innerWidth < 768;
+  });
   
   // Transaction state
   const [isProcessing, setIsProcessing] = useState(false);
