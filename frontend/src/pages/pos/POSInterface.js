@@ -166,6 +166,12 @@ const POSInterface = () => {
       const response = await productsAPI.getProductByBarcode(barcode.trim());
       addToCart(response.data);
       
+      // Clear search field after successful scan
+      setSearchTerm('');
+      if (barcodeInputRef.current) {
+        barcodeInputRef.current.value = '';
+      }
+      
       // Visual and audio feedback for successful scan
       toast.success(`✅ Scanned: ${response.data.name} added to cart`, {
         duration: 2000,
