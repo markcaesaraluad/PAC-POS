@@ -125,6 +125,13 @@ export const reportsAPI = {
     };
     return apiClient.get('/api/reports/customers', config);
   },
+  getProfitReport: (params = {}) => {
+    const config = { 
+      params,
+      responseType: 'blob'
+    };
+    return apiClient.get('/api/reports/profit', config);
+  },
   getDailySummary: (params = {}) => apiClient.get('/api/reports/daily-summary', { params }),
 };
 
