@@ -646,7 +646,7 @@ const ProductManagement = () => {
                             <div>
                               <div className="flex items-center">
                                 <span className="font-medium text-gray-900">
-                                  ${record.cost}
+                                  {formatAmount(record.cost)}
                                 </span>
                                 {index === 0 && (
                                   <span className="ml-2 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
