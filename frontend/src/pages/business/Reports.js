@@ -112,7 +112,7 @@ const Reports = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Today's Revenue</p>
-                  <p className="text-2xl font-bold text-gray-900">${dailySummary.sales?.total_revenue?.toFixed(2) || '0.00'}</p>
+                  <p className="text-2xl font-bold text-gray-900">{formatAmount(dailySummary.sales?.total_revenue || 0)}</p>
                 </div>
                 <DocumentArrowDownIcon className="h-8 w-8 text-green-500" />
               </div>
