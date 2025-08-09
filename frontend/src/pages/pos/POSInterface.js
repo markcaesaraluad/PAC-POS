@@ -1210,17 +1210,17 @@ const POSInterface = () => {
               <div className="bg-gray-50 rounded-lg p-3">
                 <div className="flex justify-between items-center text-sm text-gray-600 mb-1">
                   <span>Subtotal:</span>
-                  <span>${totals.subtotal}</span>
+                  <span>{formatAmount(totals.subtotal)}</span>
                 </div>
                 {discountAmount > 0 && (
                   <div className="flex justify-between items-center text-sm text-green-600 mb-1">
                     <span>Discount:</span>
-                    <span>-${discountAmount.toFixed(2)}</span>
+                    <span>-{formatAmount(discountAmount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between items-center text-lg font-bold text-gray-900 pt-2 border-t">
                   <span>Total:</span>
-                  <span>${totals.total}</span>
+                  <span>{formatAmount(totals.total)}</span>
                 </div>
               </div>
 
