@@ -90,9 +90,19 @@ const BusinessSettings = () => {
   };
 
   const handleSave = async () => {
+    // Validate currency
+    if (!settings.currency || settings.currency.trim() === '') {
+      toast.error('Currency is required');
+      return;
+    }
+
     try {
       setSaving(true);
       await businessAPI.updateSettings(settings);
+      
+      // Refresh currency context to update throughout the app
+      await refreshCurrency();
+      
       toast.success('Settings saved successfully');
     } catch (error) {
       const errorMessage = error.response?.data?.detail || 'Failed to save settings';
