@@ -5,6 +5,7 @@ from auth_utils import get_business_admin_or_super
 from database import get_collection
 from services.reports_service import reports_service
 from models import ProfitReportFilter, ProfitReportSummary, ProfitReportData
+from utils.currency import format_currency, get_business_currency
 from bson import ObjectId
 import json
 from io import BytesIO, StringIO
