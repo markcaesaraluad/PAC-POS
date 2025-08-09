@@ -1257,7 +1257,6 @@ class POSAPITester:
         self.tests_run += 1
 
         # Test 9: Test profit report with date range
-        from datetime import datetime, timedelta
         start_date = (datetime.now() - timedelta(days=7)).isoformat()
         end_date = datetime.now().isoformat()
         
