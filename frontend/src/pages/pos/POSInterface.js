@@ -1090,13 +1090,29 @@ const POSInterface = () => {
         )}
       </div>
 
-      {/* Right Panel - Receipt Preview (25%) */}
+      {/* Right Panel - Receipt Preview (25%) - Now Collapsible */}
       <div className="w-1/4 bg-gray-50 flex flex-col">
+        {/* Collapsible Header */}
         <div className="p-3 border-b bg-white flex-shrink-0">
-          <h3 className="text-sm font-semibold flex items-center">
-            <PrinterIcon className="h-4 w-4 mr-2" />
-            Receipt Preview
-          </h3>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-2">
+              <h3 className="text-sm font-semibold flex items-center">
+                <PrinterIcon className="h-4 w-4 mr-2" />
+                Receipt Preview
+              </h3>
+              <button
+                onClick={toggleReceiptCollapse}
+                className="lg:hidden text-gray-600 hover:text-gray-800 p-1"
+                title={receiptCollapsed ? "Show Receipt" : "Hide Receipt"}
+              >
+                {receiptCollapsed ? (
+                  <EyeIcon className="h-4 w-4" />
+                ) : (
+                  <EyeSlashIcon className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+          </div>
         </div>
         
         <div className="flex-1 overflow-y-auto p-3">
