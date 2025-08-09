@@ -925,169 +925,194 @@ const POSInterface = () => {
           </div>
         </div>
 
-        {/* Cart Items */}
-        <div className="flex-1 overflow-y-auto">
-          {cart.length > 0 ? (
-            <div className="p-3 space-y-2">
-              {cart.map((item) => (
-                <div key={item.product_id} className="bg-gray-50 rounded p-2">
-                  <div className="flex justify-between items-start mb-1">
-                    <h3 className="font-medium text-xs text-gray-900 truncate flex-1">{item.product_name}</h3>
+        {/* Collapsible Content */}
+        {!receiptCollapsed ? (
+          <>
+            {/* Cart Items */}
+            <div className="flex-1 overflow-y-auto">
+              {cart.length > 0 ? (
+                <div className="p-3 space-y-2">
+                  {cart.map((item) => (
+                    <div key={item.product_id} className="bg-gray-50 rounded p-2">
+                      <div className="flex justify-between items-start mb-1">
+                        <h3 className="font-medium text-xs text-gray-900 truncate flex-1">{item.product_name}</h3>
+                        <button
+                          onClick={() => removeFromCart(item.product_id)}
+                          className="text-red-500 hover:text-red-700 ml-1"
+                        >
+                          <XMarkIcon className="h-3 w-3" />
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-1">
+                          <button
+                            onClick={() => updateCartItemQuantity(item.product_id, item.quantity - 1)}
+                            className="w-5 h-5 rounded bg-gray-200 flex items-center justify-center hover:bg-gray-300"
+                          >
+                            <MinusIcon className="h-2 w-2" />
+                          </button>
+                          <span className="w-6 text-center text-xs">{item.quantity}</span>
+                          <button
+                            onClick={() => updateCartItemQuantity(item.product_id, item.quantity + 1)}
+                            className="w-5 h-5 rounded bg-gray-200 flex items-center justify-center hover:bg-gray-300"
+                          >
+                            <PlusIcon className="h-2 w-2" />
+                          </button>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs font-semibold">{formatAmount(item.total_price)}</div>
+                          <div className="text-xs text-gray-500">{formatAmount(item.unit_price)}/each</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex-1 flex items-center justify-center p-4">
+                  <div className="text-center">
+                    <CubeIcon className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                    <p className="text-gray-500 text-xs">Cart is empty</p>
+                    <p className="text-xs text-gray-400">Add products to start</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Cart Summary & Payment */}
+            {cart.length > 0 && (
+              <div className="border-t p-3 space-y-3 bg-gray-50 flex-shrink-0">
+                {/* Totals */}
+                <div className="space-y-1 text-xs border-t pt-2">
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>{formatAmount(totals.subtotal)}</span>
+                  </div>
+                  {taxRate > 0 && (
+                    <div className="flex justify-between">
+                      <span>Tax ({taxRate}%):</span>
+                      <span>{formatAmount(totals.taxAmount)}</span>
+                    </div>
+                  )}
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Discount:</span>
+                      <span>-{formatAmount(discountAmount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-bold text-sm pt-1 border-t">
+                    <span>Total:</span>
+                    <span>{formatAmount(totals.total)}</span>
+                  </div>
+                </div>
+
+                {/* Transaction Mode */}
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-1">
                     <button
-                      onClick={() => removeFromCart(item.product_id)}
-                      className="text-red-500 hover:text-red-700 ml-1"
+                      onClick={() => setTransactionMode('sale')}
+                      className={`text-xs py-1 px-2 rounded border ${
+                        transactionMode === 'sale' ? 'bg-green-100 border-green-500 text-green-700' : 'border-gray-300'
+                      }`}
                     >
-                      <XMarkIcon className="h-3 w-3" />
+                      Sale
+                    </button>
+                    <button
+                      onClick={() => setTransactionMode('invoice')}
+                      className={`text-xs py-1 px-2 rounded border ${
+                        transactionMode === 'invoice' ? 'bg-blue-100 border-blue-500 text-blue-700' : 'border-gray-300'
+                      }`}
+                    >
+                      Invoice
                     </button>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-1">
-                      <button
-                        onClick={() => updateCartItemQuantity(item.product_id, item.quantity - 1)}
-                        className="w-5 h-5 rounded bg-gray-200 flex items-center justify-center hover:bg-gray-300"
-                      >
-                        <MinusIcon className="h-2 w-2" />
-                      </button>
-                      <span className="w-6 text-center text-xs">{item.quantity}</span>
-                      <button
-                        onClick={() => updateCartItemQuantity(item.product_id, item.quantity + 1)}
-                        className="w-5 h-5 rounded bg-gray-200 flex items-center justify-center hover:bg-gray-300"
-                      >
-                        <PlusIcon className="h-2 w-2" />
-                      </button>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-xs font-semibold">{formatAmount(item.total_price)}</div>
-                      <div className="text-xs text-gray-500">{formatAmount(item.unit_price)}/each</div>
-                    </div>
-                  </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex-1 flex items-center justify-center p-4">
-              <div className="text-center">
-                <CubeIcon className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                <p className="text-gray-500 text-xs">Cart is empty</p>
-                <p className="text-xs text-gray-400">Add products to start</p>
-              </div>
-            </div>
-          )}
-        </div>
 
-        {/* Cart Summary & Payment */}
-        {cart.length > 0 && (
-          <div className="border-t p-3 space-y-3 bg-gray-50 flex-shrink-0">
-            {/* Discount & Notes */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <label className="text-xs text-gray-600">Discount ($):</label>
-                <input
-                  type="number"
-                  className="w-16 px-1 py-0.5 border rounded text-xs text-right"
-                  value={discountAmount}
-                  onChange={(e) => setDiscountAmount(parseFloat(e.target.value) || 0)}
-                  min="0"
-                  step="0.01"
-                />
-              </div>
-              <textarea
-                className="form-input text-xs w-full h-8 resize-none"
-                placeholder="Notes..."
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
-            </div>
-
-            {/* Totals */}
-            <div className="space-y-1 text-xs border-t pt-2">
-              <div className="flex justify-between">
-                <span>Subtotal:</span>
-                <span>{formatAmount(totals.subtotal)}</span>
-              </div>
-              {taxRate > 0 && (
-                <div className="flex justify-between">
-                  <span>Tax ({taxRate}%):</span>
-                  <span>{formatAmount(totals.taxAmount)}</span>
-                </div>
-              )}
-              {discountAmount > 0 && (
-                <div className="flex justify-between text-green-600">
-                  <span>Discount:</span>
-                  <span>-{formatAmount(discountAmount)}</span>
-                </div>
-              )}
-              <div className="flex justify-between font-bold text-sm pt-1 border-t">
-                <span>Total:</span>
-                <span>{formatAmount(totals.total)}</span>
-              </div>
-            </div>
-
-            {/* Payment Method */}
-            <div className="space-y-2">
-              <div className="grid grid-cols-2 gap-1">
-                <button
-                  onClick={() => setTransactionMode('sale')}
-                  className={`text-xs py-1 px-2 rounded border ${
-                    transactionMode === 'sale' ? 'bg-green-100 border-green-500 text-green-700' : 'border-gray-300'
-                  }`}
-                >
-                  Sale
-                </button>
-                <button
-                  onClick={() => setTransactionMode('invoice')}
-                  className={`text-xs py-1 px-2 rounded border ${
-                    transactionMode === 'invoice' ? 'bg-blue-100 border-blue-500 text-blue-700' : 'border-gray-300'
-                  }`}
-                >
-                  Invoice
-                </button>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="grid grid-cols-3 gap-1">
-              <button
-                onClick={generateReceiptPreview}
-                className="btn-secondary flex items-center justify-center text-xs py-2"
-                disabled={cart.length === 0}
-              >
-                <EyeIcon className="h-3 w-3 mr-1" />
-                Preview
-              </button>
-              <button
-                onClick={holdOrder}
-                className="btn-secondary flex items-center justify-center text-xs py-2"
-                disabled={cart.length === 0}
-              >
-                <ClockIcon className="h-3 w-3 mr-1" />
-                Hold
-              </button>
-              <button
-                onClick={transactionMode === 'sale' ? openPaymentModal : handleTransaction}
-                disabled={isProcessing || cart.length === 0}
-                className="btn-primary flex items-center justify-center text-xs py-2"
-              >
-                {isProcessing ? (
-                  <InlineSpinner />
-                ) : (
-                  <>
-                    {transactionMode === 'sale' ? (
-                      <>
-                        <BanknotesIcon className="h-3 w-3 mr-1" />
-                        Pay
-                      </>
+                {/* Action Buttons */}
+                <div className="grid grid-cols-3 gap-1">
+                  <button
+                    onClick={generateReceiptPreview}
+                    className="btn-secondary flex items-center justify-center text-xs py-2"
+                    disabled={cart.length === 0}
+                  >
+                    <EyeIcon className="h-3 w-3 mr-1" />
+                    Preview
+                  </button>
+                  <button
+                    onClick={holdOrder}
+                    className="btn-secondary flex items-center justify-center text-xs py-2"
+                    disabled={cart.length === 0}
+                  >
+                    <ClockIcon className="h-3 w-3 mr-1" />
+                    Hold
+                  </button>
+                  <button
+                    onClick={transactionMode === 'sale' ? openPaymentModal : handleTransaction}
+                    disabled={isProcessing || cart.length === 0}
+                    className="btn-primary flex items-center justify-center text-xs py-2"
+                  >
+                    {isProcessing ? (
+                      <InlineSpinner />
                     ) : (
                       <>
-                        <DocumentTextIcon className="h-3 w-3 mr-1" />
-                        Invoice
+                        {transactionMode === 'sale' ? (
+                          <>
+                            <BanknotesIcon className="h-3 w-3 mr-1" />
+                            Pay
+                          </>
+                        ) : (
+                          <>
+                            <DocumentTextIcon className="h-3 w-3 mr-1" />
+                            Invoice
+                          </>
+                        )}
                       </>
                     )}
-                  </>
-                )}
-              </button>
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          /* Collapsed View - Show Summary Only */
+          cart.length > 0 && (
+            <div className="p-3 bg-gray-50 border-t">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium">Items: {cart.length}</span>
+                <span className="text-lg font-bold">{formatAmount(totals.total)}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={transactionMode === 'sale' ? openPaymentModal : handleTransaction}
+                  disabled={isProcessing || cart.length === 0}
+                  className="btn-primary flex items-center justify-center text-xs py-2"
+                >
+                  {isProcessing ? (
+                    <InlineSpinner />
+                  ) : (
+                    <>
+                      {transactionMode === 'sale' ? (
+                        <>
+                          <BanknotesIcon className="h-3 w-3 mr-1" />
+                          Pay
+                        </>
+                      ) : (
+                        <>
+                          <DocumentTextIcon className="h-3 w-3 mr-1" />
+                          Invoice
+                        </>
+                      )}
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={toggleReceiptCollapse}
+                  className="btn-secondary text-xs"
+                >
+                  Show Details
+                </button>
+              </div>
             </div>
-          </div>
+          )
         )}
       </div>
 
