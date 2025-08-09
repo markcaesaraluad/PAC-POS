@@ -1274,7 +1274,7 @@ const POSInterface = () => {
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-green-800">Change Due:</span>
                         <span className="text-lg font-bold text-green-800">
-                          ${calculateModalChange().toFixed(2)}
+                          {formatAmount(calculateModalChange())}
                         </span>
                       </div>
                     </div>
