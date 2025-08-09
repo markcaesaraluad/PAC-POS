@@ -543,6 +543,162 @@ const ProductManagement = () => {
           </div>
         </div>
       )}
+
+      {/* Product Detail Modal with Cost History */}
+      {viewingProduct && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-md bg-white">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium text-gray-900">
+                Product Details - {viewingProduct.name}
+              </h3>
+              <button
+                onClick={closeProductDetailModal}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Product Information */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-gray-900 border-b pb-2">Product Information</h4>
+                
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Name</label>
+                    <p className="text-sm text-gray-900">{viewingProduct.name}</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">SKU</label>
+                      <p className="text-sm text-gray-900">{viewingProduct.sku}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Barcode</label>
+                      <p className="text-sm text-gray-900">{viewingProduct.barcode || 'N/A'}</p>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-gray-600">Category</label>
+                    <p className="text-sm text-gray-900">{getCategoryName(viewingProduct.category_id)}</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Sale Price</label>
+                      <p className="text-lg font-bold text-green-600">${viewingProduct.price}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Current Cost</label>
+                      <p className="text-lg font-bold text-orange-600">${viewingProduct.product_cost || '0.00'}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Stock Quantity</label>
+                      <p className="text-sm text-gray-900">{viewingProduct.quantity}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Profit Margin</label>
+                      <p className="text-sm font-bold text-blue-600">
+                        ${(viewingProduct.price - (viewingProduct.product_cost || 0)).toFixed(2)} 
+                        ({(((viewingProduct.price - (viewingProduct.product_cost || 0)) / viewingProduct.price) * 100).toFixed(1)}%)
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {viewingProduct.description && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Description</label>
+                      <p className="text-sm text-gray-900">{viewingProduct.description}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Cost History */}
+              <div className="space-y-4">
+                <h4 className="font-medium text-gray-900 border-b pb-2 flex items-center">
+                  <ClockIcon className="h-4 w-4 mr-2" />
+                  Cost History (Admin Only)
+                </h4>
+                
+                {loadingCostHistory ? (
+                  <div className="flex items-center justify-center py-8">
+                    <InlineSpinner />
+                    <span className="ml-2 text-sm text-gray-600">Loading cost history...</span>
+                  </div>
+                ) : costHistory.length > 0 ? (
+                  <div className="max-h-80 overflow-y-auto">
+                    <div className="space-y-2">
+                      {costHistory.map((record, index) => (
+                        <div key={record.id} className={`p-3 rounded-lg border ${
+                          index === 0 ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'
+                        }`}>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <div className="flex items-center">
+                                <span className="font-medium text-gray-900">
+                                  ${record.cost}
+                                </span>
+                                {index === 0 && (
+                                  <span className="ml-2 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                                    Current
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-600 mt-1">
+                                {new Date(record.effective_from).toLocaleString()}
+                              </p>
+                              {record.notes && (
+                                <p className="text-xs text-gray-500 mt-1">{record.notes}</p>
+                              )}
+                            </div>
+                            {index < costHistory.length - 1 && (
+                              <div className="text-xs">
+                                {record.cost > costHistory[index + 1].cost ? (
+                                  <span className="text-red-600">↑ +${(record.cost - costHistory[index + 1].cost).toFixed(2)}</span>
+                                ) : record.cost < costHistory[index + 1].cost ? (
+                                  <span className="text-green-600">↓ -${(costHistory[index + 1].cost - record.cost).toFixed(2)}</span>
+                                ) : (
+                                  <span className="text-gray-500">No change</span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <ClockIcon className="mx-auto h-8 w-8 text-gray-400" />
+                    <p className="text-sm text-gray-600 mt-2">
+                      {costHistory.length === 0 && !loadingCostHistory ? 
+                        'No cost history available or insufficient permissions' : 
+                        'No cost changes recorded'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={closeProductDetailModal}
+                className="btn-secondary"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
