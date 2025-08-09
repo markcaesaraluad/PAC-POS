@@ -1086,7 +1086,7 @@ const POSInterface = () => {
                 Hold
               </button>
               <button
-                onClick={handleTransaction}
+                onClick={transactionMode === 'sale' ? openPaymentModal : handleTransaction}
                 disabled={isProcessing || cart.length === 0}
                 className="btn-primary flex items-center justify-center text-xs py-2"
               >
