@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { reportsAPI } from '../../services/api';
+import { useCurrency } from '../../context/CurrencyContext';
 import toast from 'react-hot-toast';
 import { ChartBarIcon, DocumentArrowDownIcon, CalendarIcon, UsersIcon, CubeIcon } from '@heroicons/react/24/outline';
 
