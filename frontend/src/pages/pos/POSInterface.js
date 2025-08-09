@@ -448,7 +448,6 @@ const POSInterface = () => {
 
   const calculateModalTotals = () => {
     const subtotal = cart.reduce((sum, item) => sum + item.total_price, 0);
-    const taxAmount = subtotal * (taxRate / 100);
     
     let discount = 0;
     const discountValue = parseFloat(modalDiscountAmount) || 0;
