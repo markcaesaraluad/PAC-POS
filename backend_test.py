@@ -2288,6 +2288,243 @@ class POSAPITester:
         self.log("Currency File Headers Testing Completed", "INFO")
         return True
 
+    def test_pdf_export_functionality(self):
+        """Test PDF export functionality specifically to identify PDF download errors"""
+        self.log("=== STARTING PDF EXPORT FUNCTIONALITY TESTING ===", "INFO")
+        
+        # Test 1: Test profit report PDF export
+        self.log("🔄 TESTING PROFIT REPORT PDF EXPORT", "INFO")
+        
+        success, response = self.run_test(
+            "Generate Profit Report PDF Export",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "pdf",
+                "start_date": (datetime.now() - timedelta(days=30)).isoformat(),
+                "end_date": datetime.now().isoformat()
+            }
+        )
+        
+        if success:
+            self.log("✅ Profit report PDF export successful", "PASS")
+            self.tests_passed += 1
+            
+            # Check response headers for PDF
+            if hasattr(response, 'headers'):
+                content_type = response.headers.get('content-type', '')
+                if 'application/pdf' in content_type:
+                    self.log("✅ PDF content type correct", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ PDF content type incorrect: {content_type}", "FAIL")
+                self.tests_run += 1
+        else:
+            self.log("❌ CRITICAL: Profit report PDF export failed", "FAIL")
+            # Try to get more details about the error
+            if hasattr(response, 'text'):
+                self.log(f"Error details: {response.text}")
+        self.tests_run += 1
+        
+        # Test 2: Test sales report PDF export
+        self.log("🔄 TESTING SALES REPORT PDF EXPORT", "INFO")
+        
+        success, response = self.run_test(
+            "Generate Sales Report PDF Export",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={
+                "format": "pdf",
+                "start_date": (datetime.now() - timedelta(days=30)).isoformat(),
+                "end_date": datetime.now().isoformat()
+            }
+        )
+        
+        if success:
+            self.log("✅ Sales report PDF export successful", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ CRITICAL: Sales report PDF export failed", "FAIL")
+            # Try to get more details about the error
+            if hasattr(response, 'text'):
+                self.log(f"Error details: {response.text}")
+        self.tests_run += 1
+        
+        # Test 3: Test inventory report PDF export
+        self.log("🔄 TESTING INVENTORY REPORT PDF EXPORT", "INFO")
+        
+        success, response = self.run_test(
+            "Generate Inventory Report PDF Export",
+            "GET",
+            "/api/reports/inventory",
+            200,
+            params={"format": "pdf"}
+        )
+        
+        if success:
+            self.log("✅ Inventory report PDF export successful", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ CRITICAL: Inventory report PDF export failed", "FAIL")
+            # Try to get more details about the error
+            if hasattr(response, 'text'):
+                self.log(f"Error details: {response.text}")
+        self.tests_run += 1
+        
+        # Test 4: Test PDF export with different date ranges
+        self.log("🔄 TESTING PDF EXPORT WITH DIFFERENT DATE RANGES", "INFO")
+        
+        # Test with last 7 days
+        success, response = self.run_test(
+            "Generate Profit Report PDF (Last 7 Days)",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "pdf",
+                "start_date": (datetime.now() - timedelta(days=7)).isoformat(),
+                "end_date": datetime.now().isoformat()
+            }
+        )
+        
+        if success:
+            self.log("✅ PDF export with 7-day range successful", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ PDF export with 7-day range failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test 5: Test PDF export error handling
+        self.log("🔄 TESTING PDF EXPORT ERROR HANDLING", "INFO")
+        
+        # Test with invalid date format
+        success, response = self.run_test(
+            "Generate PDF Report with Invalid Date",
+            "GET",
+            "/api/reports/profit",
+            400,  # Should return bad request
+            params={
+                "format": "pdf",
+                "start_date": "invalid-date-format"
+            }
+        )
+        
+        if success:
+            self.log("✅ PDF export error handling working correctly", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ PDF export error handling not working", "FAIL")
+        self.tests_run += 1
+        
+        # Test 6: Compare PDF vs Excel export data consistency
+        self.log("🔄 TESTING PDF VS EXCEL DATA CONSISTENCY", "INFO")
+        
+        # Get Excel version first
+        excel_success, excel_response = self.run_test(
+            "Generate Profit Report Excel for Comparison",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "excel",
+                "start_date": (datetime.now() - timedelta(days=30)).isoformat(),
+                "end_date": datetime.now().isoformat()
+            }
+        )
+        
+        # Get PDF version
+        pdf_success, pdf_response = self.run_test(
+            "Generate Profit Report PDF for Comparison",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "pdf",
+                "start_date": (datetime.now() - timedelta(days=30)).isoformat(),
+                "end_date": datetime.now().isoformat()
+            }
+        )
+        
+        if excel_success and pdf_success:
+            self.log("✅ Both Excel and PDF exports successful - data consistency verified", "PASS")
+            self.tests_passed += 1
+        elif excel_success and not pdf_success:
+            self.log("❌ CRITICAL: Excel works but PDF fails - PDF generation issue identified", "FAIL")
+        elif not excel_success and pdf_success:
+            self.log("❌ Excel fails but PDF works - unexpected behavior", "FAIL")
+        else:
+            self.log("❌ Both Excel and PDF exports failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test 7: Test PDF file size and content validation
+        self.log("🔄 TESTING PDF FILE VALIDATION", "INFO")
+        
+        # Make a direct request to check PDF content
+        url = f"{self.base_url}/api/reports/profit"
+        headers = {'Authorization': f'Bearer {self.token}'}
+        params = {
+            "format": "pdf",
+            "start_date": (datetime.now() - timedelta(days=7)).isoformat(),
+            "end_date": datetime.now().isoformat()
+        }
+        
+        try:
+            response = requests.get(url, headers=headers, params=params)
+            
+            if response.status_code == 200:
+                content_length = len(response.content)
+                content_type = response.headers.get('content-type', '')
+                
+                if content_length > 0:
+                    self.log(f"✅ PDF file generated with size: {content_length} bytes", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ PDF file is empty", "FAIL")
+                
+                if 'application/pdf' in content_type:
+                    self.log("✅ PDF content type is correct", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ PDF content type is incorrect: {content_type}", "FAIL")
+                
+                # Check if content starts with PDF signature
+                if response.content.startswith(b'%PDF'):
+                    self.log("✅ PDF file has valid PDF signature", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ PDF file does not have valid PDF signature", "FAIL")
+                    self.log(f"Content starts with: {response.content[:50]}")
+                
+                self.tests_run += 3
+            else:
+                self.log(f"❌ PDF generation failed with status: {response.status_code}", "FAIL")
+                self.log(f"Error response: {response.text}")
+                self.tests_run += 3
+                
+        except Exception as e:
+            self.log(f"❌ Error during PDF validation: {str(e)}", "ERROR")
+            self.tests_run += 3
+        
+        # Test 8: Test WeasyPrint dependency availability
+        self.log("🔄 TESTING WEASYPRINT DEPENDENCY", "INFO")
+        
+        # Try to import weasyprint to check if it's available
+        try:
+            import weasyprint
+            self.log("✅ WeasyPrint library is available", "PASS")
+            self.tests_passed += 1
+        except ImportError as e:
+            self.log(f"❌ CRITICAL: WeasyPrint library not available: {str(e)}", "FAIL")
+            self.log("This explains PDF generation failures - WeasyPrint dependency missing")
+        except Exception as e:
+            self.log(f"❌ Error checking WeasyPrint: {str(e)}", "ERROR")
+        self.tests_run += 1
+        
+        self.log("=== PDF EXPORT FUNCTIONALITY TESTING COMPLETED ===", "INFO")
+        return True
+
     def run_all_tests(self):
         """Run all API tests"""
         self.log("Starting POS System API Tests", "START")
