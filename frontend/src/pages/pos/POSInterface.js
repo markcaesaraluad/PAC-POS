@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { productsAPI, categoriesAPI, customersAPI, salesAPI, invoicesAPI } from '../../services/api';
 import bluetoothPrinterService from '../../services/bluetoothPrinter';
 import { useAuth } from '../../context/AuthContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import toast from 'react-hot-toast';
 import { 
   CubeIcon, 
