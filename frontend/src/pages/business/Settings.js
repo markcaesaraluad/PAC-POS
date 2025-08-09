@@ -14,6 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const BusinessSettings = () => {
+  const { refreshCurrency } = useCurrency();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [businessInfo, setBusinessInfo] = useState(null);
@@ -21,6 +22,7 @@ const BusinessSettings = () => {
   const [logoUploading, setLogoUploading] = useState(false);
   const [logoPreview, setLogoPreview] = useState(null);
   const [printerStatus, setPrinterStatus] = useState(null);
+  const [availableCurrencies] = useState(getAvailableCurrencies());
   
   const [settings, setSettings] = useState({
     currency: 'USD',
