@@ -233,6 +233,8 @@ const BusinessSettings = () => {
       }
     }));
   };
+
+  const handleTestReceipt = async () => {
     try {
       setSaving(true);
       
