@@ -60,19 +60,32 @@ const ProductManagement = () => {
 
   const fetchData = async () => {
     try {
+      setLoading(true);
       const [productsResponse, categoriesResponse] = await Promise.all([
         productsAPI.getProducts({ search: searchTerm, category_id: selectedCategory, low_stock: showLowStock }),
         categoriesAPI.getCategories()
       ]);
-      setProducts(productsResponse.data);
-      setCategories(categoriesResponse.data);
+      
+      // Handle empty results gracefully
+      setProducts(Array.isArray(productsResponse.data) ? productsResponse.data : []);
+      setCategories(Array.isArray(categoriesResponse.data) ? categoriesResponse.data : []);
     } catch (error) {
       console.error('Failed to fetch data:', error);
-      toast.error('Failed to load products');
+      // Set empty arrays on error to prevent rendering issues
+      setProducts([]);
+      setCategories([]);
+      toast.error(`Failed to load data: ${error.response?.data?.detail || error.message}`);
     } finally {
       setLoading(false);
     }
   };
+
+  // Auto-filter when category changes
+  useEffect(() => {
+    if (selectedCategory || searchTerm || showLowStock) {
+      fetchData();
+    }
+  }, [selectedCategory, searchTerm, showLowStock]);
 
   const handleSearch = async () => {
     setLoading(true);
