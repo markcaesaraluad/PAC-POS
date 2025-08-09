@@ -314,9 +314,6 @@ const POSInterface = () => {
     setReceivedAmount('');
     setShowNewCustomerForm(false);
     setNewCustomer({ name: '', email: '', phone: '' });
-    
-    // Auto-focus search input after clearing cart
-    focusSearchInput();
   };
 
   const calculateTotals = () => {
