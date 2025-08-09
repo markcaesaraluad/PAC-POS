@@ -28,7 +28,8 @@ async def create_sale(
             detail="Super admin must specify business context",
         )
     
-    # Verify products exist and have sufficient stock
+    # Verify products exist and have sufficient stock, also prepare cost snapshots
+    items_with_cost_snapshots = []
     for item in sale.items:
         product = await products_collection.find_one({
             "_id": ObjectId(item.product_id),
@@ -46,6 +47,11 @@ async def create_sale(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Insufficient stock for {item.product_name}. Available: {product['quantity']}, Requested: {item.quantity}",
             )
+        
+        # Create item with cost snapshot
+        item_with_snapshot = item.dict()
+        item_with_snapshot["unit_cost_snapshot"] = product.get("product_cost", 0.0)
+        items_with_cost_snapshots.append(item_with_snapshot)
     
     # Generate sale number
     sale_number = f"SALE-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:8].upper()}"
