@@ -25,7 +25,6 @@ const SuperAdminDashboard = () => {
     try {
       const response = await superAdminAPI.getBusinesses();
       const businessList = response.data;
-      setBusinesses(businessList);
       
       // Calculate stats
       const activeBusinesses = businessList.filter(b => b.status === 'active').length;
