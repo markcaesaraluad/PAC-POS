@@ -18,7 +18,7 @@ router = APIRouter()
 async def get_profit_report(
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
-    format: str = Query("excel", regex="^(excel|csv|pdf)$"),
+    format: str = Query("excel", pattern="^(excel|csv|pdf)$"),
     current_user=Depends(get_business_admin_or_super)
 ):
     """Generate comprehensive profit report - Admin only"""
