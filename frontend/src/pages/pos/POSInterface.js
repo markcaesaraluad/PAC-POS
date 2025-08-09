@@ -429,6 +429,52 @@ const POSInterface = () => {
     setShowReceiptPreview(true);
   };
 
+  // Payment Modal Functions
+  const openPaymentModal = () => {
+    if (cart.length === 0) {
+      toast.error('Cart is empty');
+      return;
+    }
+    
+    setModalPaymentMethod(paymentMethod);
+    setModalReceivedAmount('');
+    setShowPaymentModal(true);
+  };
+
+  const closePaymentModal = () => {
+    setShowPaymentModal(false);
+    setModalReceivedAmount('');
+    // Return focus to barcode input after closing modal
+    focusSearchInput();
+  };
+
+  const calculateModalChange = () => {
+    if (modalPaymentMethod !== 'cash' || !modalReceivedAmount) return 0;
+    const totals = calculateTotals();
+    const received = parseFloat(modalReceivedAmount) || 0;
+    const change = received - parseFloat(totals.total);
+    return Math.max(0, change);
+  };
+
+  const confirmPayment = () => {
+    const totals = calculateTotals();
+    
+    if (modalPaymentMethod === 'cash') {
+      const received = parseFloat(modalReceivedAmount) || 0;
+      if (received < parseFloat(totals.total)) {
+        toast.error('Insufficient payment amount');
+        return;
+      }
+      setReceivedAmount(received);
+    }
+    
+    setPaymentMethod(modalPaymentMethod);
+    setShowPaymentModal(false);
+    
+    // Proceed with the transaction
+    handleTransaction();
+  };
+
   const handleTransaction = async () => {
     if (cart.length === 0) {
       toast.error('Cart is empty');
