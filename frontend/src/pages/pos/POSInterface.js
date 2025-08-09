@@ -141,11 +141,9 @@ const POSInterface = () => {
     };
   }, [scannerActive, lastBarcodeTime, barcodeBuffer]);
 
-  // Auto-focus after transactions
+  // Auto-focus after transactions - removed auto-focus
   useEffect(() => {
-    if (!isProcessing) {
-      focusSearchInput();
-    }
+    // No longer auto-focusing after processing
   }, [isProcessing]);
 
   useEffect(() => {
