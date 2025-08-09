@@ -438,14 +438,17 @@ const ProductManagement = () => {
                 </div>
 
                 <div>
-                  <label className="form-label">Cost ($) - Optional</label>
+                  <label className="form-label">Product Cost ($) *</label>
                   <input
                     type="number"
                     step="0.01"
+                    min="0"
                     className="form-input"
-                    {...register('cost')}
+                    placeholder="0.00"
+                    {...register('product_cost')}
                   />
-                  {errors.cost && <p className="form-error">{errors.cost.message}</p>}
+                  {errors.product_cost && <p className="form-error">{errors.product_cost.message}</p>}
+                  <p className="text-xs text-gray-500 mt-1">Required for profit tracking and reporting</p>
                 </div>
 
                 <div className="md:col-span-2">
