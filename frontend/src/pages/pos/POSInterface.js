@@ -158,7 +158,25 @@ const POSInterface = () => {
     }
   }, [business]);
 
-  const handleBarcodeScanned = async (barcode) => {
+  const fetchData = useCallback(async () => {
+    try {
+      const [productsResponse, categoriesResponse, customersResponse] = await Promise.all([
+        productsAPI.getProducts({ category_id: selectedCategory }),
+        categoriesAPI.getCategories(),
+        customersAPI.getCustomers()
+      ]);
+      setProducts(productsResponse.data);
+      setCategories(categoriesResponse.data);
+      setCustomers(customersResponse.data);
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+      toast.error('Failed to load POS data');
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedCategory]);
+
+  const handleBarcodeScanned = useCallback(async (barcode) => {
     if (!barcode || barcode.length < 3) return; // Minimum barcode length
     
     try {
@@ -178,22 +196,17 @@ const POSInterface = () => {
         position: 'top-center'
       });
       
-      // Visual feedback on input
+      // Green flash effect for successful scan
       if (barcodeInputRef.current) {
-        barcodeInputRef.current.style.backgroundColor = '#d4edda';
-        barcodeInputRef.current.value = `✓ ${response.data.name}`;
+        barcodeInputRef.current.style.backgroundColor = '#c6f6d5'; // Light green
         setTimeout(() => {
           if (barcodeInputRef.current) {
             barcodeInputRef.current.style.backgroundColor = '';
-            barcodeInputRef.current.value = '';
           }
-        }, 1500);
+        }, 1000);
       }
-      
     } catch (error) {
-      setIsScanning(false);
-      
-      // Clear error message with specific barcode info
+      console.error('Barcode scan error:', error);
       toast.error(`❌ Product not found: ${barcode}`, {
         duration: 3000,
         position: 'top-center'
@@ -213,25 +226,7 @@ const POSInterface = () => {
         }, 2000);
       }
     }
-  };
-
-  const fetchData = async () => {
-    try {
-      const [productsResponse, categoriesResponse, customersResponse] = await Promise.all([
-        productsAPI.getProducts({ category_id: selectedCategory }),
-        categoriesAPI.getCategories(),
-        customersAPI.getCustomers()
-      ]);
-      setProducts(productsResponse.data);
-      setCategories(categoriesResponse.data);
-      setCustomers(customersResponse.data);
-    } catch (error) {
-      console.error('Failed to fetch data:', error);
-      toast.error('Failed to load POS data');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, []);
 
   const handleProductSearch = async () => {
     if (!searchTerm && !selectedCategory) {
