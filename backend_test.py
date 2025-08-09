@@ -1494,6 +1494,418 @@ class POSAPITester:
                 200
             )
 
+    def test_comprehensive_profit_integration(self):
+        """Test comprehensive profit tracking system integration"""
+        self.log("=== STARTING COMPREHENSIVE PROFIT TRACKING INTEGRATION TESTING ===", "INFO")
+        
+        # Integration Test 1: Complete Product-to-Profit Workflow
+        self.log("🔄 INTEGRATION TEST 1: Complete Product-to-Profit Workflow", "INFO")
+        
+        # Create a new product with cost ($15.00)
+        product_data = {
+            "name": "Integration Test Product",
+            "description": "Product for integration testing",
+            "sku": f"INT-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            "price": 29.99,
+            "product_cost": 15.00,
+            "quantity": 100,
+            "category_id": self.category_id,
+            "barcode": f"INT{datetime.now().strftime('%H%M%S')}"
+        }
+        
+        success, response = self.run_test(
+            "Create Product with Initial Cost ($15.00)",
+            "POST",
+            "/api/products",
+            200,
+            data=product_data
+        )
+        
+        integration_product_id = None
+        if success and 'id' in response:
+            integration_product_id = response['id']
+            self.log(f"✅ Integration product created: {integration_product_id}")
+        
+        # Update the product cost to $18.00 (should create cost history)
+        if integration_product_id:
+            success, response = self.run_test(
+                "Update Product Cost to $18.00 (Create History)",
+                "PUT",
+                f"/api/products/{integration_product_id}",
+                200,
+                data={"product_cost": 18.00}
+            )
+            
+            if success:
+                self.log("✅ Product cost updated successfully")
+        
+        # Verify cost history shows both entries
+        if integration_product_id:
+            success, response = self.run_test(
+                "Verify Cost History (2 entries)",
+                "GET",
+                f"/api/products/{integration_product_id}/cost-history",
+                200
+            )
+            
+            if success and isinstance(response, list) and len(response) >= 2:
+                self.log(f"✅ Cost history verified: {len(response)} entries")
+                # Check chronological order and values
+                if response[0].get('cost') == 18.00 and response[1].get('cost') == 15.00:
+                    self.log("✅ Cost history chronologically correct (newest first)")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ Cost history values or order incorrect")
+                self.tests_run += 1
+        
+        # Create a sale with this product (should capture cost snapshot)
+        if integration_product_id and self.customer_id:
+            sale_data = {
+                "customer_id": self.customer_id,
+                "items": [
+                    {
+                        "product_id": integration_product_id,
+                        "product_name": "Integration Test Product",
+                        "product_sku": product_data['sku'],
+                        "quantity": 3,
+                        "unit_price": 29.99,
+                        "total_price": 89.97
+                    }
+                ],
+                "subtotal": 89.97,
+                "tax_amount": 8.10,
+                "discount_amount": 0.00,
+                "total_amount": 98.07,
+                "payment_method": "card",
+                "notes": "Integration test sale"
+            }
+            
+            success, response = self.run_test(
+                "Create Sale with Cost Snapshot",
+                "POST",
+                "/api/sales",
+                200,
+                data=sale_data
+            )
+            
+            integration_sale_id = None
+            if success and 'id' in response:
+                integration_sale_id = response['id']
+                # Verify cost snapshot captured
+                items = response.get('items', [])
+                if items and items[0].get('unit_cost_snapshot') == 18.00:
+                    self.log("✅ Cost snapshot correctly captured ($18.00)")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ Cost snapshot incorrect: {items[0].get('unit_cost_snapshot') if items else 'No items'}")
+                self.tests_run += 1
+        
+        # Integration Test 2: Cross-Report Data Consistency
+        self.log("🔄 INTEGRATION TEST 2: Cross-Report Data Consistency", "INFO")
+        
+        # Generate sales report for same date range
+        start_date = (datetime.now() - timedelta(days=1)).isoformat()
+        end_date = datetime.now().isoformat()
+        
+        success, sales_response = self.run_test(
+            "Generate Sales Report (Same Date Range)",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={
+                "format": "excel",
+                "start_date": start_date,
+                "end_date": end_date
+            }
+        )
+        
+        # Generate profit report for same date range
+        success, profit_response = self.run_test(
+            "Generate Profit Report (Same Date Range)",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "excel",
+                "start_date": start_date,
+                "end_date": end_date
+            }
+        )
+        
+        if success:
+            self.log("✅ Both reports generated successfully for consistency check")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Report generation failed for consistency check")
+        self.tests_run += 1
+        
+        # Integration Test 3: Role-Based Access Integration
+        self.log("🔄 INTEGRATION TEST 3: Role-Based Access Integration", "INFO")
+        
+        # Test admin access to profit features (current user should be admin)
+        if integration_product_id:
+            success, response = self.run_test(
+                "Admin Access to Cost History",
+                "GET",
+                f"/api/products/{integration_product_id}/cost-history",
+                200
+            )
+            
+            if success:
+                self.log("✅ Admin can access cost history")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Admin should be able to access cost history")
+            self.tests_run += 1
+        
+        # Test admin access to profit reports
+        success, response = self.run_test(
+            "Admin Access to Profit Reports",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={"format": "excel"}
+        )
+        
+        if success:
+            self.log("✅ Admin can access profit reports")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Admin should be able to access profit reports")
+        self.tests_run += 1
+        
+        # Integration Test 4: Multi-Product Sales Integration
+        self.log("🔄 INTEGRATION TEST 4: Multi-Product Sales Integration", "INFO")
+        
+        # Create second product with different cost
+        product2_data = {
+            "name": "Integration Test Product 2",
+            "description": "Second product for integration testing",
+            "sku": f"INT2-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            "price": 19.99,
+            "product_cost": 8.50,
+            "quantity": 50,
+            "category_id": self.category_id,
+            "barcode": f"INT2{datetime.now().strftime('%H%M%S')}"
+        }
+        
+        success, response = self.run_test(
+            "Create Second Product (Different Cost)",
+            "POST",
+            "/api/products",
+            200,
+            data=product2_data
+        )
+        
+        integration_product2_id = None
+        if success and 'id' in response:
+            integration_product2_id = response['id']
+        
+        # Create multi-product sale
+        if integration_product_id and integration_product2_id and self.customer_id:
+            multi_sale_data = {
+                "customer_id": self.customer_id,
+                "items": [
+                    {
+                        "product_id": integration_product_id,
+                        "product_name": "Integration Test Product",
+                        "product_sku": product_data['sku'],
+                        "quantity": 2,
+                        "unit_price": 29.99,
+                        "total_price": 59.98
+                    },
+                    {
+                        "product_id": integration_product2_id,
+                        "product_name": "Integration Test Product 2",
+                        "product_sku": product2_data['sku'],
+                        "quantity": 3,
+                        "unit_price": 19.99,
+                        "total_price": 59.97
+                    }
+                ],
+                "subtotal": 119.95,
+                "tax_amount": 10.80,
+                "discount_amount": 0.00,
+                "total_amount": 130.75,
+                "payment_method": "cash",
+                "notes": "Multi-product integration test"
+            }
+            
+            success, response = self.run_test(
+                "Create Multi-Product Sale",
+                "POST",
+                "/api/sales",
+                200,
+                data=multi_sale_data
+            )
+            
+            if success:
+                items = response.get('items', [])
+                if len(items) == 2:
+                    # Verify different cost snapshots
+                    cost1 = items[0].get('unit_cost_snapshot')
+                    cost2 = items[1].get('unit_cost_snapshot')
+                    if cost1 == 18.00 and cost2 == 8.50:
+                        self.log("✅ Multi-product sale with different cost snapshots")
+                        self.tests_passed += 1
+                    else:
+                        self.log(f"❌ Cost snapshots incorrect: {cost1}, {cost2}")
+                    self.tests_run += 1
+        
+        # Integration Test 5: Export Integration
+        self.log("🔄 INTEGRATION TEST 5: Export Integration", "INFO")
+        
+        # Test profit report export with actual business data
+        success, response = self.run_test(
+            "Export Profit Report (Excel with Business Data)",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "excel",
+                "start_date": start_date,
+                "end_date": end_date
+            }
+        )
+        
+        if success:
+            self.log("✅ Profit report Excel export successful")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Profit report Excel export failed")
+        self.tests_run += 1
+        
+        # Test CSV export
+        success, response = self.run_test(
+            "Export Profit Report (CSV with Business Data)",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "csv",
+                "start_date": start_date,
+                "end_date": end_date
+            }
+        )
+        
+        if success:
+            self.log("✅ Profit report CSV export successful")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Profit report CSV export failed")
+        self.tests_run += 1
+        
+        # Integration Test 6: Performance Integration
+        self.log("🔄 INTEGRATION TEST 6: Performance Integration", "INFO")
+        
+        # Test profit report generation performance
+        import time
+        start_time = time.time()
+        
+        success, response = self.run_test(
+            "Performance Test - Profit Report Generation",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "excel",
+                "start_date": (datetime.now() - timedelta(days=90)).isoformat(),
+                "end_date": datetime.now().isoformat()
+            }
+        )
+        
+        end_time = time.time()
+        generation_time = end_time - start_time
+        
+        if success:
+            self.log(f"✅ Profit report generated in {generation_time:.2f} seconds")
+            if generation_time < 10:  # Should complete within 10 seconds
+                self.log("✅ Performance acceptable (< 10 seconds)")
+                self.tests_passed += 1
+            else:
+                self.log("⚠️ Performance slow (> 10 seconds)")
+            self.tests_run += 1
+        
+        # Integration Test 7: Error Handling Integration
+        self.log("🔄 INTEGRATION TEST 7: Error Handling Integration", "INFO")
+        
+        # Test invalid cost updates
+        if integration_product_id:
+            success, response = self.run_test(
+                "Invalid Cost Update (Negative Cost)",
+                "PUT",
+                f"/api/products/{integration_product_id}",
+                422,  # Should fail validation
+                data={"product_cost": -5.00}
+            )
+            
+            if success:
+                self.log("✅ Negative cost correctly rejected")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Negative cost should be rejected")
+            self.tests_run += 1
+        
+        # Test profit report with invalid date
+        success, response = self.run_test(
+            "Profit Report Invalid Date Format",
+            "GET",
+            "/api/reports/profit",
+            400,  # Bad request expected
+            params={
+                "format": "excel",
+                "start_date": "invalid-date"
+            }
+        )
+        
+        if success:
+            self.log("✅ Invalid date format correctly rejected")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Invalid date format should be rejected")
+        self.tests_run += 1
+        
+        # Integration Test 8: Data Migration Integration
+        self.log("🔄 INTEGRATION TEST 8: Data Migration Integration", "INFO")
+        
+        # Test cost snapshot logic for products without cost history
+        # This simulates migrated products that might not have initial cost history
+        if integration_product_id:
+            # Get current product to verify cost handling
+            success, response = self.run_test(
+                "Get Product for Migration Test",
+                "GET",
+                f"/api/products/{integration_product_id}",
+                200
+            )
+            
+            if success and response.get('product_cost') is not None:
+                self.log("✅ Product cost available for migration scenarios")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Product cost should be available")
+            self.tests_run += 1
+        
+        # Cleanup integration test products
+        if integration_product_id:
+            self.run_test(
+                "Cleanup Integration Product 1",
+                "DELETE",
+                f"/api/products/{integration_product_id}",
+                200
+            )
+        
+        if integration_product2_id:
+            self.run_test(
+                "Cleanup Integration Product 2",
+                "DELETE",
+                f"/api/products/{integration_product2_id}",
+                200
+            )
+        
+        self.log("=== COMPREHENSIVE PROFIT TRACKING INTEGRATION TESTING COMPLETED ===", "INFO")
+        return True
+
     def run_all_tests(self):
         """Run all API tests"""
         self.log("Starting POS System API Tests", "START")
@@ -1544,6 +1956,11 @@ class POSAPITester:
         self.log("=== STARTING PROFIT TRACKING FUNCTIONALITY TESTING ===", "INFO")
         self.test_profit_tracking_functionality()
         self.log("=== PROFIT TRACKING FUNCTIONALITY TESTING COMPLETED ===", "INFO")
+
+        # NEW: Comprehensive Profit Integration Testing
+        self.log("=== STARTING COMPREHENSIVE PROFIT INTEGRATION TESTING ===", "INFO")
+        self.test_comprehensive_profit_integration()
+        self.log("=== COMPREHENSIVE PROFIT INTEGRATION TESTING COMPLETED ===", "INFO")
 
         # Cleanup
         self.cleanup_test_data()
