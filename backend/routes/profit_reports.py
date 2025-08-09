@@ -222,7 +222,7 @@ async def get_effective_cost(product_id: str, sale_date: datetime, business_id: 
     except:
         return 0.0
 
-async def generate_profit_excel(profit_data: List[Dict], business: Dict, start_dt: datetime, end_dt: datetime, summary: Dict) -> tuple[bytes, str]:
+async def generate_profit_excel(profit_data: List[Dict], business: Dict, start_dt: datetime, end_dt: datetime, summary: Dict, currency: str = 'USD') -> tuple[bytes, str]:
     """Generate Excel profit report"""
     
     output = BytesIO()
