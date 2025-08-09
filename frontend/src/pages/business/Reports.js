@@ -72,8 +72,55 @@ const Reports = () => {
   // Handle filter changes and refresh data
   function handleFilterChange(newFilters) {
     // Refresh all report data when filters change
-    loadFilteredReports(newFilters);
+    loadReportsData(newFilters);
   }
+
+  // Load categories for filter dropdown
+  useEffect(() => {
+    loadCategories();
+    loadDailySummary();
+    loadReportsData();
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      const response = await categoriesAPI.getCategories();
+      setCategories(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error('Failed to load categories:', error);
+    }
+  };
+
+  const loadDailySummary = async () => {
+    try {
+      const response = await reportsAPI.getDailySummary();
+      setDailySummary(response.data);
+    } catch (error) {
+      console.error('Failed to load daily summary:', error);
+    }
+  };
+
+  const loadReportsData = async (customFilters = null) => {
+    try {
+      const queryParams = generateQueryParams(customFilters || filters);
+      
+      // Load filtered data for preview tables
+      const [salesResponse, inventoryResponse, customersResponse] = await Promise.all([
+        reportsAPI.getSalesReport({ format: 'json', ...queryParams }),
+        reportsAPI.getInventoryReport({ format: 'json', ...queryParams }),
+        reportsAPI.getCustomersReport({ format: 'json', ...queryParams })
+      ]);
+
+      setReportData({
+        sales: salesResponse.data?.slice(0, 5) || [], // Show first 5 for preview
+        inventory: inventoryResponse.data?.slice(0, 5) || [],
+        customers: customersResponse.data?.slice(0, 5) || []
+      });
+    } catch (error) {
+      console.error('Failed to load reports data:', error);
+      setReportData({ sales: [], inventory: [], customers: [] });
+    }
+  };
 
   // Load daily summary on component mount
   useEffect(() => {
