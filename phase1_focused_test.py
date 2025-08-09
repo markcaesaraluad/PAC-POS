@@ -118,7 +118,7 @@ class Phase1Tester:
         success, response = self.run_test(
             "Daily Summary - Today (Default)",
             "GET",
-            "/api/sales/daily-summary",
+            "/api/sales/daily-summary/stats",
             200
         )
         
