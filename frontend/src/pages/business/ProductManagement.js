@@ -592,11 +592,11 @@ const ProductManagement = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium text-gray-600">Sale Price</label>
-                      <p className="text-lg font-bold text-green-600">${viewingProduct.price}</p>
+                      <p className="text-lg font-bold text-green-600">{formatAmount(viewingProduct.price)}</p>
                     </div>
                     <div>
                       <label className="text-sm font-medium text-gray-600">Current Cost</label>
-                      <p className="text-lg font-bold text-orange-600">${viewingProduct.product_cost || '0.00'}</p>
+                      <p className="text-lg font-bold text-orange-600">{formatAmount(viewingProduct.product_cost || 0)}</p>
                     </div>
                   </div>
                   
