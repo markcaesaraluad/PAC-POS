@@ -936,8 +936,8 @@ const POSInterface = () => {
         {/* Collapsible Content */}
         {!receiptCollapsed ? (
           <>
-            {/* Cart Items */}
-            <div className="flex-1 overflow-y-auto">
+            {/* Cart Items - Scrollable Area */}
+            <div className="flex-1 overflow-y-auto min-h-0">
               {cart.length > 0 ? (
                 <div className="p-3 space-y-2">
                   {cart.map((item) => (
@@ -986,7 +986,7 @@ const POSInterface = () => {
               )}
             </div>
 
-            {/* Cart Summary & Payment */}
+            {/* Sticky Action Area - Always Visible at Bottom */}
             {cart.length > 0 && (
               <div className="border-t p-3 space-y-3 bg-gray-50 flex-shrink-0">
                 {/* Totals */}
@@ -1036,22 +1036,22 @@ const POSInterface = () => {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="grid grid-cols-3 gap-1">
-                  <button
-                    onClick={generateReceiptPreview}
-                    className="btn-secondary flex items-center justify-center text-xs py-2"
-                    disabled={cart.length === 0}
-                  >
-                    <EyeIcon className="h-3 w-3 mr-1" />
-                    Preview
-                  </button>
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     onClick={holdOrder}
-                    className="btn-secondary flex items-center justify-center text-xs py-2"
                     disabled={cart.length === 0}
+                    className="btn-outline flex items-center justify-center text-xs py-2"
                   >
                     <ClockIcon className="h-3 w-3 mr-1" />
                     Hold
+                  </button>
+                  <button
+                    onClick={generateReceiptPreview}
+                    disabled={cart.length === 0}
+                    className="btn-secondary flex items-center justify-center text-xs py-2"
+                  >
+                    <DocumentTextIcon className="h-3 w-3 mr-1" />
+                    Preview
                   </button>
                   <button
                     onClick={transactionMode === 'sale' ? openPaymentModal : handleTransaction}
