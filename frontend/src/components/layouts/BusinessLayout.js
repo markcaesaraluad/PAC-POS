@@ -18,14 +18,33 @@ const BusinessLayout = ({ children }) => {
   const location = useLocation();
   const { user, business, logout } = useAuth();
 
-  const navigation = [
+  // Define base navigation items
+  const baseNavigation = [
     { name: 'Dashboard', href: '/business', icon: HomeIcon },
     { name: 'Products', href: '/business/products', icon: CubeIcon },
     { name: 'Categories', href: '/business/categories', icon: TagIcon },
     { name: 'Customers', href: '/business/customers', icon: UserGroupIcon },
     { name: 'Reports', href: '/business/reports', icon: ChartBarIcon },
+  ];
+
+  // Add admin-only navigation items
+  const adminOnlyNavigation = [
+    { name: 'Profit Report', href: '/business/profit-report', icon: CurrencyDollarIcon },
+  ];
+
+  const generalNavigation = [
     { name: 'Staff', href: '/business/users', icon: UsersIcon },
     { name: 'Settings', href: '/business/settings', icon: CogIcon },
+  ];
+
+  // Check if user is admin
+  const isAdmin = user && (user.role === 'business_admin' || user.role === 'super_admin');
+
+  // Combine navigation based on user role
+  const navigation = [
+    ...baseNavigation,
+    ...(isAdmin ? adminOnlyNavigation : []),
+    ...generalNavigation
   ];
 
   const isActive = (href) => {
