@@ -107,7 +107,7 @@ async def create_sale(
         cashier_id=str(sale_doc["cashier_id"]),
         customer_id=str(sale_doc["customer_id"]) if sale_doc["customer_id"] else None,
         sale_number=sale_doc["sale_number"],
-        items=sale.items,
+        items=[SaleItem(**item) for item in items_with_cost_snapshots],
         subtotal=sale_doc["subtotal"],
         tax_amount=sale_doc["tax_amount"],
         discount_amount=sale_doc["discount_amount"],
