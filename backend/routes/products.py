@@ -73,7 +73,7 @@ async def create_product(
         barcode=product_doc["barcode"],
         category_id=str(product_doc["category_id"]) if product_doc["category_id"] else None,
         price=product_doc["price"],
-        cost=product_doc["cost"],
+        product_cost=product_doc["product_cost"],
         quantity=product_doc["quantity"],
         image_url=product_doc["image_url"],
         is_active=product_doc["is_active"],
