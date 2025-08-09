@@ -129,18 +129,8 @@ const POSInterface = () => {
     // Add global keydown listener for barcode scanner
     document.addEventListener('keydown', handleKeyDown);
     
-    // Focus management - refocus when clicking away
-    const handleWindowClick = (event) => {
-      if (!event.target.closest('input') && !event.target.closest('button') && !event.target.closest('select')) {
-        focusSearchInput();
-      }
-    };
-    
-    document.addEventListener('click', handleWindowClick);
-    
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('click', handleWindowClick);
     };
   }, [scannerActive, lastBarcodeTime, barcodeBuffer]);
 
