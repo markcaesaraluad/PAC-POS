@@ -159,6 +159,7 @@ class SaleItem(BaseModel):
     product_sku: str
     quantity: int
     unit_price: float
+    unit_cost_snapshot: Optional[float] = Field(None, description="Cost at time of sale for profit calculation")
     total_price: float
 
 # Sale Models
