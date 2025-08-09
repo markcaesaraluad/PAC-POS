@@ -421,24 +421,58 @@ const POSInterface = () => {
     
     setModalPaymentMethod(paymentMethod);
     setModalReceivedAmount('');
+    setModalDiscountAmount(discountAmount.toString() || '');
+    setModalDiscountType(localStorage.getItem('pos-discount-type') || 'amount');
+    setModalNotes(notes);
     setShowPaymentModal(true);
   };
 
   const closePaymentModal = () => {
     setShowPaymentModal(false);
     setModalReceivedAmount('');
+    setModalDiscountAmount('');
+    setModalNotes('');
+  };
+
+  const calculateModalTotals = () => {
+    const subtotal = cart.reduce((sum, item) => sum + item.total_price, 0);
+    const taxAmount = subtotal * (taxRate / 100);
+    
+    let discount = 0;
+    const discountValue = parseFloat(modalDiscountAmount) || 0;
+    
+    if (discountValue > 0) {
+      if (modalDiscountType === 'percentage') {
+        discount = Math.min(subtotal * (discountValue / 100), subtotal);
+      } else {
+        discount = Math.min(discountValue, subtotal);
+      }
+    }
+    
+    const afterDiscount = subtotal - discount;
+    const finalTax = afterDiscount * (taxRate / 100);
+    const total = afterDiscount + finalTax;
+    
+    return {
+      subtotal: subtotal.toFixed(2),
+      discount: discount.toFixed(2),
+      taxAmount: finalTax.toFixed(2),
+      total: total.toFixed(2),
+      change: modalPaymentMethod === 'cash' && modalReceivedAmount ? 
+        Math.max(0, parseFloat(modalReceivedAmount) - parseFloat(total)).toFixed(2) : '0.00'
+    };
   };
 
   const calculateModalChange = () => {
     if (modalPaymentMethod !== 'cash' || !modalReceivedAmount) return 0;
-    const totals = calculateTotals();
+    const totals = calculateModalTotals();
     const received = parseFloat(modalReceivedAmount) || 0;
     const change = received - parseFloat(totals.total);
     return Math.max(0, change);
   };
 
   const confirmPayment = () => {
-    const totals = calculateTotals();
+    const totals = calculateModalTotals();
     
     if (modalPaymentMethod === 'cash') {
       const received = parseFloat(modalReceivedAmount) || 0;
@@ -449,7 +483,14 @@ const POSInterface = () => {
       setReceivedAmount(received);
     }
     
+    // Apply modal values to main transaction
     setPaymentMethod(modalPaymentMethod);
+    setDiscountAmount(parseFloat(totals.discount));
+    setNotes(modalNotes);
+    
+    // Save discount type preference
+    localStorage.setItem('pos-discount-type', modalDiscountType);
+    
     setShowPaymentModal(false);
     
     // Proceed with the transaction
