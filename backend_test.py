@@ -1029,6 +1029,441 @@ class POSAPITester:
         self.log("=== PRINTER SETTINGS TESTING COMPLETED ===", "INFO")
         return True
 
+    def test_profit_tracking_functionality(self):
+        """Test comprehensive profit tracking functionality"""
+        self.log("=== STARTING PROFIT TRACKING TESTING ===", "INFO")
+        
+        # Test 1: Create product with cost (required field)
+        product_with_cost_data = {
+            "name": "Profit Test Product",
+            "description": "Product for profit tracking testing",
+            "sku": f"PROFIT-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            "price": 25.99,
+            "product_cost": 10.50,  # Required cost field
+            "quantity": 50,
+            "category_id": self.category_id,
+            "barcode": f"987654321{datetime.now().strftime('%H%M%S')}"
+        }
+
+        success, response = self.run_test(
+            "Create Product with Cost (Required Field)",
+            "POST",
+            "/api/products",
+            200,
+            data=product_with_cost_data
+        )
+        
+        profit_product_id = None
+        if success and 'id' in response:
+            profit_product_id = response['id']
+            self.log(f"Profit test product created with ID: {profit_product_id}")
+            
+            # Verify cost is stored correctly
+            if response.get('product_cost') == 10.50:
+                self.log("✅ Product cost correctly stored", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Product cost incorrect. Expected: 10.50, Got: {response.get('product_cost')}", "FAIL")
+            self.tests_run += 1
+
+        # Test 2: Try to create product without cost (should fail validation)
+        product_without_cost_data = {
+            "name": "Product Without Cost",
+            "sku": f"NOCOST-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            "price": 15.99,
+            "quantity": 25
+            # Missing product_cost field
+        }
+
+        success, response = self.run_test(
+            "Create Product Without Cost (Should Fail)",
+            "POST",
+            "/api/products",
+            422,  # Validation error expected
+            data=product_without_cost_data
+        )
+        
+        if success:
+            self.log("✅ Product creation correctly rejected without cost", "PASS")
+        else:
+            self.log("❌ Product creation should have failed without cost", "FAIL")
+
+        # Test 3: Try to create product with negative cost (should fail validation)
+        product_negative_cost_data = {
+            "name": "Product Negative Cost",
+            "sku": f"NEGCOST-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            "price": 15.99,
+            "product_cost": -5.00,  # Negative cost should fail
+            "quantity": 25
+        }
+
+        success, response = self.run_test(
+            "Create Product with Negative Cost (Should Fail)",
+            "POST",
+            "/api/products",
+            422,  # Validation error expected
+            data=product_negative_cost_data
+        )
+        
+        if success:
+            self.log("✅ Product creation correctly rejected with negative cost", "PASS")
+        else:
+            self.log("❌ Product creation should have failed with negative cost", "FAIL")
+
+        # Test 4: Update product cost to create cost history
+        if profit_product_id:
+            updated_cost = 12.00
+            success, response = self.run_test(
+                "Update Product Cost (Create History Entry)",
+                "PUT",
+                f"/api/products/{profit_product_id}",
+                200,
+                data={
+                    "product_cost": updated_cost,
+                    "name": "Updated Profit Test Product"
+                }
+            )
+            
+            if success and response.get('product_cost') == updated_cost:
+                self.log("✅ Product cost updated successfully", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Product cost update failed. Expected: {updated_cost}, Got: {response.get('product_cost')}", "FAIL")
+            self.tests_run += 1
+
+        # Test 5: Get product cost history (Admin-only access)
+        if profit_product_id:
+            success, response = self.run_test(
+                "Get Product Cost History (Admin Access)",
+                "GET",
+                f"/api/products/{profit_product_id}/cost-history",
+                200
+            )
+            
+            if success and isinstance(response, list):
+                self.log(f"✅ Cost history retrieved: {len(response)} entries", "PASS")
+                self.tests_passed += 1
+                
+                # Verify history entries
+                if len(response) >= 2:  # Initial + update
+                    self.log("✅ Multiple cost history entries found (initial + update)", "PASS")
+                    self.tests_passed += 1
+                    
+                    # Check if entries are sorted by effective_from descending
+                    if len(response) > 1:
+                        first_entry = response[0]
+                        second_entry = response[1]
+                        if first_entry.get('cost') == 12.00 and second_entry.get('cost') == 10.50:
+                            self.log("✅ Cost history correctly ordered (newest first)", "PASS")
+                            self.tests_passed += 1
+                        else:
+                            self.log("❌ Cost history ordering incorrect", "FAIL")
+                        self.tests_run += 1
+                else:
+                    self.log("❌ Expected at least 2 cost history entries", "FAIL")
+                self.tests_run += 1
+            else:
+                self.log("❌ Cost history retrieval failed", "FAIL")
+            self.tests_run += 1
+
+        # Test 6: Test role-based access to cost history (should work for admin)
+        # Current user should be admin, so this should work
+        if profit_product_id:
+            success, response = self.run_test(
+                "Cost History Admin Access Verification",
+                "GET",
+                f"/api/products/{profit_product_id}/cost-history",
+                200
+            )
+            
+            if success:
+                self.log("✅ Admin can access cost history", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Admin should be able to access cost history", "FAIL")
+            self.tests_run += 1
+
+        # Test 7: Create sale with cost snapshots
+        if profit_product_id and self.customer_id:
+            sale_with_cost_data = {
+                "customer_id": self.customer_id,
+                "items": [
+                    {
+                        "product_id": profit_product_id,
+                        "product_name": "Profit Test Product",
+                        "product_sku": product_with_cost_data['sku'],
+                        "quantity": 2,
+                        "unit_price": 25.99,
+                        "total_price": 51.98
+                    }
+                ],
+                "subtotal": 51.98,
+                "tax_amount": 4.68,
+                "discount_amount": 0.00,
+                "total_amount": 56.66,
+                "payment_method": "card",
+                "notes": "Sale for profit tracking test"
+            }
+
+            success, response = self.run_test(
+                "Create Sale with Cost Snapshots",
+                "POST",
+                "/api/sales",
+                200,
+                data=sale_with_cost_data
+            )
+            
+            profit_sale_id = None
+            if success and 'id' in response:
+                profit_sale_id = response['id']
+                self.log(f"Profit test sale created with ID: {profit_sale_id}")
+                
+                # Verify cost snapshots are captured
+                items = response.get('items', [])
+                if items and len(items) > 0:
+                    first_item = items[0]
+                    unit_cost_snapshot = first_item.get('unit_cost_snapshot')
+                    if unit_cost_snapshot is not None:
+                        self.log(f"✅ Cost snapshot captured: ${unit_cost_snapshot}", "PASS")
+                        self.tests_passed += 1
+                        
+                        # Should be the current cost (12.00 from update)
+                        if unit_cost_snapshot == 12.00:
+                            self.log("✅ Cost snapshot matches current product cost", "PASS")
+                            self.tests_passed += 1
+                        else:
+                            self.log(f"❌ Cost snapshot mismatch. Expected: 12.00, Got: {unit_cost_snapshot}", "FAIL")
+                        self.tests_run += 1
+                    else:
+                        self.log("❌ Cost snapshot not captured in sale", "FAIL")
+                    self.tests_run += 1
+                else:
+                    self.log("❌ No items found in sale response", "FAIL")
+                    self.tests_run += 1
+
+        # Test 8: Test profit reports (Admin-only)
+        success, response = self.run_test(
+            "Generate Profit Report (Excel - Default)",
+            "GET",
+            "/api/reports/profit",
+            200
+        )
+        
+        if success:
+            self.log("✅ Profit report (Excel) generated successfully", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Profit report (Excel) generation failed", "FAIL")
+        self.tests_run += 1
+
+        # Test 9: Test profit report with date range
+        from datetime import datetime, timedelta
+        start_date = (datetime.now() - timedelta(days=7)).isoformat()
+        end_date = datetime.now().isoformat()
+        
+        success, response = self.run_test(
+            "Generate Profit Report with Date Range (Excel)",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "excel",
+                "start_date": start_date,
+                "end_date": end_date
+            }
+        )
+        
+        if success:
+            self.log("✅ Profit report with date range generated successfully", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Profit report with date range failed", "FAIL")
+        self.tests_run += 1
+
+        # Test 10: Test profit report CSV format
+        success, response = self.run_test(
+            "Generate Profit Report (CSV Format)",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "csv",
+                "start_date": start_date,
+                "end_date": end_date
+            }
+        )
+        
+        if success:
+            self.log("✅ Profit report (CSV) generated successfully", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Profit report (CSV) generation failed", "FAIL")
+        self.tests_run += 1
+
+        # Test 11: Test profit report PDF format (should work or give appropriate message)
+        success, response = self.run_test(
+            "Generate Profit Report (PDF Format)",
+            "GET",
+            "/api/reports/profit",
+            500,  # Expecting 500 due to PDF generation being disabled
+            params={
+                "format": "pdf",
+                "start_date": start_date,
+                "end_date": end_date
+            }
+        )
+        
+        if success:
+            self.log("✅ Profit report (PDF) correctly returns error message", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Profit report (PDF) should return 500 with disabled message", "FAIL")
+        self.tests_run += 1
+
+        # Test 12: Test profit report authentication (without token)
+        original_token = self.token
+        self.token = None
+        
+        success, response = self.run_test(
+            "Profit Report Without Auth (Should Fail)",
+            "GET",
+            "/api/reports/profit",
+            401  # Unauthorized expected
+        )
+        
+        if success:
+            self.log("✅ Profit report correctly requires authentication", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Profit report should require authentication", "FAIL")
+        self.tests_run += 1
+        
+        # Restore token
+        self.token = original_token
+
+        # Test 13: Test invalid date format in profit report
+        success, response = self.run_test(
+            "Profit Report Invalid Date Format (Should Fail)",
+            "GET",
+            "/api/reports/profit",
+            400,  # Bad request expected
+            params={
+                "format": "excel",
+                "start_date": "invalid-date-format"
+            }
+        )
+        
+        if success:
+            self.log("✅ Profit report correctly rejects invalid date format", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Profit report should reject invalid date format", "FAIL")
+        self.tests_run += 1
+
+        # Test 14: Test invalid format parameter
+        success, response = self.run_test(
+            "Profit Report Invalid Format (Should Fail)",
+            "GET",
+            "/api/reports/profit",
+            422,  # Validation error expected
+            params={
+                "format": "invalid_format"
+            }
+        )
+        
+        if success:
+            self.log("✅ Profit report correctly rejects invalid format", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Profit report should reject invalid format", "FAIL")
+        self.tests_run += 1
+
+        # Test 15: Test profit report file headers and MIME types
+        self.test_profit_report_file_headers()
+
+        # Clean up profit test product
+        if profit_product_id:
+            self.run_test(
+                "Delete Profit Test Product",
+                "DELETE",
+                f"/api/products/{profit_product_id}",
+                200
+            )
+
+        self.log("=== PROFIT TRACKING TESTING COMPLETED ===", "INFO")
+        return True
+
+    def test_profit_report_file_headers(self):
+        """Test that profit reports return proper file headers and MIME types"""
+        self.log("Testing Profit Report File Headers", "INFO")
+        
+        # Test Excel file headers
+        url = f"{self.base_url}/api/reports/profit?format=excel"
+        headers = {'Authorization': f'Bearer {self.token}'}
+        
+        try:
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
+                content_type = response.headers.get('content-type', '')
+                content_disposition = response.headers.get('content-disposition', '')
+                
+                self.log(f"Profit Excel Content-Type: {content_type}")
+                self.log(f"Profit Excel Content-Disposition: {content_disposition}")
+                
+                # Check MIME type
+                expected_excel_mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                if expected_excel_mime in content_type:
+                    self.log("✅ Profit Excel MIME type correct", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ Profit Excel MIME type incorrect. Expected: {expected_excel_mime}, Got: {content_type}", "FAIL")
+                
+                # Check filename in Content-Disposition
+                if "attachment" in content_disposition and "profit-report" in content_disposition:
+                    self.log("✅ Profit Excel Content-Disposition header correct", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ Profit Excel Content-Disposition header incorrect: {content_disposition}", "FAIL")
+                
+                self.tests_run += 2
+        except Exception as e:
+            self.log(f"❌ Error testing Profit Excel headers: {str(e)}", "ERROR")
+            self.tests_run += 2
+        
+        # Test CSV file headers
+        url = f"{self.base_url}/api/reports/profit?format=csv"
+        
+        try:
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
+                content_type = response.headers.get('content-type', '')
+                content_disposition = response.headers.get('content-disposition', '')
+                
+                self.log(f"Profit CSV Content-Type: {content_type}")
+                self.log(f"Profit CSV Content-Disposition: {content_disposition}")
+                
+                # Check MIME type
+                if "text/csv" in content_type:
+                    self.log("✅ Profit CSV MIME type correct", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ Profit CSV MIME type incorrect. Expected: text/csv, Got: {content_type}", "FAIL")
+                
+                # Check filename in Content-Disposition
+                if "attachment" in content_disposition and "profit-report" in content_disposition and ".csv" in content_disposition:
+                    self.log("✅ Profit CSV Content-Disposition header correct", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ Profit CSV Content-Disposition header incorrect: {content_disposition}", "FAIL")
+                
+                self.tests_run += 2
+        except Exception as e:
+            self.log(f"❌ Error testing Profit CSV headers: {str(e)}", "ERROR")
+            self.tests_run += 2
+        
+        self.log("Profit Report File Headers Testing Completed", "INFO")
+        return True
+
     def cleanup_test_data(self):
         """Clean up test data"""
         self.log("Cleaning up test data...")
