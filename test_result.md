@@ -399,6 +399,54 @@ test_plan:
   test_all: false
   test_priority: "high_first"
 
+  - task: "NEW PROFIT TRACKING - Product Cost Management"
+    implemented: true
+    working: true
+    file: "backend/routes/products.py, backend/models.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ COMPREHENSIVE PROFIT TRACKING TESTING COMPLETED SUCCESSFULLY: Product Cost Management fully functional. Product cost field now required (validation working - rejects missing/negative costs). Product creation with valid costs working perfectly ($10.50 test passed). Cost validation correctly rejects negative values with 422 error. Product updates create cost history entries when cost changes (tested $10.50 → $12.00 update). All cost management features working as specified."
+
+  - task: "NEW PROFIT TRACKING - Product Cost History"
+    implemented: true
+    working: true
+    file: "backend/routes/products.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ PRODUCT COST HISTORY FULLY FUNCTIONAL: GET /api/products/{product_id}/cost-history endpoint working perfectly with Admin-only access. Cost history shows chronological cost changes (2 entries: initial $10.50 + update $12.00). History correctly ordered by effective_from descending (newest first). Role-based access control working - Admin can access cost history. Cost history entries include all required fields: cost, effective_from, changed_by, notes, created_at."
+
+  - task: "NEW PROFIT TRACKING - Sales Cost Snapshots"
+    implemented: true
+    working: true
+    file: "backend/routes/sales.py, backend/models.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ SALES COST SNAPSHOTS WORKING PERFECTLY: New sales capture unit_cost_snapshot for each item automatically. Sales creation works normally with cost tracking integrated. Cost snapshots stored correctly in sale items (verified $12.00 snapshot captured). SaleItem model updated with unit_cost_snapshot field. Cost snapshots match current product cost at time of sale. Historical cost preservation working for profit calculations."
+
+  - task: "NEW PROFIT TRACKING - Profit Reports (Admin-Only)"
+    implemented: true
+    working: true
+    file: "backend/routes/profit_reports.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ PROFIT REPORTS FULLY FUNCTIONAL: GET /api/reports/profit endpoint working with comprehensive features. Excel export format working perfectly with proper MIME types and headers. CSV export format working with correct formatting. Date range filtering working (last 30 days default, custom ranges supported). Role-based access working (Admin-only access enforced). Reports include KPIs: Gross Sales, COGS, Profit, Total Items. File headers correct: profit-report_YYYY-MM-DD_to_YYYY-MM-DD.xlsx/csv. Error handling working for invalid dates/formats. PDF generation correctly disabled with appropriate error message."
+
 agent_communication:
   - agent: "testing"
     message: "CRITICAL AUTHENTICATION BUG DISCOVERED: The multi-tenant middleware in server.py extracts subdomain from the host header and overrides the business_subdomain from the request body. This causes business admin login to fail because the middleware sets business_subdomain to the external URL subdomain (ed6f9d7f-7152-4de2-a3e7-301ed414aea4) instead of the actual business subdomain (prints-cuts-tagum). The auth logic in routes/auth.py uses the middleware subdomain first, causing business lookup to fail. This is a fundamental architecture issue that blocks all business-specific API testing."
