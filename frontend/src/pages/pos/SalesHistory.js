@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { salesAPI, invoicesAPI, customersAPI } from '../../services/api';
+import GlobalFilter from '../../components/GlobalFilter';
+import useGlobalFilter from '../../hooks/useGlobalFilter';
+import { useCurrency } from '../../context/CurrencyContext';
 import toast from 'react-hot-toast';
 import { 
   ClipboardDocumentListIcon,
