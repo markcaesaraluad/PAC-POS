@@ -2586,6 +2586,11 @@ class POSAPITester:
         self.test_currency_functionality()
         self.log("=== CURRENCY FUNCTIONALITY TESTING COMPLETED ===", "INFO")
 
+        # NEW: PDF Export Functionality Testing
+        self.log("=== STARTING PDF EXPORT FUNCTIONALITY TESTING ===", "INFO")
+        self.test_pdf_export_functionality()
+        self.log("=== PDF EXPORT FUNCTIONALITY TESTING COMPLETED ===", "INFO")
+
         # Cleanup
         self.cleanup_test_data()
 
