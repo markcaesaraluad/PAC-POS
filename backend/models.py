@@ -242,7 +242,7 @@ class Token(BaseModel):
 class ProfitReportFilter(BaseModel):
     start_date: Optional[str] = Field(None, description="Start date in YYYY-MM-DD format")
     end_date: Optional[str] = Field(None, description="End date in YYYY-MM-DD format")
-    format: str = Field("excel", regex="^(excel|csv|pdf)$")
+    format: str = Field("excel", pattern="^(excel|csv|pdf)$")
 
 class ProfitReportData(BaseModel):
     date_time: datetime
