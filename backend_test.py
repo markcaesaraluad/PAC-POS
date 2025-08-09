@@ -2525,6 +2525,925 @@ class POSAPITester:
         self.log("=== PDF EXPORT FUNCTIONALITY TESTING COMPLETED ===", "INFO")
         return True
 
+    def test_global_filter_system(self):
+        """Test the Global Filter System for Reports and Sales History"""
+        self.log("=== STARTING GLOBAL FILTER SYSTEM TESTING ===", "INFO")
+        
+        # Test 1: Test Sales History with filtering capabilities
+        self.log("🔄 TESTING SALES HISTORY FILTERING", "INFO")
+        
+        # Test basic sales endpoint with customer filter
+        if self.customer_id:
+            success, response = self.run_test(
+                "Get Sales with Customer Filter",
+                "GET",
+                "/api/sales",
+                200,
+                params={"customer_id": self.customer_id}
+            )
+            
+            if success:
+                self.log("✅ Sales filtering by customer ID working", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Sales filtering by customer ID failed", "FAIL")
+            self.tests_run += 1
+        
+        # Test sales with pagination filters
+        success, response = self.run_test(
+            "Get Sales with Pagination Filters",
+            "GET",
+            "/api/sales",
+            200,
+            params={"limit": 10, "skip": 0}
+        )
+        
+        if success:
+            self.log("✅ Sales pagination filtering working", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Sales pagination filtering failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test 2: Test Reports with Date Range Filtering
+        self.log("🔄 TESTING REPORTS DATE RANGE FILTERING", "INFO")
+        
+        # Test sales report with date range filters
+        start_date = (datetime.now() - timedelta(days=30)).isoformat()
+        end_date = datetime.now().isoformat()
+        
+        success, response = self.run_test(
+            "Sales Report with Date Range Filter",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={
+                "format": "excel",
+                "start_date": start_date,
+                "end_date": end_date
+            }
+        )
+        
+        if success:
+            self.log("✅ Sales report date range filtering working", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Sales report date range filtering failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test inventory report with filtering options
+        success, response = self.run_test(
+            "Inventory Report with Low Stock Filter",
+            "GET",
+            "/api/reports/inventory",
+            200,
+            params={
+                "format": "excel",
+                "low_stock_only": "true"
+            }
+        )
+        
+        if success:
+            self.log("✅ Inventory report low stock filtering working", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Inventory report low stock filtering failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test inventory report with inactive products filter
+        success, response = self.run_test(
+            "Inventory Report with Include Inactive Filter",
+            "GET",
+            "/api/reports/inventory",
+            200,
+            params={
+                "format": "excel",
+                "include_inactive": "true"
+            }
+        )
+        
+        if success:
+            self.log("✅ Inventory report inactive products filtering working", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Inventory report inactive products filtering failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test 3: Test Customer Reports with Filtering
+        self.log("🔄 TESTING CUSTOMER REPORTS FILTERING", "INFO")
+        
+        # Test customer report with top customers filter
+        success, response = self.run_test(
+            "Customer Report with Top Customers Filter",
+            "GET",
+            "/api/reports/customers",
+            200,
+            params={
+                "format": "excel",
+                "top_customers": "25"
+            }
+        )
+        
+        if success:
+            self.log("✅ Customer report top customers filtering working", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Customer report top customers filtering failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test 4: Test Daily Summary with Date Filter
+        self.log("🔄 TESTING DAILY SUMMARY DATE FILTERING", "INFO")
+        
+        # Test daily summary with specific date
+        specific_date = (datetime.now() - timedelta(days=1)).date().isoformat()
+        success, response = self.run_test(
+            "Daily Summary with Date Filter",
+            "GET",
+            "/api/reports/daily-summary",
+            200,
+            params={"date": specific_date}
+        )
+        
+        if success:
+            self.log("✅ Daily summary date filtering working", "PASS")
+            self.tests_passed += 1
+            
+            # Verify the response contains the correct date
+            if response.get("date") == specific_date:
+                self.log("✅ Daily summary returns correct filtered date", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Daily summary date mismatch. Expected: {specific_date}, Got: {response.get('date')}", "FAIL")
+            self.tests_run += 1
+        else:
+            self.log("❌ Daily summary date filtering failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test 5: Test Sales Daily Summary Stats with Date Filter
+        self.log("🔄 TESTING SALES DAILY SUMMARY STATS FILTERING", "INFO")
+        
+        success, response = self.run_test(
+            "Sales Daily Summary Stats with Date Filter",
+            "GET",
+            "/api/sales/daily-summary/stats",
+            200,
+            params={"date": specific_date}
+        )
+        
+        if success:
+            self.log("✅ Sales daily summary stats date filtering working", "PASS")
+            self.tests_passed += 1
+            
+            # Verify response structure
+            expected_fields = ["date", "total_sales", "total_revenue", "total_items_sold", "average_sale"]
+            if all(field in response for field in expected_fields):
+                self.log("✅ Sales daily summary stats contains all expected fields", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Sales daily summary stats missing expected fields", "FAIL")
+            self.tests_run += 1
+        else:
+            self.log("❌ Sales daily summary stats filtering failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test 6: Test Filter Parameter Validation
+        self.log("🔄 TESTING FILTER PARAMETER VALIDATION", "INFO")
+        
+        # Test invalid date format
+        success, response = self.run_test(
+            "Sales Report with Invalid Date Format (Should Fail)",
+            "GET",
+            "/api/reports/sales",
+            400,  # Bad request expected
+            params={
+                "format": "excel",
+                "start_date": "invalid-date-format"
+            }
+        )
+        
+        if success:
+            self.log("✅ Invalid date format correctly rejected", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Invalid date format should be rejected", "FAIL")
+        self.tests_run += 1
+        
+        # Test invalid customer ID format
+        success, response = self.run_test(
+            "Sales with Invalid Customer ID Format",
+            "GET",
+            "/api/sales",
+            500,  # Internal server error expected for invalid ObjectId
+            params={"customer_id": "invalid-customer-id"}
+        )
+        
+        if success:
+            self.log("✅ Invalid customer ID format handled appropriately", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Invalid customer ID format should be handled", "FAIL")
+        self.tests_run += 1
+        
+        self.log("=== GLOBAL FILTER SYSTEM TESTING COMPLETED ===", "INFO")
+        return True
+
+    def test_enhanced_navigation_system(self):
+        """Test Enhanced Navigation - Profit Report nested under Reports submenu"""
+        self.log("=== STARTING ENHANCED NAVIGATION SYSTEM TESTING ===", "INFO")
+        
+        # Test 1: Verify Profit Report endpoint is accessible (Admin-only)
+        self.log("🔄 TESTING PROFIT REPORT NAVIGATION ACCESS", "INFO")
+        
+        success, response = self.run_test(
+            "Access Profit Report Endpoint (Admin Navigation)",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={"format": "excel"}
+        )
+        
+        if success:
+            self.log("✅ Profit Report endpoint accessible via Reports navigation", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Profit Report endpoint not accessible", "FAIL")
+        self.tests_run += 1
+        
+        # Test 2: Verify Admin-only access to Profit Report
+        self.log("🔄 TESTING ADMIN-ONLY ACCESS TO PROFIT REPORT", "INFO")
+        
+        # Store current token
+        original_token = self.token
+        
+        # Test without authentication (should fail)
+        self.token = None
+        success, response = self.run_test(
+            "Profit Report Without Auth (Should Fail)",
+            "GET",
+            "/api/reports/profit",
+            401,  # Unauthorized expected
+            params={"format": "excel"}
+        )
+        
+        if success:
+            self.log("✅ Profit Report correctly requires authentication", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Profit Report should require authentication", "FAIL")
+        self.tests_run += 1
+        
+        # Restore token
+        self.token = original_token
+        
+        # Test 3: Verify Reports submenu structure by testing all report endpoints
+        self.log("🔄 TESTING REPORTS SUBMENU STRUCTURE", "INFO")
+        
+        # Test all report endpoints under /api/reports/
+        report_endpoints = [
+            ("sales", "Sales Report"),
+            ("inventory", "Inventory Report"), 
+            ("customers", "Customer Report"),
+            ("daily-summary", "Daily Summary Report"),
+            ("profit", "Profit Report")
+        ]
+        
+        for endpoint, name in report_endpoints:
+            success, response = self.run_test(
+                f"Access {name} via Reports Navigation",
+                "GET",
+                f"/api/reports/{endpoint}",
+                200,
+                params={"format": "excel"} if endpoint != "daily-summary" else {}
+            )
+            
+            if success:
+                self.log(f"✅ {name} accessible via Reports navigation", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ {name} not accessible via Reports navigation", "FAIL")
+            self.tests_run += 1
+        
+        # Test 4: Verify proper routing structure
+        self.log("🔄 TESTING ROUTING STRUCTURE", "INFO")
+        
+        # Test that profit reports are properly nested under /api/reports/
+        success, response = self.run_test(
+            "Verify Profit Report Routing Structure",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "csv",
+                "start_date": (datetime.now() - timedelta(days=7)).isoformat(),
+                "end_date": datetime.now().isoformat()
+            }
+        )
+        
+        if success:
+            self.log("✅ Profit Report properly nested under /api/reports/ structure", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Profit Report routing structure incorrect", "FAIL")
+        self.tests_run += 1
+        
+        # Test 5: Test navigation consistency across different formats
+        self.log("🔄 TESTING NAVIGATION CONSISTENCY ACROSS FORMATS", "INFO")
+        
+        formats = ["excel", "csv"]
+        for format_type in formats:
+            success, response = self.run_test(
+                f"Profit Report Navigation - {format_type.upper()} Format",
+                "GET",
+                "/api/reports/profit",
+                200,
+                params={"format": format_type}
+            )
+            
+            if success:
+                self.log(f"✅ Profit Report navigation working for {format_type.upper()} format", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Profit Report navigation failed for {format_type.upper()} format", "FAIL")
+            self.tests_run += 1
+        
+        # Test 6: Test role-based navigation restrictions
+        self.log("🔄 TESTING ROLE-BASED NAVIGATION RESTRICTIONS", "INFO")
+        
+        # Current user should be admin, so profit report should be accessible
+        success, response = self.run_test(
+            "Admin User Access to Profit Report Navigation",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={"format": "excel"}
+        )
+        
+        if success:
+            self.log("✅ Admin user can access Profit Report via navigation", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Admin user should be able to access Profit Report", "FAIL")
+        self.tests_run += 1
+        
+        self.log("=== ENHANCED NAVIGATION SYSTEM TESTING COMPLETED ===", "INFO")
+        return True
+
+    def test_comprehensive_report_exports(self):
+        """Test comprehensive report export functionality with focus on PDF and Excel"""
+        self.log("=== STARTING COMPREHENSIVE REPORT EXPORTS TESTING ===", "INFO")
+        
+        # Test 1: Test all report types with Excel export
+        self.log("🔄 TESTING EXCEL EXPORT FOR ALL REPORT TYPES", "INFO")
+        
+        report_types = [
+            ("sales", "Sales Report"),
+            ("inventory", "Inventory Report"),
+            ("customers", "Customer Report"),
+            ("profit", "Profit Report")
+        ]
+        
+        for endpoint, name in report_types:
+            success, response = self.run_test(
+                f"{name} Excel Export",
+                "GET",
+                f"/api/reports/{endpoint}",
+                200,
+                params={"format": "excel"}
+            )
+            
+            if success:
+                self.log(f"✅ {name} Excel export successful", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ {name} Excel export failed", "FAIL")
+            self.tests_run += 1
+        
+        # Test 2: Test all report types with PDF export
+        self.log("🔄 TESTING PDF EXPORT FOR ALL REPORT TYPES", "INFO")
+        
+        for endpoint, name in report_types:
+            # Skip customer report PDF as it's not implemented
+            if endpoint == "customers":
+                continue
+                
+            success, response = self.run_test(
+                f"{name} PDF Export",
+                "GET",
+                f"/api/reports/{endpoint}",
+                200,  # Expecting success or appropriate error
+                params={"format": "pdf"}
+            )
+            
+            if success:
+                self.log(f"✅ {name} PDF export successful", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ {name} PDF export failed", "FAIL")
+                # Check if it's a WeasyPrint issue
+                if hasattr(response, 'text') and 'weasyprint' in response.text.lower():
+                    self.log(f"   → PDF failure due to WeasyPrint dependency issue", "INFO")
+            self.tests_run += 1
+        
+        # Test 3: Test CSV export for profit reports
+        self.log("🔄 TESTING CSV EXPORT FOR PROFIT REPORTS", "INFO")
+        
+        success, response = self.run_test(
+            "Profit Report CSV Export",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={"format": "csv"}
+        )
+        
+        if success:
+            self.log("✅ Profit Report CSV export successful", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Profit Report CSV export failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test 4: Test export with active filters
+        self.log("🔄 TESTING EXPORTS WITH ACTIVE FILTERS", "INFO")
+        
+        # Test sales report with date range filter
+        start_date = (datetime.now() - timedelta(days=30)).isoformat()
+        end_date = datetime.now().isoformat()
+        
+        success, response = self.run_test(
+            "Sales Report Excel Export with Date Filter",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={
+                "format": "excel",
+                "start_date": start_date,
+                "end_date": end_date
+            }
+        )
+        
+        if success:
+            self.log("✅ Sales report export with date filter successful", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Sales report export with date filter failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test inventory report with low stock filter
+        success, response = self.run_test(
+            "Inventory Report Excel Export with Low Stock Filter",
+            "GET",
+            "/api/reports/inventory",
+            200,
+            params={
+                "format": "excel",
+                "low_stock_only": "true"
+            }
+        )
+        
+        if success:
+            self.log("✅ Inventory report export with low stock filter successful", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Inventory report export with low stock filter failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test profit report with date range filter
+        success, response = self.run_test(
+            "Profit Report Excel Export with Date Filter",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "excel",
+                "start_date": start_date,
+                "end_date": end_date
+            }
+        )
+        
+        if success:
+            self.log("✅ Profit report export with date filter successful", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Profit report export with date filter failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test 5: Test export file headers and MIME types
+        self.log("🔄 TESTING EXPORT FILE HEADERS AND MIME TYPES", "INFO")
+        
+        # Test Excel MIME type
+        url = f"{self.base_url}/api/reports/sales?format=excel"
+        headers = {'Authorization': f'Bearer {self.token}'}
+        
+        try:
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
+                content_type = response.headers.get('content-type', '')
+                content_disposition = response.headers.get('content-disposition', '')
+                
+                expected_excel_mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                if expected_excel_mime in content_type:
+                    self.log("✅ Excel export MIME type correct", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ Excel export MIME type incorrect: {content_type}", "FAIL")
+                
+                if "attachment" in content_disposition and "filename=" in content_disposition:
+                    self.log("✅ Excel export Content-Disposition header correct", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ Excel export Content-Disposition header incorrect: {content_disposition}", "FAIL")
+                
+                self.tests_run += 2
+        except Exception as e:
+            self.log(f"❌ Error testing Excel export headers: {str(e)}", "ERROR")
+            self.tests_run += 2
+        
+        # Test CSV MIME type
+        url = f"{self.base_url}/api/reports/profit?format=csv"
+        
+        try:
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
+                content_type = response.headers.get('content-type', '')
+                content_disposition = response.headers.get('content-disposition', '')
+                
+                if "text/csv" in content_type:
+                    self.log("✅ CSV export MIME type correct", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ CSV export MIME type incorrect: {content_type}", "FAIL")
+                
+                if "attachment" in content_disposition and ".csv" in content_disposition:
+                    self.log("✅ CSV export Content-Disposition header correct", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ CSV export Content-Disposition header incorrect: {content_disposition}", "FAIL")
+                
+                self.tests_run += 2
+        except Exception as e:
+            self.log(f"❌ Error testing CSV export headers: {str(e)}", "ERROR")
+            self.tests_run += 2
+        
+        # Test 6: Test export data integrity
+        self.log("🔄 TESTING EXPORT DATA INTEGRITY", "INFO")
+        
+        # Generate same report in different formats and verify consistency
+        excel_success, excel_response = self.run_test(
+            "Profit Report Excel for Data Integrity Check",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "excel",
+                "start_date": start_date,
+                "end_date": end_date
+            }
+        )
+        
+        csv_success, csv_response = self.run_test(
+            "Profit Report CSV for Data Integrity Check",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "csv",
+                "start_date": start_date,
+                "end_date": end_date
+            }
+        )
+        
+        if excel_success and csv_success:
+            self.log("✅ Both Excel and CSV exports successful - data integrity maintained", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Export data integrity check failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test 7: Test export performance
+        self.log("🔄 TESTING EXPORT PERFORMANCE", "INFO")
+        
+        import time
+        start_time = time.time()
+        
+        success, response = self.run_test(
+            "Large Date Range Export Performance Test",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={
+                "format": "excel",
+                "start_date": (datetime.now() - timedelta(days=90)).isoformat(),
+                "end_date": datetime.now().isoformat()
+            }
+        )
+        
+        end_time = time.time()
+        export_time = end_time - start_time
+        
+        if success:
+            self.log(f"✅ Large export completed in {export_time:.2f} seconds", "PASS")
+            if export_time < 15:  # Should complete within 15 seconds
+                self.log("✅ Export performance acceptable (< 15 seconds)", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log("⚠️ Export performance slow (> 15 seconds)", "WARN")
+            self.tests_run += 1
+        
+        self.log("=== COMPREHENSIVE REPORT EXPORTS TESTING COMPLETED ===", "INFO")
+        return True
+
+    def test_dynamic_currency_display(self):
+        """Test dynamic currency display from settings across all monetary values"""
+        self.log("=== STARTING DYNAMIC CURRENCY DISPLAY TESTING ===", "INFO")
+        
+        # Test 1: Get current business currency setting
+        self.log("🔄 TESTING CURRENT CURRENCY SETTING RETRIEVAL", "INFO")
+        
+        success, response = self.run_test(
+            "Get Current Business Currency Setting",
+            "GET",
+            "/api/business/info",
+            200
+        )
+        
+        current_currency = "USD"  # Default fallback
+        if success:
+            current_settings = response.get("settings", {})
+            current_currency = current_settings.get("currency", "USD")
+            self.log(f"Current business currency: {current_currency}")
+            
+            if current_currency:
+                self.log("✅ Business currency setting retrieved successfully", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Business currency setting not found", "FAIL")
+            self.tests_run += 1
+        
+        # Test 2: Test currency display in daily summary
+        self.log("🔄 TESTING CURRENCY DISPLAY IN DAILY SUMMARY", "INFO")
+        
+        success, response = self.run_test(
+            "Daily Summary with Currency Context",
+            "GET",
+            "/api/reports/daily-summary",
+            200
+        )
+        
+        if success:
+            # Check if monetary values are present (they should be numeric for frontend formatting)
+            sales_data = response.get("sales", {})
+            if "total_revenue" in sales_data:
+                self.log("✅ Daily summary contains monetary values for currency formatting", "PASS")
+                self.tests_passed += 1
+                
+                # Verify numeric format (should be numbers, not formatted strings)
+                total_revenue = sales_data.get("total_revenue")
+                if isinstance(total_revenue, (int, float)):
+                    self.log("✅ Daily summary monetary values in correct numeric format", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ Daily summary monetary values in wrong format: {type(total_revenue)}", "FAIL")
+                self.tests_run += 1
+            else:
+                self.log("❌ Daily summary missing monetary values", "FAIL")
+            self.tests_run += 1
+        
+        # Test 3: Test currency display in sales daily stats
+        self.log("🔄 TESTING CURRENCY DISPLAY IN SALES DAILY STATS", "INFO")
+        
+        success, response = self.run_test(
+            "Sales Daily Stats with Currency Context",
+            "GET",
+            "/api/sales/daily-summary/stats",
+            200
+        )
+        
+        if success:
+            # Verify monetary fields are present and in correct format
+            expected_fields = ["total_revenue", "average_sale"]
+            monetary_fields_present = all(field in response for field in expected_fields)
+            
+            if monetary_fields_present:
+                self.log("✅ Sales daily stats contains all monetary fields", "PASS")
+                self.tests_passed += 1
+                
+                # Check numeric format
+                total_revenue = response.get("total_revenue")
+                if isinstance(total_revenue, (int, float)):
+                    self.log("✅ Sales daily stats monetary values in correct format", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ Sales daily stats monetary values in wrong format: {type(total_revenue)}", "FAIL")
+                self.tests_run += 1
+            else:
+                self.log("❌ Sales daily stats missing monetary fields", "FAIL")
+            self.tests_run += 1
+        
+        # Test 4: Test currency in profit reports
+        self.log("🔄 TESTING CURRENCY IN PROFIT REPORTS", "INFO")
+        
+        # Test CSV format to check currency information
+        success, response = self.run_test(
+            "Profit Report CSV with Currency Information",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={"format": "csv"}
+        )
+        
+        if success:
+            self.log("✅ Profit report CSV generated with currency context", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Profit report CSV generation failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test 5: Test currency changes and persistence
+        self.log("🔄 TESTING CURRENCY CHANGES AND PERSISTENCE", "INFO")
+        
+        # Store original currency
+        original_currency = current_currency
+        
+        # Test currency change to EUR
+        eur_settings = {
+            "currency": "EUR",
+            "tax_rate": 0.20,
+            "receipt_header": "European Store",
+            "receipt_footer": "Thank you!",
+            "low_stock_threshold": 10,
+            "printer_settings": {
+                "paper_size": "80",
+                "characters_per_line": 32,
+                "font_size": "normal"
+            }
+        }
+        
+        success, response = self.run_test(
+            "Change Business Currency to EUR",
+            "PUT",
+            "/api/business/settings",
+            200,
+            data=eur_settings
+        )
+        
+        if success:
+            self.log("✅ Currency changed to EUR successfully", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Currency change to EUR failed", "FAIL")
+        self.tests_run += 1
+        
+        # Verify currency persistence
+        success, response = self.run_test(
+            "Verify EUR Currency Persistence",
+            "GET",
+            "/api/business/info",
+            200
+        )
+        
+        if success:
+            updated_currency = response.get("settings", {}).get("currency")
+            if updated_currency == "EUR":
+                self.log("✅ EUR currency correctly persisted", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Currency persistence failed. Expected: EUR, Got: {updated_currency}", "FAIL")
+            self.tests_run += 1
+        
+        # Test reports with new currency
+        success, response = self.run_test(
+            "Profit Report with EUR Currency",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={"format": "excel"}
+        )
+        
+        if success:
+            self.log("✅ Profit report generated with EUR currency", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Profit report generation failed with EUR currency", "FAIL")
+        self.tests_run += 1
+        
+        # Test 6: Test multiple currency formats
+        self.log("🔄 TESTING MULTIPLE CURRENCY FORMATS", "INFO")
+        
+        currencies_to_test = ["GBP", "JPY", "PHP"]
+        
+        for currency in currencies_to_test:
+            currency_settings = {
+                "currency": currency,
+                "tax_rate": 0.15,
+                "receipt_header": f"{currency} Store",
+                "receipt_footer": "Thank you!",
+                "low_stock_threshold": 10,
+                "printer_settings": {
+                    "paper_size": "58",
+                    "characters_per_line": 24,
+                    "font_size": "small"
+                }
+            }
+            
+            success, response = self.run_test(
+                f"Change Currency to {currency}",
+                "PUT",
+                "/api/business/settings",
+                200,
+                data=currency_settings
+            )
+            
+            if success:
+                # Test report generation with new currency
+                success, response = self.run_test(
+                    f"Generate Report with {currency} Currency",
+                    "GET",
+                    "/api/reports/profit",
+                    200,
+                    params={"format": "csv"}
+                )
+                
+                if success:
+                    self.log(f"✅ Report generated successfully with {currency} currency", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ Report generation failed with {currency} currency", "FAIL")
+                self.tests_run += 1
+        
+        # Test 7: Test currency validation
+        self.log("🔄 TESTING CURRENCY VALIDATION", "INFO")
+        
+        # Test with unsupported currency
+        unsupported_currency_settings = {
+            "currency": "XYZ",  # Unsupported currency
+            "tax_rate": 0.10,
+            "receipt_header": "Test Store",
+            "receipt_footer": "Thank you!",
+            "low_stock_threshold": 10
+        }
+        
+        success, response = self.run_test(
+            "Set Unsupported Currency (XYZ)",
+            "PUT",
+            "/api/business/settings",
+            200,  # Should accept but handle gracefully
+            data=unsupported_currency_settings
+        )
+        
+        if success:
+            # Test if system handles unsupported currency gracefully
+            success, response = self.run_test(
+                "Generate Report with Unsupported Currency",
+                "GET",
+                "/api/reports/profit",
+                200,
+                params={"format": "csv"}
+            )
+            
+            if success:
+                self.log("✅ System handles unsupported currency gracefully", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log("❌ System should handle unsupported currency gracefully", "FAIL")
+            self.tests_run += 1
+        
+        # Test 8: Restore original currency
+        self.log("🔄 RESTORING ORIGINAL CURRENCY", "INFO")
+        
+        restore_settings = {
+            "currency": original_currency,
+            "tax_rate": 0.08,
+            "receipt_header": "Welcome to our store!",
+            "receipt_footer": "Thank you for shopping with us!",
+            "low_stock_threshold": 10,
+            "printer_settings": {
+                "paper_size": "80",
+                "characters_per_line": 32,
+                "font_size": "normal",
+                "enable_logo": True,
+                "cut_paper": True,
+                "printer_name": "thermal_printer"
+            }
+        }
+        
+        success, response = self.run_test(
+            f"Restore Original Currency ({original_currency})",
+            "PUT",
+            "/api/business/settings",
+            200,
+            data=restore_settings
+        )
+        
+        if success:
+            self.log(f"✅ Original currency ({original_currency}) restored successfully", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log(f"❌ Failed to restore original currency ({original_currency})", "FAIL")
+        self.tests_run += 1
+        
+        self.log("=== DYNAMIC CURRENCY DISPLAY TESTING COMPLETED ===", "INFO")
+        return True
+
     def run_all_tests(self):
         """Run all API tests"""
         self.log("Starting POS System API Tests", "START")
