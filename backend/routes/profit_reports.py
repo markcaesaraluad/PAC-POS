@@ -380,7 +380,7 @@ async def generate_profit_csv(profit_data: List[Dict], business: Dict, start_dt:
     
     return output.getvalue().encode('utf-8'), filename
 
-async def generate_profit_pdf(profit_data: List[Dict], business: Dict, start_dt: datetime, end_dt: datetime, summary: Dict) -> tuple[bytes, str]:
+async def generate_profit_pdf(profit_data: List[Dict], business: Dict, start_dt: datetime, end_dt: datetime, summary: Dict, currency: str = 'USD') -> tuple[bytes, str]:
     """Generate PDF profit report"""
     
     from jinja2 import Template
