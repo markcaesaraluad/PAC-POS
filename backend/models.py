@@ -93,7 +93,7 @@ class ProductUpdate(BaseModel):
     barcode: Optional[str] = None
     category_id: Optional[str] = None
     price: Optional[float] = None
-    cost: Optional[float] = None
+    product_cost: Optional[float] = Field(None, ge=0, description="Product cost for profit tracking")
     quantity: Optional[int] = None
     image_url: Optional[str] = None
 
