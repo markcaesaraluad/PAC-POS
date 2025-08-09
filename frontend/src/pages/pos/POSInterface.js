@@ -497,6 +497,13 @@ const POSInterface = () => {
     handleTransaction();
   };
 
+  // Receipt collapse toggle
+  const toggleReceiptCollapse = () => {
+    const newState = !receiptCollapsed;
+    setReceiptCollapsed(newState);
+    localStorage.setItem('pos-receipt-collapsed', JSON.stringify(newState));
+  };
+
   const handleTransaction = async () => {
     if (cart.length === 0) {
       toast.error('Cart is empty');
