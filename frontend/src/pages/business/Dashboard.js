@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { productsAPI, categoriesAPI, salesAPI } from '../../services/api';
 import { Link } from 'react-router-dom';
 import { 
