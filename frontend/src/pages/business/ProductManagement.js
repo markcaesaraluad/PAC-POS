@@ -345,14 +345,23 @@ const ProductManagement = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex items-center justify-end space-x-2">
                             <button
+                              onClick={() => openProductDetailModal(product)}
+                              className="text-blue-600 hover:text-blue-900"
+                              title="View Details & Cost History"
+                            >
+                              <EyeIcon className="h-4 w-4" />
+                            </button>
+                            <button
                               onClick={() => openEditModal(product)}
                               className="text-primary-600 hover:text-primary-900"
+                              title="Edit Product"
                             >
                               <PencilSquareIcon className="h-4 w-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteProduct(product.id, product.name)}
                               className="text-red-600 hover:text-red-900"
+                              title="Delete Product"
                             >
                               <TrashIcon className="h-4 w-4" />
                             </button>
