@@ -75,7 +75,19 @@ const BusinessSettings = () => {
   useEffect(() => {
     loadBusinessInfo();
     checkPrinterStatus();
+    loadAvailablePrinters();
   }, []);
+
+  const loadAvailablePrinters = () => {
+    const printers = enhancedPrinterService.getAvailablePrinters();
+    setAvailablePrinters(printers);
+    
+    // Set default printer if none selected
+    if (!selectedPrinter && printers.length > 0) {
+      const defaultPrinter = printers.find(p => p.recommended) || printers[0];
+      setSelectedPrinter(defaultPrinter);
+    }
+  };
 
   const checkPrinterStatus = () => {
     const status = bluetoothPrinterService.getStatus();
