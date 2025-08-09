@@ -217,7 +217,7 @@ const ProductManagement = () => {
       {/* Search and Filters */}
       <div className="card">
         <div className="card-body">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="form-label">Search Products</label>
               <div className="relative">
@@ -258,15 +258,6 @@ const ProductManagement = () => {
                 />
                 <span className="ml-2 text-sm text-gray-700">Low stock only</span>
               </label>
-            </div>
-
-            <div className="flex items-end">
-              <button
-                onClick={handleSearch}
-                className="btn-primary w-full"
-              >
-                Search
-              </button>
             </div>
           </div>
         </div>
