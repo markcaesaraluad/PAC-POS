@@ -423,8 +423,6 @@ const POSInterface = () => {
   const closePaymentModal = () => {
     setShowPaymentModal(false);
     setModalReceivedAmount('');
-    // Return focus to barcode input after closing modal
-    focusSearchInput();
   };
 
   const calculateModalChange = () => {
