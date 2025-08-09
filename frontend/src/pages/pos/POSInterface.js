@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { productsAPI, categoriesAPI, customersAPI, salesAPI, invoicesAPI } from '../../services/api';
 import bluetoothPrinterService from '../../services/bluetoothPrinter';
 import { useAuth } from '../../context/AuthContext';
