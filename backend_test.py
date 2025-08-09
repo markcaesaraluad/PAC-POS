@@ -2344,6 +2344,11 @@ class POSAPITester:
         self.test_comprehensive_profit_integration()
         self.log("=== COMPREHENSIVE PROFIT INTEGRATION TESTING COMPLETED ===", "INFO")
 
+        # NEW: Currency Functionality Testing
+        self.log("=== STARTING CURRENCY FUNCTIONALITY TESTING ===", "INFO")
+        self.test_currency_functionality()
+        self.log("=== CURRENCY FUNCTIONALITY TESTING COMPLETED ===", "INFO")
+
         # Cleanup
         self.cleanup_test_data()
 
