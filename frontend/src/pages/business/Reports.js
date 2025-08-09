@@ -17,11 +17,6 @@ const Reports = () => {
   const { formatAmount } = useCurrency();
   const [dailySummary, setDailySummary] = useState(null);
   const [categories, setCategories] = useState([]);
-  const [reportData, setReportData] = useState({
-    sales: [],
-    inventory: [],
-    customers: []
-  });
   const [downloadLoading, setDownloadLoading] = useState({});
 
   // Filter configuration for GlobalFilter component
@@ -64,20 +59,13 @@ const Reports = () => {
       date_preset: 'last30days'
     },
     persistenceKey: 'reports-filter',
-    enablePersistence: true,
-    onFilterChange: handleFilterChange
+    enablePersistence: true
   });
 
-  // Handle filter changes and refresh data
-  function handleFilterChange(newFilters) {
-    loadReportsData(newFilters);
-  }
-
-  // Load categories for filter dropdown
+  // Load initial data
   useEffect(() => {
     loadCategories();
     loadDailySummary();
-    loadReportsData();
   }, []);
 
   const loadCategories = async () => {
@@ -98,28 +86,14 @@ const Reports = () => {
     }
   };
 
-  const loadReportsData = async (customFilters = null) => {
-    try {
-      const queryParams = generateQueryParams(customFilters || filters);
-      
-      // Load filtered data for preview tables (if JSON format is supported)
-      // Otherwise just keep empty arrays for now
-      setReportData({
-        sales: [],
-        inventory: [],
-        customers: []
-      });
-    } catch (error) {
-      console.error('Failed to load reports data:', error);
-      setReportData({ sales: [], inventory: [], customers: [] });
-    }
-  };
-
-  const downloadReport = async (reportType, format = 'excel', params = {}) => {
+  const downloadReport = async (reportType, format = 'excel') => {
     const loadingKey = `${reportType}-${format}`;
     
     try {
       setDownloadLoading(prev => ({ ...prev, [loadingKey]: true }));
+      
+      // Get current filter parameters
+      const params = generateQueryParams();
       
       let response;
       let defaultFilename;
@@ -127,42 +101,32 @@ const Reports = () => {
       switch (reportType) {
         case 'sales':
           response = await reportsAPI.getSalesReport({ format, ...params });
-          defaultFilename = `sales_report.${format === 'excel' ? 'xlsx' : 'pdf'}`;
+          defaultFilename = `sales_report.${format === 'excel' ? 'xlsx' : format}`;
           break;
         case 'inventory':
           response = await reportsAPI.getInventoryReport({ format, ...params });
-          defaultFilename = `inventory_report.${format === 'excel' ? 'xlsx' : 'pdf'}`;
+          defaultFilename = `inventory_report.${format === 'excel' ? 'xlsx' : format}`;
           break;
         case 'customers':
           response = await reportsAPI.getCustomersReport({ format, ...params });
-          defaultFilename = `customers_report.${format === 'excel' ? 'xlsx' : 'pdf'}`;
+          defaultFilename = `customers_report.${format === 'excel' ? 'xlsx' : format}`;
           break;
         default:
           throw new Error('Invalid report type');
       }
 
-      // Extract filename from response headers
-      const contentDisposition = response.headers['content-disposition'];
-      let filename = defaultFilename;
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
-        if (filenameMatch) {
-          filename = filenameMatch[1];
-        }
-      }
-
-      // Create download link
+      // Handle file download
       const blob = new Blob([response.data]);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = filename;
+      link.download = defaultFilename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      toast.success(`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} report downloaded successfully`);
+      toast.success(`${reportType.charAt(0).toUpperCase() + reportType.slice(1)} report downloaded successfully with current filters applied`);
     } catch (error) {
       console.error('Download error:', error);
       const errorMessage = error.response?.data?.detail || `Failed to download ${reportType} report`;
@@ -180,7 +144,7 @@ const Reports = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Reports & Analytics</h1>
-        <p className="text-gray-600">Generate and download business reports</p>
+        <p className="text-gray-600">Generate and download business reports with advanced filtering</p>
       </div>
 
       {/* Daily Summary */}
@@ -236,129 +200,133 @@ const Reports = () => {
         </div>
       )}
 
-      {/* Sales Reports */}
-      <div className="card">
-        <div className="card-body">
-          <div className="flex items-center mb-6">
-            <ChartBarIcon className="h-6 w-6 text-blue-500 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-900">Sales Reports</h2>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-4">
-              <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-gray-900 mb-2">Sales Analysis</h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  Comprehensive sales report with product performance, revenue analysis, and customer insights.
-                </p>
-                <div className="flex space-x-2">
-                  <button
-                    onClick={() => downloadReport('sales', 'excel')}
-                    disabled={isDownloading('sales', 'excel')}
-                    className="btn-primary text-sm"
-                  >
-                    {isDownloading('sales', 'excel') ? 'Generating...' : 'Download Excel'}
-                  </button>
-                  <button
-                    onClick={() => downloadReport('sales', 'pdf')}
-                    disabled={isDownloading('sales', 'pdf')}
-                    className="btn-secondary text-sm"
-                  >
-                    {isDownloading('sales', 'pdf') ? 'Generating...' : 'Download PDF'}
-                  </button>
+      {/* Global Filter Component */}
+      <GlobalFilter
+        filters={filterConfig}
+        onFilterChange={setFilters}
+        loading={filterLoading}
+        initialFilters={filters}
+        className="mb-6"
+        searchPlaceholder="Search reports by customer, product, SKU..."
+      />
+
+      {/* Reports Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        
+        {/* Sales Reports */}
+        <div className="card">
+          <div className="card-body">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <ChartBarIcon className="h-6 w-6 text-blue-500 mr-3" />
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">Sales Reports</h3>
+                  <p className="text-sm text-gray-500">Detailed sales transaction reports</p>
                 </div>
               </div>
             </div>
 
-            <div className="border-t pt-4">
-              <h4 className="font-medium text-gray-900 mb-2">Custom Date Range</h4>
-              <div className="flex space-x-2 items-end">
-                <div>
-                  <label className="block text-xs text-gray-600 mb-1">Start Date</label>
-                  <input
-                    type="date"
-                    id="sales-start-date"
-                    className="input text-sm"
-                    defaultValue={new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-600 mb-1">End Date</label>
-                  <input
-                    type="date"
-                    id="sales-end-date"
-                    className="input text-sm"
-                    defaultValue={new Date().toISOString().split('T')[0]}
-                  />
-                </div>
+            <div className="space-y-3">
+              <p className="text-sm text-gray-600">
+                {hasActiveFilters ? 'Filtered sales data' : 'All sales data'} • Export with current filters applied
+              </p>
+              
+              <div className="flex space-x-2">
                 <button
-                  onClick={() => {
-                    const startDate = document.getElementById('sales-start-date').value;
-                    const endDate = document.getElementById('sales-end-date').value;
-                    if (startDate && endDate) {
-                      downloadReport('sales', 'excel', { start_date: startDate, end_date: endDate });
-                    } else {
-                      toast.error('Please select both start and end dates');
-                    }
-                  }}
-                  className="btn-primary text-sm"
+                  onClick={() => downloadReport('sales', 'excel')}
+                  disabled={isDownloading('sales', 'excel')}
+                  className="btn-primary text-sm flex items-center"
                 >
-                  Generate
+                  <ArrowDownTrayIcon className="h-4 w-4 mr-1" />
+                  {isDownloading('sales', 'excel') ? 'Downloading...' : 'Download Excel'}
+                </button>
+                <button
+                  onClick={() => downloadReport('sales', 'pdf')}
+                  disabled={isDownloading('sales', 'pdf')}
+                  className="btn-secondary text-sm flex items-center"
+                >
+                  <ArrowDownTrayIcon className="h-4 w-4 mr-1" />
+                  {isDownloading('sales', 'pdf') ? 'Downloading...' : 'Download PDF'}
                 </button>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Inventory Reports */}
-      <div className="card">
-        <div className="card-body">
-          <div className="flex items-center mb-6">
-            <CubeIcon className="h-6 w-6 text-purple-500 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-900">Inventory Reports</h2>
-          </div>
-          
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-medium text-gray-900 mb-2">Stock Overview</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Complete inventory report with current stock levels, values, and low stock alerts.
+        {/* Inventory Reports */}
+        <div className="card">
+          <div className="card-body">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <CubeIcon className="h-6 w-6 text-green-500 mr-3" />
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">Inventory Reports</h3>
+                  <p className="text-sm text-gray-500">Stock levels and product analytics</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-sm text-gray-600">
+                {hasActiveFilters ? 'Filtered inventory data' : 'All inventory data'} • Export with current filters applied
               </p>
+              
               <div className="flex space-x-2">
                 <button
                   onClick={() => downloadReport('inventory', 'excel')}
                   disabled={isDownloading('inventory', 'excel')}
-                  className="btn-primary text-sm"
+                  className="btn-primary text-sm flex items-center"
                 >
-                  {isDownloading('inventory', 'excel') ? 'Generating...' : 'Download Excel'}
+                  <ArrowDownTrayIcon className="h-4 w-4 mr-1" />
+                  {isDownloading('inventory', 'excel') ? 'Downloading...' : 'Download Excel'}
                 </button>
                 <button
                   onClick={() => downloadReport('inventory', 'pdf')}
                   disabled={isDownloading('inventory', 'pdf')}
-                  className="btn-secondary text-sm"
+                  className="btn-secondary text-sm flex items-center"
                 >
-                  {isDownloading('inventory', 'pdf') ? 'Generating...' : 'Download PDF'}
+                  <ArrowDownTrayIcon className="h-4 w-4 mr-1" />
+                  {isDownloading('inventory', 'pdf') ? 'Downloading...' : 'Download PDF'}
                 </button>
               </div>
             </div>
+          </div>
+        </div>
 
-            <div className="border-t pt-4">
-              <h4 className="font-medium text-gray-900 mb-2">Filtered Reports</h4>
+        {/* Customer Reports */}
+        <div className="card">
+          <div className="card-body">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <UsersIcon className="h-6 w-6 text-purple-500 mr-3" />
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">Customer Reports</h3>
+                  <p className="text-sm text-gray-500">Customer analytics and purchase history</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-sm text-gray-600">
+                {hasActiveFilters ? 'Filtered customer data' : 'All customer data'} • Export with current filters applied
+              </p>
+              
               <div className="flex space-x-2">
                 <button
-                  onClick={() => downloadReport('inventory', 'excel', { low_stock_only: true })}
-                  disabled={isDownloading('inventory', 'excel')}
-                  className="btn-outline text-sm"
+                  onClick={() => downloadReport('customers', 'excel')}
+                  disabled={isDownloading('customers', 'excel')}
+                  className="btn-primary text-sm flex items-center"
                 >
-                  Low Stock Only
+                  <ArrowDownTrayIcon className="h-4 w-4 mr-1" />
+                  {isDownloading('customers', 'excel') ? 'Downloading...' : 'Download Excel'}
                 </button>
                 <button
-                  onClick={() => downloadReport('inventory', 'excel', { include_inactive: true })}
-                  disabled={isDownloading('inventory', 'excel')}
-                  className="btn-outline text-sm"
+                  onClick={() => downloadReport('customers', 'pdf')}
+                  disabled={isDownloading('customers', 'pdf')}
+                  className="btn-secondary text-sm flex items-center"
                 >
-                  Include Inactive
+                  <ArrowDownTrayIcon className="h-4 w-4 mr-1" />
+                  {isDownloading('customers', 'pdf') ? 'Downloading...' : 'Download PDF'}
                 </button>
               </div>
             </div>
@@ -366,56 +334,27 @@ const Reports = () => {
         </div>
       </div>
 
-      {/* Customer Reports */}
-      <div className="card">
-        <div className="card-body">
-          <div className="flex items-center mb-6">
-            <UsersIcon className="h-6 w-6 text-orange-500 mr-2" />
-            <h2 className="text-lg font-semibold text-gray-900">Customer Reports</h2>
-          </div>
-          
-          <div>
-            <h3 className="font-medium text-gray-900 mb-2">Customer Analysis</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Customer database with purchase history, spending patterns, and loyalty metrics.
-            </p>
-            <div className="flex space-x-2">
+      {/* Filter Status */}
+      {hasActiveFilters && (
+        <div className="card">
+          <div className="card-body">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="flex items-center text-sm text-blue-600">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full mr-2"></div>
+                  Filters are active - All exports will include filtered data only
+                </div>
+              </div>
               <button
-                onClick={() => downloadReport('customers', 'excel')}
-                disabled={isDownloading('customers', 'excel')}
-                className="btn-primary text-sm"
+                onClick={clearFilters}
+                className="text-sm text-gray-500 hover:text-gray-700"
               >
-                {isDownloading('customers', 'excel') ? 'Generating...' : 'Download Excel'}
-              </button>
-              <button
-                onClick={() => downloadReport('customers', 'excel', { top_customers: 25 })}
-                disabled={isDownloading('customers', 'excel')}
-                className="btn-outline text-sm"
-              >
-                Top 25 Customers
+                Clear all filters
               </button>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Additional Info */}
-      <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-        <div className="flex">
-          <div className="ml-3">
-            <h3 className="text-sm font-medium text-blue-800">Report Information</h3>
-            <div className="mt-2 text-sm text-blue-700">
-              <ul className="list-disc pl-5 space-y-1">
-                <li>Excel reports include multiple sheets with detailed analysis and charts</li>
-                <li>PDF reports provide formatted summaries ideal for printing and sharing</li>
-                <li>All reports are generated with your current business data</li>
-                <li>Date ranges can be customized for sales reports</li>
-                <li>Inventory reports include low stock alerts and product valuations</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
