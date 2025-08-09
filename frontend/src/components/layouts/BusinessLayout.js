@@ -76,18 +76,60 @@ const BusinessLayout = ({ children }) => {
         <nav className="mt-8 px-4">
           <div className="space-y-2">
             {navigation.map((item) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`flex items-center px-4 py-2 text-sm font-medium rounded-md ${
-                  isActive(item.href)
-                    ? 'bg-primary-100 text-primary-700'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <item.icon className="mr-3 h-5 w-5" />
-                {item.name}
-              </Link>
+              <div key={item.name}>
+                {/* Main Navigation Item */}
+                {item.submenu ? (
+                  // Navigation item with submenu
+                  <div className="space-y-1">
+                    <Link
+                      to={item.href}
+                      className={`flex items-center px-4 py-2 text-sm font-medium rounded-md ${
+                        isActive(item.href)
+                          ? 'bg-primary-100 text-primary-700'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <item.icon className="mr-3 h-5 w-5" />
+                      {item.name}
+                    </Link>
+                    
+                    {/* Submenu Items */}
+                    <div className="ml-8 space-y-1">
+                      {item.submenu.map((subItem) => {
+                        // Check if admin-only item should be shown
+                        if (subItem.adminOnly && !isAdmin) return null;
+                        
+                        return (
+                          <Link
+                            key={subItem.name}
+                            to={subItem.href}
+                            className={`flex items-center px-3 py-1.5 text-xs font-medium rounded-md ${
+                              isActive(subItem.href)
+                                ? 'bg-primary-50 text-primary-600'
+                                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                            }`}
+                          >
+                            {subItem.name}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  // Regular navigation item without submenu
+                  <Link
+                    to={item.href}
+                    className={`flex items-center px-4 py-2 text-sm font-medium rounded-md ${
+                      isActive(item.href)
+                        ? 'bg-primary-100 text-primary-700'
+                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    }`}
+                  >
+                    <item.icon className="mr-3 h-5 w-5" />
+                    {item.name}
+                  </Link>
+                )}
+              </div>
             ))}
           </div>
           
