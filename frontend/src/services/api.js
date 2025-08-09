@@ -67,6 +67,7 @@ export const productsAPI = {
   updateProduct: (id, productData) => apiClient.put(`/api/products/${id}`, productData),
   deleteProduct: (id) => apiClient.delete(`/api/products/${id}`),
   getProductByBarcode: (barcode) => apiClient.get(`/api/products/barcode/${barcode}`),
+  getProductCostHistory: (id) => apiClient.get(`/api/products/${id}/cost-history`),
 };
 
 export const categoriesAPI = {
