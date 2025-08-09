@@ -21,6 +21,7 @@ import CustomerManagement from './pages/business/CustomerManagement';
 import UserManagement from './pages/business/UserManagement';
 import BusinessSettings from './pages/business/Settings';
 import Reports from './pages/business/Reports';
+import ProfitReport from './pages/business/ProfitReport';
 
 // POS Pages
 import POSInterface from './pages/pos/POSInterface';
