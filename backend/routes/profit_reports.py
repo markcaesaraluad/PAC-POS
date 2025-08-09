@@ -263,15 +263,19 @@ async def generate_profit_excel(profit_data: List[Dict], business: Dict, start_d
         # Summary KPIs
         summary_sheet.write(row, 0, 'Gross Sales:', header_format)
         summary_sheet.write(row, 1, summary['gross_sales'], money_format)
+        summary_sheet.write(row, 2, f"({currency})")
         
         summary_sheet.write(row + 1, 0, 'Cost of Goods Sold:', header_format)
         summary_sheet.write(row + 1, 1, summary['cost_of_goods_sold'], money_format)
+        summary_sheet.write(row + 1, 2, f"({currency})")
         
         summary_sheet.write(row + 2, 0, 'Profit:', header_format)
         summary_sheet.write(row + 2, 1, summary['profit'], money_format)
+        summary_sheet.write(row + 2, 2, f"({currency})")
         
         summary_sheet.write(row + 3, 0, 'Total Items:', header_format)
         summary_sheet.write(row + 3, 1, summary['total_items'])
+        summary_sheet.write(row + 3, 2, "units")
         
         # Detailed data sheet
         if profit_data:
