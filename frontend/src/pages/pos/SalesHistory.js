@@ -15,6 +15,7 @@ import {
 import LoadingSpinner, { InlineSpinner } from '../../components/LoadingSpinner';
 
 const SalesHistory = () => {
+  const { formatAmount } = useCurrency();
   const [activeTab, setActiveTab] = useState('sales');
   const [sales, setSales] = useState([]);
   const [invoices, setInvoices] = useState([]);
@@ -26,6 +27,50 @@ const SalesHistory = () => {
   const [showReprintModal, setShowReprintModal] = useState(false);
   const [reprintTransaction, setReprintTransaction] = useState(null);
   const [reprintPreview, setReprintPreview] = useState(null);
+
+  // Filter configuration for GlobalFilter component
+  const filterConfig = {
+    status: {
+      label: 'Status',
+      placeholder: 'All statuses',
+      options: [
+        { value: 'completed', label: 'Completed' },
+        { value: 'pending', label: 'Pending' },
+        { value: 'cancelled', label: 'Cancelled' },
+      ],
+    },
+    payment_method: {
+      label: 'Payment Method',
+      placeholder: 'All payment methods',
+      options: [
+        { value: 'cash', label: 'Cash' },
+        { value: 'card', label: 'Card' },
+        { value: 'bank_transfer', label: 'Bank Transfer' },
+      ],
+    },
+  };
+
+  // Global filter hook for managing filter state
+  const {
+    filters,
+    setFilters,
+    loading: filterLoading,
+    generateQueryParams,
+    clearFilters,
+    hasActiveFilters
+  } = useGlobalFilter({
+    defaultFilters: {
+      date_preset: 'last7days'
+    },
+    persistenceKey: 'sales-history-filter',
+    enablePersistence: true,
+    onFilterChange: handleFilterChange
+  });
+
+  // Handle filter changes and refresh data
+  function handleFilterChange(newFilters) {
+    fetchData(newFilters);
+  }
 
   useEffect(() => {
     fetchData();
