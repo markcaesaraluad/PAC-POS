@@ -67,8 +67,17 @@ const POSInterface = () => {
   const [taxRate, setTaxRate] = useState(0);
   const [discountAmount, setDiscountAmount] = useState(0);
   
-  // Receipt preview state
-  const [showReceiptPreview, setShowReceiptPreview] = useState(false);
+  // Receipt preview state with responsive defaults and session persistence
+  const getInitialReceiptToggle = () => {
+    const saved = sessionStorage.getItem('pos-receipt-preview-expanded');
+    if (saved !== null) {
+      return JSON.parse(saved);
+    }
+    // Default: expanded on desktop (>= 768px), collapsed on mobile
+    return window.innerWidth >= 768;
+  };
+  
+  const [showReceiptPreview, setShowReceiptPreview] = useState(getInitialReceiptToggle());
   const [previewReceiptData, setPreviewReceiptData] = useState(null);
   
   // Hold orders state
