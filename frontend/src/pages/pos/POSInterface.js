@@ -18,6 +18,7 @@ import {
   BanknotesIcon,
   CreditCardIcon,
   EyeIcon,
+  EyeSlashIcon,
   ClockIcon
 } from '@heroicons/react/24/outline';
 import LoadingSpinner, { InlineSpinner } from '../../components/LoadingSpinner';
