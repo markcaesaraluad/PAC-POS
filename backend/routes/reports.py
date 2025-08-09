@@ -11,7 +11,7 @@ router = APIRouter()
 
 @router.get("/sales")
 async def generate_sales_report(
-    format: str = Query("excel", regex="^(excel|pdf)$"),
+    format: str = Query("excel", pattern="^(excel|pdf)$"),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     current_user=Depends(get_any_authenticated_user)
