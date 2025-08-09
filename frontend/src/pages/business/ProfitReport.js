@@ -268,7 +268,7 @@ const ProfitReport = () => {
                 <p className="text-2xl font-bold text-orange-600">Available in Export</p>
                 <p className="text-xs text-gray-500">Total cost of sold items</p>
               </div>
-              <TrendingDownIcon className="h-8 w-8 text-orange-500" />
+              <ArrowTrendingDownIcon className="h-8 w-8 text-orange-500" />
             </div>
           </div>
         </div>
