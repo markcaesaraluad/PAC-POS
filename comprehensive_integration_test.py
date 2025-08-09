@@ -539,7 +539,7 @@ class ComprehensiveIntegrationTester:
                 "receipt_footer": "Test",
                 "low_stock_threshold": 10,
                 "printer_settings": {"paper_size": "80"}
-            }),
+            }, None),
             
             # Invalid product cost
             ("Invalid Product Cost", "POST", "/api/products", 422, {
@@ -548,7 +548,7 @@ class ComprehensiveIntegrationTester:
                 "price": 10.00,
                 "product_cost": -5.00,  # Negative cost should fail
                 "quantity": 10
-            }),
+            }, None),
             
             # Invalid report parameters
             ("Invalid Report Date", "GET", "/api/reports/sales", 400, None, {
