@@ -32,6 +32,9 @@ const ProductManagement = () => {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [viewingProduct, setViewingProduct] = useState(null);
+  const [costHistory, setCostHistory] = useState([]);
+  const [loadingCostHistory, setLoadingCostHistory] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
