@@ -281,7 +281,7 @@ const ProfitReport = () => {
                 <p className="text-2xl font-bold text-blue-600">Available in Export</p>
                 <p className="text-xs text-gray-500">Gross Sales - COGS</p>
               </div>
-              <TrendingUpIcon className="h-8 w-8 text-blue-500" />
+              <ArrowTrendingUpIcon className="h-8 w-8 text-blue-500" />
             </div>
           </div>
         </div>
