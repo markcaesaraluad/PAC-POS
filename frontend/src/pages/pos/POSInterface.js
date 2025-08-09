@@ -503,11 +503,6 @@ const POSInterface = () => {
       setReceivedAmount(''); // Reset payment values
       setPaymentMethod('cash');
       
-      // Auto-focus search input after transaction
-      setTimeout(() => {
-        focusSearchInput();
-      }, 1000);
-      
       // Refresh product data to update stock
       fetchData();
       
