@@ -110,6 +110,14 @@ const BusinessSettings = () => {
           ...(businessSettings.printer_settings || {})
         }
       }));
+
+      // Load selected printer if saved
+      if (businessSettings.selected_printer) {
+        const savedPrinter = availablePrinters.find(p => p.id === businessSettings.selected_printer);
+        if (savedPrinter) {
+          setSelectedPrinter(savedPrinter);
+        }
+      }
     } catch (error) {
       toast.error('Failed to load business information');
       console.error('Error loading business info:', error);
@@ -142,33 +150,7 @@ const BusinessSettings = () => {
     }
   };
 
-  const handlePrinterTest = async () => {
-    try {
-      setSaving(true);
-      
-      if (!bluetoothPrinterService.isBluetoothSupported()) {
-        toast.error('Bluetooth is not supported in this browser. Use Chrome, Edge, or Opera.');
-        return;
-      }
-
-      if (!printerStatus?.isConnected) {
-        toast.info('Connecting to POS-9200-L printer...');
-        const result = await bluetoothPrinterService.connect();
-        toast.success(result.message);
-        checkPrinterStatus();
-      }
-
-      // Test printer
-      const testResult = await bluetoothPrinterService.testPrinter();
-      toast.success(testResult.message);
-      
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      setSaving(false);
-    }
-  };
-
+  // Enhanced Printer Functions
   const handleEnhancedPrinterTest = async (testType = 'connection') => {
     if (!selectedPrinter) {
       toast.error('Please select a printer first');
@@ -234,51 +216,29 @@ const BusinessSettings = () => {
     }));
   };
 
-  const handleTestReceipt = async () => {
+  // Legacy Bluetooth Functions (for backward compatibility)
+  const handlePrinterTest = async () => {
     try {
       setSaving(true);
       
-      if (!printerStatus?.isConnected) {
-        toast.error('Please connect to printer first');
+      if (!bluetoothPrinterService.isBluetoothSupported()) {
+        toast.error('Bluetooth is not supported in this browser. Use Chrome, Edge, or Opera.');
         return;
       }
 
-      // Generate sample receipt data
-      const sampleReceipt = {
-        business: businessInfo,
-        transaction_number: 'TEST-001',
-        transaction_type: 'SALE',
-        timestamp: new Date(),
-        customer: { name: 'Sample Customer' },
-        items: [
-          {
-            product_name: 'Sample Product',
-            quantity: 2,
-            unit_price: 10.00,
-            total_price: 20.00
-          },
-          {
-            product_name: 'Test Item',
-            quantity: 1,
-            unit_price: 5.50,
-            total_price: 5.50
-          }
-        ],
-        subtotal: 25.50,
-        tax_amount: 2.55,
-        discount_amount: 0.00,
-        total_amount: 28.05,
-        payment_method: 'cash',
-        received_amount: 30.00,
-        change_amount: 1.95,
-        notes: 'Sample receipt for testing'
-      };
+      if (!printerStatus?.isConnected) {
+        toast.info('Connecting to POS-9200-L printer...');
+        const result = await bluetoothPrinterService.connect();
+        toast.success(result.message);
+        checkPrinterStatus();
+      }
 
-      await bluetoothPrinterService.printReceipt(sampleReceipt, settings.printer_settings);
-      toast.success('Sample receipt printed successfully');
+      // Test printer
+      const testResult = await bluetoothPrinterService.testPrinter();
+      toast.success(testResult.message);
       
     } catch (error) {
-      toast.error(`Print failed: ${error.message}`);
+      toast.error(error.message);
     } finally {
       setSaving(false);
     }
@@ -403,69 +363,17 @@ const BusinessSettings = () => {
     }
   };
 
-  const handleEnhancedPrinterTest = async (testType = 'connection') => {
-    if (!selectedPrinter) {
-      toast.error('Please select a printer first');
-      return;
+  const getPrinterIcon = (type) => {
+    switch (type) {
+      case 'local':
+        return ComputerDesktopIcon;
+      case 'network':
+        return WifiIcon;
+      case 'bluetooth':
+        return DevicePhoneMobileIcon;
+      default:
+        return PrinterIcon;
     }
-
-    try {
-      setPrinterTestLoading(true);
-      setPrinterTestResults(null);
-      
-      // Configure the enhanced printer service
-      await enhancedPrinterService.configurePrinter(selectedPrinter);
-      
-      // Run the test
-      const result = await enhancedPrinterService.testPrint(testType);
-      
-      setPrinterTestResults(result);
-      toast.success(result.message);
-      
-    } catch (error) {
-      const errorMessage = error.message || 'Printer test failed';
-      toast.error(errorMessage);
-      setPrinterTestResults({
-        success: false,
-        message: errorMessage,
-        error: true
-      });
-    } finally {
-      setPrinterTestLoading(false);
-    }
-  };
-
-  const handlePrinterSelection = async (printer) => {
-    setSelectedPrinter(printer);
-    setSettings(prev => ({
-      ...prev,
-      printer_type: printer.type,
-      selected_printer: printer.id,
-      printer_settings: {
-        ...prev.printer_settings,
-        ...printer.settings
-      }
-    }));
-
-    // Clear previous test results
-    setPrinterTestResults(null);
-    
-    try {
-      await enhancedPrinterService.configurePrinter(printer);
-      toast.success(`Selected ${printer.name}`);
-    } catch (error) {
-      console.error('Failed to configure printer:', error);
-    }
-  };
-
-  const handleNetworkPrinterSettings = (key, value) => {
-    setSettings(prev => ({
-      ...prev,
-      printer_settings: {
-        ...prev.printer_settings,
-        [key]: value
-      }
-    }));
   };
 
   if (loading) {
@@ -476,7 +384,7 @@ const BusinessSettings = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Business Settings</h1>
-        <p className="text-gray-600">Configure your business and receipt printer settings</p>
+        <p className="text-gray-600">Configure your business and enhanced receipt printer options</p>
       </div>
 
       {/* Business Info Card */}
@@ -619,89 +527,207 @@ const BusinessSettings = () => {
           </div>
         )}
 
-        {/* Printer Settings */}
+        {/* Enhanced Printer Settings */}
         {activeTab === 'printer' && (
-          <div className="card">
-            <div className="card-body space-y-6">
-              <div className="flex items-center space-x-2">
-                <PrinterIcon className="h-6 w-6 text-gray-600" />
-                <h3 className="text-lg font-medium text-gray-900">Printer Configuration</h3>
+          <div className="space-y-6">
+            {/* Printer Selection */}
+            <div className="card">
+              <div className="card-body">
+                <div className="flex items-center space-x-2 mb-6">
+                  <PrinterIcon className="h-6 w-6 text-gray-600" />
+                  <h3 className="text-lg font-medium text-gray-900">Enhanced Printer Options</h3>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                  {availablePrinters.map((printer) => {
+                    const IconComponent = getPrinterIcon(printer.type);
+                    return (
+                      <div
+                        key={printer.id}
+                        className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                          selectedPrinter?.id === printer.id
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                        onClick={() => handlePrinterSelection(printer)}
+                      >
+                        <div className="flex items-start space-x-3">
+                          <IconComponent className="h-8 w-8 text-gray-600 mt-1 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center space-x-2">
+                              <h4 className="font-medium text-gray-900 truncate">{printer.name}</h4>
+                              {printer.recommended && (
+                                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                  Recommended
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-500 mb-2">{printer.description}</p>
+                            <div className="flex flex-wrap gap-1">
+                              {printer.capabilities?.map((cap) => (
+                                <span key={cap} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                                  {cap}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                          {selectedPrinter?.id === printer.id && (
+                            <CheckCircleIcon className="h-5 w-5 text-green-500 flex-shrink-0" />
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Network Printer Settings */}
+                {selectedPrinter?.type === 'network' && (
+                  <div className="border-t pt-6">
+                    <h4 className="font-medium text-gray-900 mb-4">Network Configuration</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          IP Address
+                        </label>
+                        <input
+                          type="text"
+                          value={settings.printer_settings.ip_address}
+                          onChange={(e) => handleNetworkPrinterSettings('ip_address', e.target.value)}
+                          className="input w-full"
+                          placeholder="192.168.1.100"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Port
+                        </label>
+                        <input
+                          type="number"
+                          value={settings.printer_settings.port}
+                          onChange={(e) => handleNetworkPrinterSettings('port', parseInt(e.target.value))}
+                          className="input w-full"
+                          placeholder="9100"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Test Print Section */}
+                <div className="border-t pt-6">
+                  <h4 className="font-medium text-gray-900 mb-4">Test Print Functions</h4>
+                  
+                  <div className="flex flex-wrap gap-3 mb-4">
+                    <button
+                      onClick={() => handleEnhancedPrinterTest('connection')}
+                      disabled={printerTestLoading || !selectedPrinter}
+                      className="btn-primary text-sm"
+                    >
+                      <PrinterIcon className="h-4 w-4 mr-2" />
+                      {printerTestLoading ? 'Testing...' : 'Test Connection'}
+                    </button>
+                    <button
+                      onClick={() => handleEnhancedPrinterTest('formatting')}
+                      disabled={printerTestLoading || !selectedPrinter}
+                      className="btn-secondary text-sm"
+                    >
+                      📝 Test Formatting
+                    </button>
+                    <button
+                      onClick={() => handleEnhancedPrinterTest('receipt')}
+                      disabled={printerTestLoading || !selectedPrinter}
+                      className="btn-secondary text-sm"
+                    >
+                      🧾 Test Receipt
+                    </button>
+                  </div>
+
+                  {/* Test Results */}
+                  {printerTestResults && (
+                    <div className={`p-3 rounded-lg border ${
+                      printerTestResults.success 
+                        ? 'bg-green-50 border-green-200' 
+                        : 'bg-red-50 border-red-200'
+                    }`}>
+                      <div className="flex items-start space-x-2">
+                        {printerTestResults.success ? (
+                          <CheckCircleIcon className="h-5 w-5 text-green-500 mt-0.5" />
+                        ) : (
+                          <XCircleIcon className="h-5 w-5 text-red-500 mt-0.5" />
+                        )}
+                        <div>
+                          <p className={`text-sm font-medium ${
+                            printerTestResults.success ? 'text-green-800' : 'text-red-800'
+                          }`}>
+                            {printerTestResults.message}
+                          </p>
+                          {printerTestResults.details && (
+                            <p className={`text-xs mt-1 ${
+                              printerTestResults.success ? 'text-green-600' : 'text-red-600'
+                            }`}>
+                              {printerTestResults.details}
+                            </p>
+                          )}
+                          {printerTestResults.simulated && (
+                            <p className="text-xs mt-1 text-blue-600">
+                              ⚠️ This was a simulated test. Actual network printing requires backend configuration.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <p className="text-xs text-gray-500 mt-3">
+                    Selected Printer: <strong>{selectedPrinter?.name || 'None'}</strong>
+                    {selectedPrinter?.type && (
+                      <> • Type: <strong>{selectedPrinter.type}</strong></>
+                    )}
+                  </p>
+                </div>
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Paper Size
-                  </label>
-                  <select
-                    value={settings.printer_settings.paper_size}
-                    onChange={(e) => updatePrinterSetting('paper_size', e.target.value)}
-                    className="input w-full"
-                  >
-                    {paperSizes.map(size => (
-                      <option key={size.value} value={size.value}>
-                        {size.label} ({size.chars} characters per line)
-                      </option>
-                    ))}
-                  </select>
+            </div>
+
+            {/* Basic Printer Configuration */}
+            <div className="card">
+              <div className="card-body space-y-6">
+                <h4 className="font-medium text-gray-900">Basic Configuration</h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Paper Size
+                    </label>
+                    <select
+                      value={settings.printer_settings.paper_size}
+                      onChange={(e) => updatePrinterSetting('paper_size', e.target.value)}
+                      className="input w-full"
+                    >
+                      {paperSizes.map(size => (
+                        <option key={size.value} value={size.value}>
+                          {size.label} ({size.chars} characters per line)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Font Size
+                    </label>
+                    <select
+                      value={settings.printer_settings.font_size}
+                      onChange={(e) => updatePrinterSetting('font_size', e.target.value)}
+                      className="input w-full"
+                    >
+                      <option value="small">Small</option>
+                      <option value="normal">Normal</option>
+                      <option value="large">Large</option>
+                    </select>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Characters Per Line
-                  </label>
-                  <input
-                    type="number"
-                    min="20"
-                    max="80"
-                    value={settings.printer_settings.characters_per_line}
-                    onChange={(e) => updatePrinterSetting('characters_per_line', parseInt(e.target.value))}
-                    className="input w-full"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Font Size
-                  </label>
-                  <select
-                    value={settings.printer_settings.font_size}
-                    onChange={(e) => updatePrinterSetting('font_size', e.target.value)}
-                    className="input w-full"
-                  >
-                    <option value="small">Small</option>
-                    <option value="normal">Normal</option>
-                    <option value="large">Large</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Printer Name
-                  </label>
-                  <input
-                    type="text"
-                    value={settings.printer_settings.printer_name}
-                    onChange={(e) => updatePrinterSetting('printer_name', e.target.value)}
-                    className="input w-full"
-                    placeholder="default"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">Print Options</h4>
                 <div className="space-y-3">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={settings.printer_settings.enable_logo}
-                      onChange={(e) => updatePrinterSetting('enable_logo', e.target.checked)}
-                      className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Print business logo on receipts</span>
-                  </label>
-
                   <label className="flex items-center">
                     <input
                       type="checkbox"
@@ -710,16 +736,6 @@ const BusinessSettings = () => {
                       className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
                     />
                     <span className="ml-2 text-sm text-gray-700">Auto-print receipts after sale completion</span>
-                  </label>
-
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={settings.printer_settings.enable_barcode}
-                      onChange={(e) => updatePrinterSetting('enable_barcode', e.target.checked)}
-                      className="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Print barcode/QR code on receipts</span>
                   </label>
 
                   <label className="flex items-center">
@@ -742,97 +758,6 @@ const BusinessSettings = () => {
                     <span className="ml-2 text-sm text-gray-700">Open cash drawer after printing</span>
                   </label>
                 </div>
-              </div>
-
-              <div className="bg-blue-50 p-4 rounded-md">
-                <div className="flex">
-                  <div className="ml-3">
-                    <h4 className="text-sm font-medium text-blue-800">Printer Setup Tips</h4>
-                    <div className="mt-2 text-sm text-blue-700">
-                      <ul className="list-disc pl-5 space-y-1">
-                        <li>58mm printers are common for small receipts (24 characters/line)</li>
-                        <li>80mm printers provide more space for detailed receipts (32 characters/line)</li>
-                        <li>Test print after changing settings to ensure proper formatting</li>
-                        <li>Enable auto-cut for cleaner receipt presentation</li>
-                        <li>Auto-print saves time by printing immediately after each sale</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Printer Test Section */}
-              <div className="border-t pt-4">
-                <h4 className="font-medium text-gray-900 mb-3">Bluetooth Printer (POS-9200-L)</h4>
-                
-                {/* Printer Status */}
-                <div className="bg-gray-50 p-3 rounded-lg mb-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <span className={`w-3 h-3 rounded-full mr-2 ${
-                        printerStatus?.isConnected ? 'bg-green-500' : 'bg-red-500'
-                      }`}></span>
-                      <span className="text-sm font-medium">
-                        {printerStatus?.isConnected ? 'Connected' : 'Disconnected'}
-                      </span>
-                    </div>
-                    <div className="text-xs text-gray-600">
-                      {printerStatus?.device?.name || 'No device'}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Connection Controls */}
-                <div className="flex space-x-2 mb-4">
-                  {!printerStatus?.isConnected ? (
-                    <button
-                      onClick={handleConnectPrinter}
-                      disabled={saving}
-                      className="btn-primary text-sm"
-                    >
-                      🔗 Connect Printer
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleDisconnectPrinter}
-                      disabled={saving}
-                      className="btn-secondary text-sm"
-                    >
-                      ❌ Disconnect
-                    </button>
-                  )}
-                </div>
-
-                {/* Test Controls */}
-                <div className="flex space-x-2">
-                  <button
-                    onClick={handlePrinterTest}
-                    disabled={saving}
-                    className="btn-primary text-sm"
-                  >
-                    <PrinterIcon className="h-4 w-4 mr-2" />
-                    {saving ? 'Testing...' : 'Test Connection'}
-                  </button>
-                  <button
-                    onClick={handleTestReceipt}
-                    disabled={saving || !printerStatus?.isConnected}
-                    className="btn-secondary text-sm"
-                  >
-                    📄 Print Sample
-                  </button>
-                </div>
-                
-                <p className="text-xs text-gray-500 mt-2">
-                  Connect to POS-9200-L thermal printer via Bluetooth for receipt printing
-                </p>
-                
-                {!bluetoothPrinterService.isBluetoothSupported() && (
-                  <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
-                    <p className="text-xs text-yellow-800">
-                      ⚠️ Bluetooth not supported. Use Chrome, Edge, or Opera browser.
-                    </p>
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -894,11 +819,11 @@ Follow us on social media @ourstore"
                   </div>
                   <div className="space-y-1">
                     <div className="flex justify-between">
-                      <span>Item Name</span>
+                      <span>Sample Item</span>
                       <span>$10.00</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Another Item</span>
+                      <span>Test Product</span>
                       <span>$5.50</span>
                     </div>
                     <div className="border-t pt-1 mt-2">
