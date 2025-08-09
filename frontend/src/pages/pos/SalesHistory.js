@@ -314,8 +314,8 @@ const SalesHistory = () => {
                         </button>
                         <button
                           onClick={() => {
-                            setSelectedItem(invoice);
-                            setShowDetailModal(true);
+                            // TODO: Implement detail modal
+                            toast.info('Detail view not yet implemented');
                           }}
                           className="text-blue-600 hover:text-blue-900"
                           title="View Details"
