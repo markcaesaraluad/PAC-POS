@@ -636,7 +636,7 @@ const POSInterface = () => {
 
   const generatePDFContent = (receiptData) => {
     // Simplified PDF generation (in production, use a proper PDF library)
-    return `Receipt: ${receiptData.transaction_number}\nDate: ${receiptData.timestamp.toLocaleString()}\nTotal: $${receiptData.total_amount.toFixed(2)}`;
+    return `Receipt: ${receiptData.transaction_number}\nDate: ${receiptData.timestamp.toLocaleString()}\nTotal: ${formatAmount(receiptData.total_amount)}`;
   };
 
   const totals = calculateTotals();
