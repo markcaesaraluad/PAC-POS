@@ -194,8 +194,18 @@ const SalesHistory = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Sales History</h1>
-        <p className="text-gray-600">View and manage your transaction history</p>
+        <p className="text-gray-600">View and manage your transaction history with advanced filtering</p>
       </div>
+
+      {/* Global Filter Component */}
+      <GlobalFilter
+        filters={filterConfig}
+        onFilterChange={setFilters}
+        loading={filterLoading}
+        initialFilters={filters}
+        className="mb-6"
+        searchPlaceholder="Search by sale #, customer name, product..."
+      />
 
       {/* Tabs */}
       <div className="border-b border-gray-200">
