@@ -237,3 +237,28 @@ class Token(BaseModel):
     token_type: str
     user: UserResponse
     business: Optional[BusinessResponse] = None
+
+# Profit Report Models
+class ProfitReportFilter(BaseModel):
+    start_date: Optional[str] = Field(None, description="Start date in YYYY-MM-DD format")
+    end_date: Optional[str] = Field(None, description="End date in YYYY-MM-DD format")
+    format: str = Field("excel", regex="^(excel|csv|pdf)$")
+
+class ProfitReportData(BaseModel):
+    date_time: datetime
+    invoice_id: str
+    item_name: str
+    item_sku: str
+    quantity: int
+    unit_price: float
+    unit_cost: Optional[float] = None
+    line_profit: float
+    line_total: float
+
+class ProfitReportSummary(BaseModel):
+    gross_sales: float
+    cost_of_goods_sold: float
+    profit: float
+    total_items: int
+    start_date: str
+    end_date: str
