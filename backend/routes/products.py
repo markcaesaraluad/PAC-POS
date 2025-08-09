@@ -283,7 +283,7 @@ async def update_product(
         barcode=updated_product.get("barcode"),
         category_id=str(updated_product["category_id"]) if updated_product.get("category_id") else None,
         price=updated_product["price"],
-        cost=updated_product.get("cost"),
+        product_cost=updated_product.get("product_cost"),
         quantity=updated_product["quantity"],
         image_url=updated_product.get("image_url"),
         is_active=updated_product.get("is_active", True),
