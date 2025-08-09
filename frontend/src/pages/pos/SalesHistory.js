@@ -76,19 +76,35 @@ const SalesHistory = () => {
     fetchData();
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = async (customFilters = null) => {
     try {
+      setLoading(true);
+      
+      // Get filter parameters
+      const queryParams = generateQueryParams(customFilters || filters);
+      
+      // Ensure we're fetching completed transactions by default
+      const params = {
+        ...queryParams,
+        status: queryParams.status || 'completed' // Default to completed transactions
+      };
+
       const [salesResponse, invoicesResponse, customersResponse] = await Promise.all([
-        salesAPI.getSales(),
-        invoicesAPI.getInvoices(),
+        salesAPI.getSales(params),
+        invoicesAPI.getInvoices(params),
         customersAPI.getCustomers()
       ]);
-      setSales(salesResponse.data);
-      setInvoices(invoicesResponse.data);
-      setCustomers(customersResponse.data);
+      
+      setSales(Array.isArray(salesResponse.data) ? salesResponse.data : []);
+      setInvoices(Array.isArray(invoicesResponse.data) ? invoicesResponse.data : []);
+      setCustomers(Array.isArray(customersResponse.data) ? customersResponse.data : []);
     } catch (error) {
       console.error('Failed to fetch data:', error);
-      toast.error('Failed to load transaction history');
+      toast.error('Failed to load sales history');
+      // Set empty arrays on error
+      setSales([]);
+      setInvoices([]);
+      setCustomers([]);
     } finally {
       setLoading(false);
     }
