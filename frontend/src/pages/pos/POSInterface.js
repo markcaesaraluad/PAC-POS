@@ -92,11 +92,13 @@ const POSInterface = () => {
     if (saved) {
       setHeldOrders(JSON.parse(saved));
     }
+  }, []);
 
-    // Enhanced barcode scanner listener
+  // Separate useEffect for barcode scanner to avoid dependency issues
+  useEffect(() => {
+    if (!scannerActive) return;
+
     const handleKeyDown = (event) => {
-      if (!scannerActive) return;
-      
       const currentTime = Date.now();
       const timeDiff = currentTime - lastBarcodeTime;
       
@@ -145,7 +147,7 @@ const POSInterface = () => {
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [scannerActive, lastBarcodeTime, barcodeBuffer]);
+  }, [scannerActive, lastBarcodeTime, barcodeBuffer, handleBarcodeScanned]);
 
   // Auto-focus after transactions - removed auto-focus
   useEffect(() => {
