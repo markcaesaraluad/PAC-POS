@@ -1115,111 +1115,113 @@ const POSInterface = () => {
           </div>
         </div>
         
-        <div className="flex-1 overflow-y-auto p-3">
-          {showReceiptPreview && previewReceiptData ? (
-            <div className="bg-white border rounded-lg p-4 font-mono text-xs">
-              {/* Receipt Header */}
-              <div className="text-center border-b pb-2 mb-3">
-                <h2 className="font-bold text-sm">{previewReceiptData.business?.name || 'BUSINESS NAME'}</h2>
-                <p className="text-xs">{previewReceiptData.business?.address || 'Business Address'}</p>
-                <p className="text-xs">{previewReceiptData.business?.contact_email}</p>
-                <p className="text-xs">{previewReceiptData.business?.phone}</p>
-              </div>
-
-              {/* Transaction Details */}
-              <div className="border-b pb-2 mb-2">
-                <p>Receipt: {previewReceiptData.transaction_number}</p>
-                <p>Date: {previewReceiptData.timestamp.toLocaleString()}</p>
-                {previewReceiptData.customer && (
-                  <p>Customer: {previewReceiptData.customer.name}</p>
-                )}
-                <p>Cashier: Staff</p>
-              </div>
-
-              {/* Items */}
-              <div className="border-b pb-2 mb-2">
-                {previewReceiptData.items.map((item, index) => (
-                  <div key={index} className="flex justify-between mb-1">
-                    <div>
-                      <p className="truncate">{item.product_name}</p>
-                      <p className="text-xs text-gray-600">
-                        {item.quantity} x {formatAmount(item.unit_price)}
-                      </p>
-                    </div>
-                    <p>{formatAmount(item.total_price)}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Totals */}
-              <div className="border-b pb-2 mb-2">
-                <div className="flex justify-between">
-                  <span>Subtotal:</span>
-                  <span>{formatAmount(previewReceiptData.subtotal)}</span>
+        {!receiptCollapsed && (
+          <div className="flex-1 overflow-y-auto p-3">
+            {showReceiptPreview && previewReceiptData ? (
+              <div className="bg-white border rounded-lg p-4 font-mono text-xs">
+                {/* Receipt Header */}
+                <div className="text-center border-b pb-2 mb-3">
+                  <h2 className="font-bold text-sm">{previewReceiptData.business?.name || 'BUSINESS NAME'}</h2>
+                  <p className="text-xs">{previewReceiptData.business?.address || 'Business Address'}</p>
+                  <p className="text-xs">{previewReceiptData.business?.contact_email}</p>
+                  <p className="text-xs">{previewReceiptData.business?.phone}</p>
                 </div>
-                {parseFloat(previewReceiptData.tax_amount) > 0 && (
-                  <div className="flex justify-between">
-                    <span>Tax:</span>
-                    <span>{formatAmount(previewReceiptData.tax_amount)}</span>
-                  </div>
-                )}
-                {parseFloat(previewReceiptData.discount_amount) > 0 && (
-                  <div className="flex justify-between">
-                    <span>Discount:</span>
-                    <span>-{formatAmount(previewReceiptData.discount_amount)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between font-bold border-t pt-1">
-                  <span>TOTAL:</span>
-                  <span>{formatAmount(previewReceiptData.total_amount)}</span>
+
+                {/* Transaction Details */}
+                <div className="border-b pb-2 mb-2">
+                  <p>Receipt: {previewReceiptData.transaction_number}</p>
+                  <p>Date: {previewReceiptData.timestamp.toLocaleString()}</p>
+                  {previewReceiptData.customer && (
+                    <p>Customer: {previewReceiptData.customer.name}</p>
+                  )}
+                  <p>Cashier: Staff</p>
                 </div>
-                {transactionMode === 'sale' && paymentMethod === 'cash' && (
-                  <>
-                    <div className="flex justify-between">
-                      <span>Paid:</span>
-                      <span>${previewReceiptData.received_amount}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Change:</span>
-                      <span>${previewReceiptData.change_amount}</span>
-                    </div>
-                  </>
-                )}
-              </div>
 
-              {/* Footer */}
-              <div className="text-center text-xs">
-                <p>Thank you for your business!</p>
-                {previewReceiptData.notes && (
-                  <p className="mt-2 text-gray-600">Note: {previewReceiptData.notes}</p>
-                )}
-              </div>
+                {/* Items */}
+                <div className="border-b pb-2 mb-2">
+                  {previewReceiptData.items.map((item, index) => (
+                    <div key={index} className="flex justify-between mb-1">
+                      <div>
+                        <p className="truncate">{item.product_name}</p>
+                        <p className="text-xs text-gray-600">
+                          {item.quantity} x {formatAmount(item.unit_price)}
+                        </p>
+                      </div>
+                      <p>{formatAmount(item.total_price)}</p>
+                    </div>
+                  ))}
+                </div>
 
-              {/* Print Actions */}
-              <div className="mt-4 pt-4 border-t space-y-2">
-                <button 
-                  onClick={() => handlePrintReceipt()}
-                  className="w-full btn-primary text-xs py-2"
-                >
-                  <PrinterIcon className="h-3 w-3 mr-1 inline" />
-                  Print to POS-9200-L
-                </button>
-                <button 
-                  onClick={() => handleSavePDF()}
-                  className="w-full btn-secondary text-xs py-1"
-                >
-                  Save as PDF
-                </button>
+                {/* Totals */}
+                <div className="border-b pb-2 mb-2">
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>{formatAmount(previewReceiptData.subtotal)}</span>
+                  </div>
+                  {parseFloat(previewReceiptData.tax_amount) > 0 && (
+                    <div className="flex justify-between">
+                      <span>Tax:</span>
+                      <span>{formatAmount(previewReceiptData.tax_amount)}</span>
+                    </div>
+                  )}
+                  {parseFloat(previewReceiptData.discount_amount) > 0 && (
+                    <div className="flex justify-between">
+                      <span>Discount:</span>
+                      <span>-{formatAmount(previewReceiptData.discount_amount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-bold border-t pt-1">
+                    <span>TOTAL:</span>
+                    <span>{formatAmount(previewReceiptData.total_amount)}</span>
+                  </div>
+                  {transactionMode === 'sale' && paymentMethod === 'cash' && (
+                    <>
+                      <div className="flex justify-between">
+                        <span>Paid:</span>
+                        <span>${previewReceiptData.received_amount}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Change:</span>
+                        <span>${previewReceiptData.change_amount}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className="text-center text-xs">
+                  <p>Thank you for your business!</p>
+                  {previewReceiptData.notes && (
+                    <p className="mt-2 text-gray-600">Note: {previewReceiptData.notes}</p>
+                  )}
+                </div>
+
+                {/* Print Actions */}
+                <div className="mt-4 pt-4 border-t space-y-2">
+                  <button 
+                    onClick={() => handlePrintReceipt()}
+                    className="w-full btn-primary text-xs py-2"
+                  >
+                    <PrinterIcon className="h-3 w-3 mr-1 inline" />
+                    Print to POS-9200-L
+                  </button>
+                  <button 
+                    onClick={() => handleSavePDF()}
+                    className="w-full btn-secondary text-xs py-1"
+                  >
+                    Save as PDF
+                  </button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="text-center py-20">
-              <PrinterIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <p className="text-gray-500 text-xs">Receipt preview will appear here</p>
-              <p className="text-xs text-gray-400">Add items and click Preview</p>
-            </div>
-          )}
-        </div>
+            ) : (
+              <div className="text-center py-20">
+                <PrinterIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <p className="text-gray-500 text-xs">Receipt preview will appear here</p>
+                <p className="text-xs text-gray-400">Add items and click Preview</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Payment Modal */}
