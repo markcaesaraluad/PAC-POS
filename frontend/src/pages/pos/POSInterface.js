@@ -1182,6 +1182,146 @@ const POSInterface = () => {
           )}
         </div>
       </div>
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-auto">
+            {/* Modal Header */}
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">Complete Payment</h3>
+              <button
+                onClick={closePaymentModal}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4 space-y-4">
+              {/* Transaction Summary */}
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="flex justify-between items-center text-sm text-gray-600 mb-1">
+                  <span>Subtotal:</span>
+                  <span>${totals.subtotal}</span>
+                </div>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between items-center text-sm text-green-600 mb-1">
+                    <span>Discount:</span>
+                    <span>-${discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center text-lg font-bold text-gray-900 pt-2 border-t">
+                  <span>Total:</span>
+                  <span>${totals.total}</span>
+                </div>
+              </div>
+
+              {/* Payment Method Selection */}
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-700">Payment Method</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setModalPaymentMethod('cash')}
+                    className={`p-3 rounded-lg border-2 flex items-center justify-center transition-colors ${
+                      modalPaymentMethod === 'cash' 
+                        ? 'border-primary-500 bg-primary-50 text-primary-700' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <BanknotesIcon className="h-5 w-5 mr-2" />
+                    Cash
+                  </button>
+                  <button
+                    onClick={() => setModalPaymentMethod('card')}
+                    className={`p-3 rounded-lg border-2 flex items-center justify-center transition-colors ${
+                      modalPaymentMethod === 'card' 
+                        ? 'border-primary-500 bg-primary-50 text-primary-700' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <CreditCardIcon className="h-5 w-5 mr-2" />
+                    Card
+                  </button>
+                </div>
+              </div>
+
+              {/* Cash Payment Input */}
+              {modalPaymentMethod === 'cash' && (
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium text-gray-700">Amount Received</label>
+                  <input
+                    type="number"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-primary-500 focus:border-primary-500 text-right text-lg"
+                    placeholder="0.00"
+                    value={modalReceivedAmount}
+                    onChange={(e) => setModalReceivedAmount(e.target.value)}
+                    step="0.01"
+                    min="0"
+                    autoFocus
+                  />
+                  
+                  {/* Change Calculation */}
+                  {modalReceivedAmount && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-green-800">Change Due:</span>
+                        <span className="text-lg font-bold text-green-800">
+                          ${calculateModalChange().toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Quick Amount Buttons */}
+                  <div className="grid grid-cols-4 gap-2">
+                    {[10, 20, 50, 100].map((amount) => (
+                      <button
+                        key={amount}
+                        onClick={() => setModalReceivedAmount(amount.toString())}
+                        className="px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50"
+                      >
+                        ${amount}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Card Payment Message */}
+              {modalPaymentMethod === 'card' && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div className="flex items-center">
+                    <CreditCardIcon className="h-5 w-5 text-blue-500 mr-2" />
+                    <span className="text-sm text-blue-800">Card payment - no change required</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex space-x-3 p-4 border-t">
+              <button
+                onClick={closePaymentModal}
+                className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmPayment}
+                disabled={modalPaymentMethod === 'cash' && (!modalReceivedAmount || parseFloat(modalReceivedAmount) < parseFloat(totals.total))}
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-lg hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                {modalPaymentMethod === 'cash' 
+                  ? `Confirm Payment - $${modalReceivedAmount || '0.00'}` 
+                  : `Confirm Card Payment - $${totals.total}`
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
