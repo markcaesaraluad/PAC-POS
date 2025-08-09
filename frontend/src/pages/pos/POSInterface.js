@@ -404,6 +404,13 @@ const POSInterface = () => {
     toast.success('Order resumed');
   };
 
+  // Toggle receipt preview with session persistence
+  const toggleReceiptPreview = () => {
+    const newState = !showReceiptPreview;
+    setShowReceiptPreview(newState);
+    sessionStorage.setItem('pos-receipt-preview-expanded', JSON.stringify(newState));
+  };
+
   const generateReceiptPreview = () => {
     const totals = calculateTotals();
     const receiptData = {
