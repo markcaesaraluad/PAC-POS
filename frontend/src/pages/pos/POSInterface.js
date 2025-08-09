@@ -396,7 +396,6 @@ const POSInterface = () => {
     setHeldOrders(updated);
     localStorage.setItem('pos-held-orders', JSON.stringify(updated));
     
-    setSelectedHeldOrder(null);
     toast.success('Order resumed');
   };
 
