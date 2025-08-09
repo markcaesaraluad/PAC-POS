@@ -996,12 +996,12 @@ const POSInterface = () => {
               {discountAmount > 0 && (
                 <div className="flex justify-between text-green-600">
                   <span>Discount:</span>
-                  <span>-${discountAmount.toFixed(2)}</span>
+                  <span>-{formatAmount(discountAmount)}</span>
                 </div>
               )}
               <div className="flex justify-between font-bold text-sm pt-1 border-t">
                 <span>Total:</span>
-                <span>${totals.total}</span>
+                <span>{formatAmount(totals.total)}</span>
               </div>
             </div>
 
