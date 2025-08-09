@@ -664,9 +664,9 @@ const ProductManagement = () => {
                             {index < costHistory.length - 1 && (
                               <div className="text-xs">
                                 {record.cost > costHistory[index + 1].cost ? (
-                                  <span className="text-red-600">↑ +${(record.cost - costHistory[index + 1].cost).toFixed(2)}</span>
+                                  <span className="text-red-600">↑ +{formatAmount(record.cost - costHistory[index + 1].cost)}</span>
                                 ) : record.cost < costHistory[index + 1].cost ? (
-                                  <span className="text-green-600">↓ -${(costHistory[index + 1].cost - record.cost).toFixed(2)}</span>
+                                  <span className="text-green-600">↓ -{formatAmount(costHistory[index + 1].cost - record.cost)}</span>
                                 ) : (
                                   <span className="text-gray-500">No change</span>
                                 )}
