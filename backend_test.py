@@ -3446,7 +3446,7 @@ class POSAPITester:
 
     def run_all_tests(self):
         """Run all API tests"""
-        self.log("Starting POS System API Tests", "START")
+        self.log("Starting POS System Enhancements API Tests", "START")
         self.log(f"Testing against: {self.base_url}")
         
         # Basic connectivity
@@ -3468,47 +3468,68 @@ class POSAPITester:
         if not self.test_get_current_user():
             self.log("❌ Get current user failed", "ERROR")
 
-        # CRUD operations
+        # CRUD operations (needed for comprehensive testing)
         self.test_categories_crud()
         self.test_products_crud()
         self.test_customers_crud()
         
-        # Core POS functionality
+        # Core POS functionality (needed for data generation)
         self.test_invoice_workflow()
         self.test_sales_operations()
         self.test_business_operations()
 
-        # NEW: Comprehensive Reports Testing
+        # === NEW POS SYSTEM ENHANCEMENTS TESTING ===
+        
+        # Test 1: Global Filter System
+        self.log("=== STARTING GLOBAL FILTER SYSTEM TESTING ===", "INFO")
+        self.test_global_filter_system()
+        self.log("=== GLOBAL FILTER SYSTEM TESTING COMPLETED ===", "INFO")
+
+        # Test 2: Enhanced Navigation System
+        self.log("=== STARTING ENHANCED NAVIGATION SYSTEM TESTING ===", "INFO")
+        self.test_enhanced_navigation_system()
+        self.log("=== ENHANCED NAVIGATION SYSTEM TESTING COMPLETED ===", "INFO")
+
+        # Test 3: Comprehensive Report Exports
+        self.log("=== STARTING COMPREHENSIVE REPORT EXPORTS TESTING ===", "INFO")
+        self.test_comprehensive_report_exports()
+        self.log("=== COMPREHENSIVE REPORT EXPORTS TESTING COMPLETED ===", "INFO")
+
+        # Test 4: Dynamic Currency Display
+        self.log("=== STARTING DYNAMIC CURRENCY DISPLAY TESTING ===", "INFO")
+        self.test_dynamic_currency_display()
+        self.log("=== DYNAMIC CURRENCY DISPLAY TESTING COMPLETED ===", "INFO")
+
+        # Test 5: PDF Export Functionality (Specific Focus)
+        self.log("=== STARTING PDF EXPORT FUNCTIONALITY TESTING ===", "INFO")
+        self.test_pdf_export_functionality()
+        self.log("=== PDF EXPORT FUNCTIONALITY TESTING COMPLETED ===", "INFO")
+
+        # === EXISTING COMPREHENSIVE TESTING ===
+        
+        # Reports Functionality Testing
         self.log("=== STARTING REPORTS FUNCTIONALITY TESTING ===", "INFO")
         self.test_reports_authentication()
         self.test_reports_functionality()
         self.test_reports_file_headers()
         self.log("=== REPORTS FUNCTIONALITY TESTING COMPLETED ===", "INFO")
 
-        # NEW: Comprehensive Printer Settings Testing
+        # Currency Functionality Testing
+        self.log("=== STARTING CURRENCY FUNCTIONALITY TESTING ===", "INFO")
+        self.test_currency_functionality()
+        self.test_currency_file_headers()
+        self.log("=== CURRENCY FUNCTIONALITY TESTING COMPLETED ===", "INFO")
+
+        # Profit Tracking Testing
+        self.log("=== STARTING PROFIT TRACKING FUNCTIONALITY TESTING ===", "INFO")
+        self.test_profit_tracking_functionality()
+        self.test_comprehensive_profit_integration()
+        self.log("=== PROFIT TRACKING FUNCTIONALITY TESTING COMPLETED ===", "INFO")
+
+        # Printer Settings Testing
         self.log("=== STARTING PRINTER SETTINGS FUNCTIONALITY TESTING ===", "INFO")
         self.test_printer_settings_functionality()
         self.log("=== PRINTER SETTINGS FUNCTIONALITY TESTING COMPLETED ===", "INFO")
-
-        # NEW: Comprehensive Profit Tracking Testing
-        self.log("=== STARTING PROFIT TRACKING FUNCTIONALITY TESTING ===", "INFO")
-        self.test_profit_tracking_functionality()
-        self.log("=== PROFIT TRACKING FUNCTIONALITY TESTING COMPLETED ===", "INFO")
-
-        # NEW: Comprehensive Profit Integration Testing
-        self.log("=== STARTING COMPREHENSIVE PROFIT INTEGRATION TESTING ===", "INFO")
-        self.test_comprehensive_profit_integration()
-        self.log("=== COMPREHENSIVE PROFIT INTEGRATION TESTING COMPLETED ===", "INFO")
-
-        # NEW: Currency Functionality Testing
-        self.log("=== STARTING CURRENCY FUNCTIONALITY TESTING ===", "INFO")
-        self.test_currency_functionality()
-        self.log("=== CURRENCY FUNCTIONALITY TESTING COMPLETED ===", "INFO")
-
-        # NEW: PDF Export Functionality Testing
-        self.log("=== STARTING PDF EXPORT FUNCTIONALITY TESTING ===", "INFO")
-        self.test_pdf_export_functionality()
-        self.log("=== PDF EXPORT FUNCTIONALITY TESTING COMPLETED ===", "INFO")
 
         # Cleanup
         self.cleanup_test_data()
