@@ -214,7 +214,7 @@ async def generate_inventory_report(
 
 @router.get("/customers")
 async def generate_customers_report(
-    format: str = Query("excel", regex="^(excel|pdf)$"),
+    format: str = Query("excel", pattern="^(excel|pdf)$"),
     top_customers: int = Query(50, ge=1, le=500),
     current_user=Depends(get_business_admin_or_super)
 ):
