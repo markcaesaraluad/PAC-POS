@@ -90,7 +90,7 @@ const POSInterface = () => {
     if (saved) {
       setHeldOrders(JSON.parse(saved));
     }
-  }, []);
+  }, [fetchData]);
 
   // Separate useEffect for barcode scanner to avoid dependency issues
   useEffect(() => {
