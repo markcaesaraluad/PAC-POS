@@ -5,10 +5,7 @@ import {
   ClipboardDocumentListIcon,
   DocumentTextIcon,
   EyeIcon,
-  ArrowPathIcon,
-  PaperAirplaneIcon,
   ArrowDownTrayIcon,
-  BanknotesIcon,
   PrinterIcon,
   XMarkIcon
 } from '@heroicons/react/24/outline';
