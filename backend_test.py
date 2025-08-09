@@ -1906,6 +1906,388 @@ class POSAPITester:
         self.log("=== COMPREHENSIVE PROFIT TRACKING INTEGRATION TESTING COMPLETED ===", "INFO")
         return True
 
+    def test_currency_functionality(self):
+        """Test comprehensive currency functionality"""
+        self.log("=== STARTING CURRENCY FUNCTIONALITY TESTING ===", "INFO")
+        
+        # Test 1: Get current business settings to check currency
+        success, response = self.run_test(
+            "Get Current Business Settings (Check Currency)",
+            "GET",
+            "/api/business/info",
+            200
+        )
+        
+        current_currency = "USD"  # Default
+        if success:
+            current_settings = response.get("settings", {})
+            current_currency = current_settings.get("currency", "USD")
+            self.log(f"Current business currency: {current_currency}")
+        
+        # Test 2: Update business currency to EUR
+        eur_settings = {
+            "currency": "EUR",
+            "tax_rate": 0.20,
+            "receipt_header": "Welcome to our European store!",
+            "receipt_footer": "Thank you for shopping with us!",
+            "low_stock_threshold": 15,
+            "printer_settings": {
+                "paper_size": "80",
+                "characters_per_line": 32,
+                "font_size": "normal",
+                "enable_logo": True,
+                "cut_paper": True,
+                "printer_name": "thermal_printer"
+            }
+        }
+        
+        success, response = self.run_test(
+            "Update Business Currency to EUR",
+            "PUT",
+            "/api/business/settings",
+            200,
+            data=eur_settings
+        )
+        
+        if success:
+            self.log("✅ Business currency updated to EUR successfully")
+        
+        # Test 3: Verify currency persistence
+        success, response = self.run_test(
+            "Verify EUR Currency Persistence",
+            "GET",
+            "/api/business/info",
+            200
+        )
+        
+        if success:
+            updated_settings = response.get("settings", {})
+            if updated_settings.get("currency") == "EUR":
+                self.log("✅ EUR currency correctly persisted", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Currency persistence failed. Expected: EUR, Got: {updated_settings.get('currency')}", "FAIL")
+            self.tests_run += 1
+        
+        # Test 4: Test currency validation - empty currency should fail
+        invalid_settings = {
+            "currency": "",  # Empty currency should fail
+            "tax_rate": 0.10,
+            "receipt_header": "Test",
+            "receipt_footer": "Test",
+            "low_stock_threshold": 10
+        }
+        
+        success, response = self.run_test(
+            "Update Business Currency to Empty (Should Fail)",
+            "PUT",
+            "/api/business/settings",
+            422,  # Validation error expected
+            data=invalid_settings
+        )
+        
+        if success:
+            self.log("✅ Empty currency correctly rejected", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Empty currency should be rejected", "FAIL")
+        self.tests_run += 1
+        
+        # Test 5: Test different currencies (GBP, PHP, JPY)
+        currencies_to_test = ["GBP", "PHP", "JPY", "USD"]
+        
+        for currency in currencies_to_test:
+            currency_settings = {
+                "currency": currency,
+                "tax_rate": 0.15,
+                "receipt_header": f"Welcome to our {currency} store!",
+                "receipt_footer": "Thank you!",
+                "low_stock_threshold": 10,
+                "printer_settings": {
+                    "paper_size": "58",
+                    "characters_per_line": 24,
+                    "font_size": "small"
+                }
+            }
+            
+            success, response = self.run_test(
+                f"Update Business Currency to {currency}",
+                "PUT",
+                "/api/business/settings",
+                200,
+                data=currency_settings
+            )
+            
+            if success:
+                # Verify the currency was set
+                success, verify_response = self.run_test(
+                    f"Verify {currency} Currency Setting",
+                    "GET",
+                    "/api/business/info",
+                    200
+                )
+                
+                if success:
+                    verified_currency = verify_response.get("settings", {}).get("currency")
+                    if verified_currency == currency:
+                        self.log(f"✅ {currency} currency correctly set and verified", "PASS")
+                        self.tests_passed += 1
+                    else:
+                        self.log(f"❌ {currency} currency verification failed. Expected: {currency}, Got: {verified_currency}", "FAIL")
+                    self.tests_run += 1
+        
+        # Test 6: Test profit reports with different currencies
+        # First set currency to EUR for profit report testing
+        success, response = self.run_test(
+            "Set Currency to EUR for Profit Report Testing",
+            "PUT",
+            "/api/business/settings",
+            200,
+            data=eur_settings
+        )
+        
+        if success:
+            # Generate profit report with EUR currency
+            success, response = self.run_test(
+                "Generate Profit Report with EUR Currency (Excel)",
+                "GET",
+                "/api/reports/profit",
+                200,
+                params={"format": "excel"}
+            )
+            
+            if success:
+                self.log("✅ Profit report generated successfully with EUR currency", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Profit report generation failed with EUR currency", "FAIL")
+            self.tests_run += 1
+            
+            # Test CSV export with EUR currency
+            success, response = self.run_test(
+                "Generate Profit Report with EUR Currency (CSV)",
+                "GET",
+                "/api/reports/profit",
+                200,
+                params={"format": "csv"}
+            )
+            
+            if success:
+                self.log("✅ Profit report CSV generated successfully with EUR currency", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Profit report CSV generation failed with EUR currency", "FAIL")
+            self.tests_run += 1
+        
+        # Test 7: Test sales reports with currency formatting
+        success, response = self.run_test(
+            "Generate Sales Report with EUR Currency (Excel)",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={"format": "excel"}
+        )
+        
+        if success:
+            self.log("✅ Sales report generated successfully with EUR currency", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Sales report generation failed with EUR currency", "FAIL")
+        self.tests_run += 1
+        
+        # Test 8: Test PHP currency (different symbol placement)
+        php_settings = {
+            "currency": "PHP",
+            "tax_rate": 0.12,
+            "receipt_header": "Welcome to our Philippine store!",
+            "receipt_footer": "Salamat!",
+            "low_stock_threshold": 5,
+            "printer_settings": {
+                "paper_size": "80",
+                "characters_per_line": 32,
+                "font_size": "normal"
+            }
+        }
+        
+        success, response = self.run_test(
+            "Update Business Currency to PHP",
+            "PUT",
+            "/api/business/settings",
+            200,
+            data=php_settings
+        )
+        
+        if success:
+            # Test profit report with PHP currency
+            success, response = self.run_test(
+                "Generate Profit Report with PHP Currency (CSV)",
+                "GET",
+                "/api/reports/profit",
+                200,
+                params={"format": "csv"}
+            )
+            
+            if success:
+                self.log("✅ Profit report generated successfully with PHP currency", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Profit report generation failed with PHP currency", "FAIL")
+            self.tests_run += 1
+        
+        # Test 9: Test currency in daily summary reports
+        success, response = self.run_test(
+            "Get Daily Summary with PHP Currency",
+            "GET",
+            "/api/reports/daily-summary",
+            200
+        )
+        
+        if success:
+            self.log("✅ Daily summary report generated with PHP currency", "PASS")
+            self.tests_passed += 1
+            
+            # Check if response contains currency-related data
+            sales_data = response.get("sales", {})
+            if "total_revenue" in sales_data:
+                self.log(f"Daily summary revenue: {sales_data['total_revenue']}")
+        else:
+            self.log("❌ Daily summary report generation failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test 10: Test unsupported currency graceful handling
+        unsupported_currency_settings = {
+            "currency": "XYZ",  # Unsupported currency
+            "tax_rate": 0.10,
+            "receipt_header": "Test",
+            "receipt_footer": "Test",
+            "low_stock_threshold": 10
+        }
+        
+        success, response = self.run_test(
+            "Update Business Currency to Unsupported Currency (XYZ)",
+            "PUT",
+            "/api/business/settings",
+            200,  # Should accept but handle gracefully
+            data=unsupported_currency_settings
+        )
+        
+        if success:
+            # Test if reports still work with unsupported currency
+            success, response = self.run_test(
+                "Generate Profit Report with Unsupported Currency",
+                "GET",
+                "/api/reports/profit",
+                200,
+                params={"format": "csv"}
+            )
+            
+            if success:
+                self.log("✅ System gracefully handles unsupported currency", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log("❌ System should gracefully handle unsupported currency", "FAIL")
+            self.tests_run += 1
+        
+        # Test 11: Test currency formatting in file headers
+        self.test_currency_file_headers()
+        
+        # Test 12: Restore original currency
+        restore_settings = {
+            "currency": current_currency,
+            "tax_rate": 0.0,
+            "receipt_header": "Welcome to our store!",
+            "receipt_footer": "Thank you for shopping with us!",
+            "low_stock_threshold": 10,
+            "printer_settings": {
+                "paper_size": "80",
+                "characters_per_line": 32,
+                "font_size": "normal",
+                "enable_logo": True,
+                "cut_paper": True,
+                "printer_name": "thermal_printer"
+            }
+        }
+        
+        success, response = self.run_test(
+            f"Restore Original Currency ({current_currency})",
+            "PUT",
+            "/api/business/settings",
+            200,
+            data=restore_settings
+        )
+        
+        if success:
+            self.log(f"✅ Original currency ({current_currency}) restored successfully")
+        
+        self.log("=== CURRENCY FUNCTIONALITY TESTING COMPLETED ===", "INFO")
+        return True
+
+    def test_currency_file_headers(self):
+        """Test that currency information is properly included in export file headers"""
+        self.log("Testing Currency Information in Export Files", "INFO")
+        
+        # Test profit report CSV with currency information
+        url = f"{self.base_url}/api/reports/profit?format=csv"
+        headers = {'Authorization': f'Bearer {self.token}'}
+        
+        try:
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
+                content = response.text
+                
+                # Check if currency information is included in CSV content
+                if "Currency" in content or "PHP" in content or "EUR" in content or "USD" in content:
+                    self.log("✅ Currency information found in CSV export", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ Currency information missing from CSV export", "FAIL")
+                
+                # Check for currency symbols in content
+                currency_symbols = ['₱', '€', '$', '£', '¥']
+                found_symbol = any(symbol in content for symbol in currency_symbols)
+                if found_symbol:
+                    self.log("✅ Currency symbols found in CSV export", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ Currency symbols missing from CSV export", "FAIL")
+                
+                self.tests_run += 2
+        except Exception as e:
+            self.log(f"❌ Error testing CSV currency headers: {str(e)}", "ERROR")
+            self.tests_run += 2
+        
+        # Test Excel export headers
+        url = f"{self.base_url}/api/reports/profit?format=excel"
+        
+        try:
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
+                content_type = response.headers.get('content-type', '')
+                content_disposition = response.headers.get('content-disposition', '')
+                
+                # Check MIME type
+                expected_excel_mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                if expected_excel_mime in content_type:
+                    self.log("✅ Excel MIME type correct for currency report", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ Excel MIME type incorrect for currency report", "FAIL")
+                
+                # Check filename
+                if "profit-report" in content_disposition:
+                    self.log("✅ Excel filename correct for currency report", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ Excel filename incorrect for currency report", "FAIL")
+                
+                self.tests_run += 2
+        except Exception as e:
+            self.log(f"❌ Error testing Excel currency headers: {str(e)}", "ERROR")
+            self.tests_run += 2
+        
+        self.log("Currency File Headers Testing Completed", "INFO")
+        return True
+
     def run_all_tests(self):
         """Run all API tests"""
         self.log("Starting POS System API Tests", "START")
