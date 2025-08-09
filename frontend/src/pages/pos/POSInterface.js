@@ -777,7 +777,7 @@ const POSInterface = () => {
                   <h3 className="font-medium text-xs text-gray-900 truncate">{product.name}</h3>
                   <p className="text-xs text-gray-500 truncate">{product.sku}</p>
                   <div className="mt-1">
-                    <span className="text-sm font-bold text-primary-600">${product.price}</span>
+                    <span className="text-sm font-bold text-primary-600">{formatAmount(product.price)}</span>
                   </div>
                   <span className={`text-xs px-1 py-0.5 rounded ${
                     product.quantity > 10 ? 'bg-green-100 text-green-600' : 
