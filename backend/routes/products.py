@@ -64,6 +64,20 @@ async def create_product(
     
     await products_collection.insert_one(product_doc)
     
+    # Create initial cost history entry
+    cost_history_collection = await get_collection("product_cost_history")
+    cost_history_doc = {
+        "_id": ObjectId(),
+        "business_id": ObjectId(business_id),
+        "product_id": product_doc["_id"],
+        "cost": product.product_cost,
+        "effective_from": datetime.utcnow(),
+        "changed_by": ObjectId(current_user["_id"]),
+        "notes": "Initial cost entry",
+        "created_at": datetime.utcnow()
+    }
+    await cost_history_collection.insert_one(cost_history_doc)
+    
     return ProductResponse(
         id=str(product_doc["_id"]),
         business_id=str(product_doc["business_id"]),
