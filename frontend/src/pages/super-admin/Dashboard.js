@@ -9,7 +9,6 @@ import {
 import LoadingSpinner from '../../components/LoadingSpinner';
 
 const SuperAdminDashboard = () => {
-  const [businesses, setBusinesses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalBusinesses: 0,
