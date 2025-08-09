@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { reportsAPI } from '../../services/api';
+import { reportsAPI, categoriesAPI } from '../../services/api';
 import { useCurrency } from '../../context/CurrencyContext';
+import GlobalFilter from '../../components/GlobalFilter';
+import useGlobalFilter from '../../hooks/useGlobalFilter';
 import toast from 'react-hot-toast';
-import { ChartBarIcon, DocumentArrowDownIcon, CalendarIcon, UsersIcon, CubeIcon } from '@heroicons/react/24/outline';
+import { 
+  ChartBarIcon, 
+  DocumentArrowDownIcon, 
+  CalendarIcon, 
+  UsersIcon, 
+  CubeIcon,
+  ArrowDownTrayIcon 
+} from '@heroicons/react/24/outline';
 
 const Reports = () => {
   const { formatAmount } = useCurrency();
