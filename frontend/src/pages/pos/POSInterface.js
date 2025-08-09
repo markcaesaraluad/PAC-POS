@@ -37,6 +37,11 @@ const POSInterface = () => {
   const [newCustomer, setNewCustomer] = useState({ name: '', email: '', phone: '' });
   const [showNewCustomerForm, setShowNewCustomerForm] = useState(false);
   
+  // Payment modal state
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [modalPaymentMethod, setModalPaymentMethod] = useState('cash');
+  const [modalReceivedAmount, setModalReceivedAmount] = useState('');
+  
   // Transaction state
   const [isProcessing, setIsProcessing] = useState(false);
   const [transactionMode, setTransactionMode] = useState('sale'); // 'sale' or 'invoice'
