@@ -1106,6 +1106,11 @@ class POSAPITester:
         self.test_printer_settings_functionality()
         self.log("=== PRINTER SETTINGS FUNCTIONALITY TESTING COMPLETED ===", "INFO")
 
+        # NEW: Comprehensive Profit Tracking Testing
+        self.log("=== STARTING PROFIT TRACKING FUNCTIONALITY TESTING ===", "INFO")
+        self.test_profit_tracking_functionality()
+        self.log("=== PROFIT TRACKING FUNCTIONALITY TESTING COMPLETED ===", "INFO")
+
         # Cleanup
         self.cleanup_test_data()
 
