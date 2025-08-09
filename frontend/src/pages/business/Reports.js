@@ -58,8 +58,7 @@ const Reports = () => {
     loading: filterLoading,
     generateQueryParams,
     clearFilters,
-    hasActiveFilters,
-    exportData
+    hasActiveFilters
   } = useGlobalFilter({
     defaultFilters: {
       date_preset: 'last30days'
@@ -71,7 +70,6 @@ const Reports = () => {
 
   // Handle filter changes and refresh data
   function handleFilterChange(newFilters) {
-    // Refresh all report data when filters change
     loadReportsData(newFilters);
   }
 
@@ -104,35 +102,16 @@ const Reports = () => {
     try {
       const queryParams = generateQueryParams(customFilters || filters);
       
-      // Load filtered data for preview tables
-      const [salesResponse, inventoryResponse, customersResponse] = await Promise.all([
-        reportsAPI.getSalesReport({ format: 'json', ...queryParams }),
-        reportsAPI.getInventoryReport({ format: 'json', ...queryParams }),
-        reportsAPI.getCustomersReport({ format: 'json', ...queryParams })
-      ]);
-
+      // Load filtered data for preview tables (if JSON format is supported)
+      // Otherwise just keep empty arrays for now
       setReportData({
-        sales: salesResponse.data?.slice(0, 5) || [], // Show first 5 for preview
-        inventory: inventoryResponse.data?.slice(0, 5) || [],
-        customers: customersResponse.data?.slice(0, 5) || []
+        sales: [],
+        inventory: [],
+        customers: []
       });
     } catch (error) {
       console.error('Failed to load reports data:', error);
       setReportData({ sales: [], inventory: [], customers: [] });
-    }
-  };
-
-  // Load daily summary on component mount
-  useEffect(() => {
-    loadDailySummary();
-  }, []);
-
-  const loadDailySummary = async () => {
-    try {
-      const response = await reportsAPI.getDailySummary();
-      setDailySummary(response.data);
-    } catch (error) {
-      console.error('Failed to load daily summary:', error);
     }
   };
 
