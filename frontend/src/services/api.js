@@ -104,6 +104,15 @@ export const invoicesAPI = {
   exportInvoice: (id, options) => apiClient.post(`/api/invoices/${id}/export`, options),
 };
 
+export const staffAPI = {
+  getUsers: (params = {}) => apiClient.get('/api/staff/users', { params }),
+  getUser: (id) => apiClient.get(`/api/staff/users/${id}`),
+  createUser: (userData) => apiClient.post('/api/staff/users', userData),
+  updateUser: (id, userData) => apiClient.put(`/api/staff/users/${id}`, userData),
+  deleteUser: (id) => apiClient.delete(`/api/staff/users/${id}`),
+  resetPassword: (id, passwordData) => apiClient.post(`/api/staff/users/${id}/reset-password`, passwordData),
+};
+
 export const reportsAPI = {
   getSalesReport: (params = {}) => {
     const config = { 
