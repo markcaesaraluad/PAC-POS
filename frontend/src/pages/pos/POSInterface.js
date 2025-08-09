@@ -1019,52 +1019,6 @@ const POSInterface = () => {
                   Invoice
                 </button>
               </div>
-              
-              {transactionMode === 'sale' && (
-                <>
-                  <div className="grid grid-cols-2 gap-1">
-                    <button
-                      onClick={() => setPaymentMethod('cash')}
-                      className={`text-xs py-1 px-2 rounded border flex items-center justify-center ${
-                        paymentMethod === 'cash' ? 'bg-primary-100 border-primary-500 text-primary-700' : 'border-gray-300'
-                      }`}
-                    >
-                      <BanknotesIcon className="h-3 w-3 mr-1" />
-                      Cash
-                    </button>
-                    <button
-                      onClick={() => setPaymentMethod('card')}
-                      className={`text-xs py-1 px-2 rounded border flex items-center justify-center ${
-                        paymentMethod === 'card' ? 'bg-primary-100 border-primary-500 text-primary-700' : 'border-gray-300'
-                      }`}
-                    >
-                      <CreditCardIcon className="h-3 w-3 mr-1" />
-                      Card
-                    </button>
-                  </div>
-                  
-                  {paymentMethod === 'cash' && (
-                    <div className="space-y-1">
-                      <input
-                        type="number"
-                        className="form-input text-xs text-right w-full"
-                        placeholder="Amount received"
-                        value={receivedAmount}
-                        onChange={(e) => setReceivedAmount(parseFloat(e.target.value) || '')}
-                        step="0.01"
-                        min="0"
-                      />
-                      {receivedAmount && (
-                        <div className="text-right">
-                          <span className="text-xs font-bold text-green-600">
-                            Change: ${totals.change}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
             </div>
 
             {/* Action Buttons */}
