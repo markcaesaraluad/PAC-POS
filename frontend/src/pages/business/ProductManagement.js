@@ -30,6 +30,7 @@ const schema = yup.object({
 });
 
 const ProductManagement = () => {
+  const { formatAmount } = useCurrency();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
