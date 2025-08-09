@@ -14,7 +14,6 @@ import {
   UserPlusIcon,
   PrinterIcon,
   DocumentTextIcon,
-  PaperAirplaneIcon,
   XMarkIcon,
   BanknotesIcon,
   CreditCardIcon,
