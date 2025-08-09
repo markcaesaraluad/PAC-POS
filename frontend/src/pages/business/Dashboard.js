@@ -81,7 +81,7 @@ const BusinessDashboard = () => {
     },
     { 
       name: 'Today\'s Sales', 
-      value: `$${stats.todaySales.toFixed(2)}`, 
+      value: formatAmount(stats.todaySales), 
       icon: ChartBarIcon, 
       color: 'bg-purple-500',
       link: '/pos/sales'
