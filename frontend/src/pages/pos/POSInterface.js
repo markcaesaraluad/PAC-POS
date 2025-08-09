@@ -73,7 +73,6 @@ const POSInterface = () => {
   
   // Hold orders state
   const [heldOrders, setHeldOrders] = useState([]);
-  const [selectedHeldOrder, setSelectedHeldOrder] = useState(null);
   
   // Barcode scanner state
   const [barcodeBuffer, setBarcodeBuffer] = useState('');
