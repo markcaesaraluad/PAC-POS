@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { ChartBarIcon, DocumentArrowDownIcon, CalendarIcon, UsersIcon, CubeIcon } from '@heroicons/react/24/outline';
 
 const Reports = () => {
+  const { formatAmount } = useCurrency();
   const [dailySummary, setDailySummary] = useState(null);
   const [loading, setLoading] = useState(false);
   const [downloadLoading, setDownloadLoading] = useState({});
