@@ -370,8 +370,8 @@ async def generate_profit_csv(profit_data: List[Dict], business: Dict, start_dt:
     writer.writerow([
         '', '', '', '', 'TOTALS:',
         '', '', 
-        f"${summary['profit']:.2f}",
-        f"${summary['gross_sales']:.2f}",
+        format_currency(summary['profit'], currency),
+        format_currency(summary['gross_sales'], currency),
         ''
     ])
     
