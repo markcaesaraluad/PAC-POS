@@ -254,6 +254,19 @@ async def update_product(
     if update_data:
         update_data["updated_at"] = datetime.utcnow()
     
+    # Check if cost is being updated to create history entry
+    cost_changed = False
+    if 'product_cost' in update_data:
+        # Get current product to compare costs
+        current_product = await products_collection.find_one({
+            "_id": ObjectId(product_id),
+            "business_id": ObjectId(business_id)
+        })
+        
+        if current_product and current_product.get("product_cost") != update_data["product_cost"]:
+            cost_changed = True
+            new_cost = update_data["product_cost"]
+    
     result = await products_collection.update_one(
         {
             "_id": ObjectId(product_id),
@@ -267,6 +280,21 @@ async def update_product(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Product not found",
         )
+    
+    # Create cost history entry if cost changed
+    if cost_changed:
+        cost_history_collection = await get_collection("product_cost_history")
+        cost_history_doc = {
+            "_id": ObjectId(),
+            "business_id": ObjectId(business_id),
+            "product_id": ObjectId(product_id),
+            "cost": new_cost,
+            "effective_from": datetime.utcnow(),
+            "changed_by": ObjectId(current_user["_id"]),
+            "notes": "Cost updated via product management",
+            "created_at": datetime.utcnow()
+        }
+        await cost_history_collection.insert_one(cost_history_doc)
     
     # Return updated product
     updated_product = await products_collection.find_one({
