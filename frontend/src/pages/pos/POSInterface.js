@@ -1288,7 +1288,7 @@ const POSInterface = () => {
                         onClick={() => setModalReceivedAmount(amount.toString())}
                         className="px-3 py-2 text-sm border border-gray-300 rounded hover:bg-gray-50"
                       >
-                        ${amount}
+                        {formatAmount(amount)}
                       </button>
                     ))}
                   </div>
