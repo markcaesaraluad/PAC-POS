@@ -135,7 +135,8 @@ async def get_profit_report(
                     "cost_of_goods_sold": total_cogs,
                     "profit": total_profit,
                     "total_items": total_items
-                }
+                },
+                get_business_currency(business)
             )
             return Response(
                 content=report_bytes,
