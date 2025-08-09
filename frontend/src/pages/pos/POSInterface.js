@@ -71,13 +71,6 @@ const POSInterface = () => {
   
   const barcodeInputRef = useRef(null);
 
-  // Focus helper function
-  const focusSearchInput = () => {
-    if (barcodeInputRef.current) {
-      barcodeInputRef.current.focus();
-    }
-  };
-
   useEffect(() => {
     fetchData();
 
