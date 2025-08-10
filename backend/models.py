@@ -100,6 +100,13 @@ class CategoryResponse(CategoryBase):
     created_at: datetime
     updated_at: datetime
 
+class CategoryResponse(CategoryBase):
+    id: str
+    business_id: str
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
 # Product Models
 class ProductBase(BaseModel):
     name: str
