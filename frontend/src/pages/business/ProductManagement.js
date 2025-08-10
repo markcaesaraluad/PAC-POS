@@ -408,9 +408,7 @@ const ProductManagement = () => {
 
   const saveInlineEdit = async (productId, field) => {
     try {
-      const updateData = { [field]: parseFloat(inlineEditValue) || inlineEditValue };
-      await productsAPI.updateProduct(productId, updateData);
-      
+      await productsAPI.quickEdit(productId, { field, value: inlineEditValue });
       toast.success(`${field.charAt(0).toUpperCase() + field.slice(1)} updated successfully`);
       setInlineEditField(null);
       fetchData();
