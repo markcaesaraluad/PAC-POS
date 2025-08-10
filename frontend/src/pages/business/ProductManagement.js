@@ -439,28 +439,14 @@ const ProductManagement = () => {
   // 5. Product Duplication
   const duplicateProduct = async (productId) => {
     try {
-      const response = await fetch(`/api/products/${productId}/duplicate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          copy_barcode: false,
-          copy_quantity: false
-        })
+      const result = await productsAPI.duplicateProduct(productId, {
+        copy_barcode: false,
+        copy_quantity: false
       });
-
-      const result = await response.json();
-      
-      if (response.ok) {
-        toast.success(`Product duplicated: ${result.duplicate_name}`);
-        fetchData();
-      } else {
-        throw new Error(result.detail || 'Duplication failed');
-      }
+      toast.success(`Product duplicated: ${result.data.duplicate_name}`);
+      fetchData();
     } catch (error) {
-      toast.error('Product duplication failed: ' + error.message);
+      toast.error('Product duplication failed: ' + (error.response?.data?.detail || error.message));
     }
   };
 
