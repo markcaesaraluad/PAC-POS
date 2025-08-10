@@ -62,7 +62,9 @@ async def create_sale(
         "_id": ObjectId(),
         "business_id": ObjectId(business_id),
         "cashier_id": ObjectId(current_user["_id"]),
+        "cashier_name": sale.cashier_name,
         "customer_id": ObjectId(sale.customer_id) if sale.customer_id else None,
+        "customer_name": sale.customer_name,
         "sale_number": sale_number,
         "items": items_with_cost_snapshots,
         "subtotal": sale.subtotal,
@@ -70,8 +72,12 @@ async def create_sale(
         "discount_amount": sale.discount_amount,
         "total_amount": sale.total_amount,
         "payment_method": sale.payment_method,
+        "received_amount": sale.received_amount,
+        "change_amount": sale.change_amount,
+        "notes": sale.notes,
         "status": "completed",
-        "created_at": datetime.utcnow()
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow()
     }
     
     # Insert sale
