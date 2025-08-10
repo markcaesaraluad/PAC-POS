@@ -318,6 +318,18 @@ class ProfitReportSummary(BaseModel):
     start_date: str
     end_date: str
 
+# Additional Profit Report Models
+class ProfitReportFilter(BaseModel):
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    date_preset: Optional[str] = None
+    format: str = "json"
+
+class ProfitReportData(BaseModel):
+    summary: ProfitReportSummary
+    items: List[ProfitReportItem]
+    business_info: Dict[str, Any]
+
 # Stock Adjustment Models
 class StockAdjustmentBase(BaseModel):
     product_id: str
