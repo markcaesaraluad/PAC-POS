@@ -153,7 +153,7 @@ const ProductManagement = () => {
     }
   };
 
-  const fetchData = async (customFilters = null) => {
+  const fetchData = useCallback(async (customFilters = null) => {
     try {
       setLoading(true);
       const queryParams = generateQueryParams(customFilters || filters);
@@ -174,7 +174,7 @@ const ProductManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [generateQueryParams, filters]);
 
   const handleCreateProduct = async (data) => {
     setIsSubmitting(true);
