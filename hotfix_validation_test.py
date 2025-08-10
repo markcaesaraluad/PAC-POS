@@ -141,7 +141,7 @@ class HotfixValidationTester:
                 "description": "Product for hotfix testing",
                 "sku": f"HOTFIX-{datetime.now().strftime('%Y%m%d%H%M%S')}",
                 "price": 100.00,
-                "cost": 50.00,
+                "product_cost": 50.00,  # Fixed: use product_cost instead of cost
                 "quantity": 100,
                 "category_id": self.category_id,
                 "barcode": f"HOTFIX{datetime.now().strftime('%H%M%S')}"
