@@ -56,18 +56,7 @@ const POSInterface = () => {
   const [receivedAmount, setReceivedAmount] = useState('');
   
   // Barcode state
-  const [scannerActive, setScannerActive] = useState(true);
-  const [barcodeBuffer, setBarcodeBuffer] = useState('');
-  const [lastBarcodeTime, setLastBarcodeTime] = useState(0);
-  const [isScanning, setIsScanning] = useState(false);
-  
-  // Held orders state
   const [heldOrders, setHeldOrders] = useState([]);
-  
-  // Receipt state
-  const [showReceiptPreview, setShowReceiptPreview] = useState(false);
-  const [receiptCollapsed, setReceiptCollapsed] = useState(false);
-  const [previewReceiptData, setPreviewReceiptData] = useState(null);
   
   const barcodeInputRef = useRef(null);
 
