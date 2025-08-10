@@ -176,29 +176,6 @@ const ProductManagement = () => {
     }
   };
 
-  const fetchData = useCallback(async (customFilters = null) => {
-    try {
-      setLoading(true);
-      const queryParams = generateQueryParams(customFilters || filters);
-      
-      // Handle special filter cases
-      const params = { ...queryParams };
-      if (params.status === 'low_stock') {
-        params.low_stock = true;
-        delete params.status;
-      }
-      
-      const response = await productsAPI.getProducts(params);
-      setProducts(Array.isArray(response.data) ? response.data : []);
-    } catch (error) {
-      console.error('Failed to fetch data:', error);
-      setProducts([]);
-      toast.error(`Failed to load data: ${error.response?.data?.detail || error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  }, [generateQueryParams, filters]);
-
   const handleCreateProduct = async (data) => {
     setIsSubmitting(true);
     try {
