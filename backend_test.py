@@ -3997,6 +3997,12 @@ class POSAPITester:
         # CRUD operations (needed for comprehensive testing)
         self.test_categories_crud()
         self.test_products_crud()
+        
+        # NEW: Test Updated Products API Features
+        self.log("=== STARTING UPDATED PRODUCTS API TESTING ===", "INFO")
+        self.test_updated_products_api()
+        self.log("=== UPDATED PRODUCTS API TESTING COMPLETED ===", "INFO")
+        
         self.test_customers_crud()
         
         # Core POS functionality (needed for data generation)
