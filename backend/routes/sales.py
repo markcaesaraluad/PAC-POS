@@ -51,6 +51,7 @@ async def create_sale(
         # Create item with cost snapshot
         item_with_snapshot = item.dict()
         item_with_snapshot["unit_cost_snapshot"] = product.get("product_cost", 0.0)
+        item_with_snapshot["id"] = str(ObjectId())  # Add ID for SaleItem response
         items_with_cost_snapshots.append(item_with_snapshot)
     
     # Generate sale number
