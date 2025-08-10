@@ -127,7 +127,7 @@ const ProductManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [generateQueryParams, filters]);
 
   // Handle filter changes and refresh data  
   const handleFilterChange = useCallback((newFilters) => {
