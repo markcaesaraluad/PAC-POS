@@ -877,3 +877,177 @@ async def toggle_product_status(
         "product_id": product_id,
         "new_status": new_status
     }
+
+@router.post("/generate-barcodes")
+async def generate_barcodes_for_products(
+    request: BarcodeGenerateRequest,
+    current_user=Depends(get_business_admin_or_super)
+):
+    """Generate barcodes for products that don't have them"""
+    products_collection = await get_collection("products")
+    
+    business_id = current_user["business_id"]
+    if current_user["role"] == "super_admin":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Super admin must specify business context",
+        )
+    
+    updated_products = []
+    
+    for product_id in request.product_ids:
+        product = await products_collection.find_one({
+            "_id": ObjectId(product_id),
+            "business_id": ObjectId(business_id)
+        })
+        
+        if not product:
+            continue
+        
+        # Generate barcode if missing
+        if not product.get('barcode'):
+            # Use SKU as barcode or generate from SKU
+            barcode = product['sku'].replace('-', '').upper()
+            
+            # Update product with barcode
+            await products_collection.update_one(
+                {"_id": ObjectId(product_id)},
+                {
+                    "$set": {
+                        "barcode": barcode,
+                        "updated_at": datetime.utcnow()
+                    }
+                }
+            )
+            
+            updated_products.append({
+                "product_id": product_id,
+                "name": product['name'],
+                "sku": product['sku'],
+                "barcode": barcode
+            })
+    
+    return {
+        "success": True,
+        "updated_count": len(updated_products),
+        "updated_products": updated_products
+    }
+
+@router.post("/print-labels")
+async def print_product_labels(
+    options: LabelPrintOptions,
+    current_user=Depends(get_business_admin_or_super)
+):
+    """Generate labels for printing"""
+    products_collection = await get_collection("products")
+    businesses_collection = await get_collection("businesses")
+    
+    business_id = current_user["business_id"]
+    if current_user["role"] == "super_admin":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Super admin must specify business context",
+        )
+    
+    # Get business info for currency
+    business = await businesses_collection.find_one({"_id": ObjectId(business_id)})
+    currency = business.get("settings", {}).get("currency", "USD")
+    
+    labels_data = []
+    
+    for product_id in options.product_ids:
+        product = await products_collection.find_one({
+            "_id": ObjectId(product_id),
+            "business_id": ObjectId(business_id)
+        })
+        
+        if not product:
+            continue
+        
+        # Ensure product has barcode
+        barcode = product.get('barcode') or product['sku'].replace('-', '').upper()
+        
+        labels_data.append({
+            "product_id": product_id,
+            "name": product['name'],
+            "sku": product['sku'],
+            "barcode": barcode,
+            "price": product['price'],
+            "currency": currency
+        })
+    
+    # Generate label layout based on options
+    label_format = {
+        "size": options.label_size,
+        "format": options.format,
+        "copies": options.copies,
+        "products": labels_data
+    }
+    
+    return {
+        "success": True,
+        "label_count": len(labels_data) * options.copies,
+        "label_data": label_format
+    }
+
+@router.get("/download-template")
+async def download_import_template(
+    format: str = Query("csv", regex="^(csv|excel)$")
+):
+    """Download bulk import template"""
+    
+    # Template data
+    template_data = [
+        {
+            'name': 'Sample Product 1',
+            'sku': 'SAMPLE-001',
+            'barcode': '1234567890123',
+            'category': 'Electronics',
+            'product_cost': 10.00,
+            'price': 19.99,
+            'quantity': 50,
+            'status': 'active',
+            'description': 'Sample product description',
+            'brand': 'Sample Brand',
+            'supplier': 'Sample Supplier',
+            'low_stock_threshold': 5
+        },
+        {
+            'name': 'Sample Product 2',
+            'sku': '',  # Will be auto-generated
+            'barcode': '',
+            'category': 'Books',
+            'product_cost': 5.00,
+            'price': 12.99,
+            'quantity': 25,
+            'status': 'active',
+            'description': '',
+            'brand': '',
+            'supplier': '',
+            'low_stock_threshold': 10
+        }
+    ]
+    
+    df = pd.DataFrame(template_data)
+    
+    if format == "csv":
+        output = io.StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        
+        return StreamingResponse(
+            io.BytesIO(output.getvalue().encode()),
+            media_type="application/octet-stream",
+            headers={"Content-Disposition": "attachment; filename=products_import_template.csv"}
+        )
+    else:  # excel
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, sheet_name='Products', index=False)
+        output.seek(0)
+        
+        return StreamingResponse(
+            output,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": "attachment; filename=products_import_template.xlsx"}
+        )
