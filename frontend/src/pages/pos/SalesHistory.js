@@ -83,10 +83,11 @@ const SalesHistory = () => {
       // Get filter parameters
       const queryParams = generateQueryParams(customFilters || filters);
       
-      // Ensure we're fetching completed transactions by default
+      // HOTFIX 2: Ensure we're fetching with proper parameters
       const params = {
         ...queryParams,
-        status: queryParams.status || 'completed' // Default to completed transactions
+        // Don't force status to 'completed' as it might filter out valid transactions
+        // status: queryParams.status || 'completed' // Default to completed transactions
       };
 
       const [salesResponse, invoicesResponse, customersResponse] = await Promise.all([
