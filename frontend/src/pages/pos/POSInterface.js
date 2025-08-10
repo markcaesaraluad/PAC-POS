@@ -426,11 +426,17 @@ const POSInterface = () => {
 
     const totals = calculateTotals();
     
+    // HOTFIX 7: Fixed payment validation logic
     // For sales, payment validation is already done in confirmPayment()
-    // For invoices, no payment validation needed
-    if (transactionMode === 'sale' && paymentMethod === 'cash' && receivedAmount < parseFloat(totals.total)) {
-      toast.error('Insufficient payment amount');
-      return;
+    // But double-check here for safety
+    if (transactionMode === 'sale' && paymentMethod === 'cash') {
+      const requiredAmount = parseFloat(totals.subtotal) - parseFloat(totals.discount) + parseFloat(totals.taxAmount);
+      const receivedAmountNum = parseFloat(receivedAmount) || 0;
+      
+      if (receivedAmountNum < requiredAmount) {
+        toast.error(`Insufficient payment. Required: ${formatAmount(requiredAmount)}, Received: ${formatAmount(receivedAmountNum)}`);
+        return;
+      }
     }
 
     setIsProcessing(true);
