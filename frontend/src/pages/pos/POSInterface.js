@@ -498,24 +498,32 @@ const POSInterface = () => {
       const receiptData = generateReceiptData(transactionData, transactionType);
       
       if (printerType === 'bluetooth') {
-        // Use Bluetooth printer service
+        // Use Bluetooth printer service for direct ESC/POS printing
         const printerStatus = bluetoothPrinterService.getStatus();
         if (!printerStatus.isConnected) {
-          toast.info('Bluetooth printer not connected - auto-print skipped');
+          toast.info('Auto-print skipped - Bluetooth printer not connected');
           return;
         }
         await bluetoothPrinterService.printReceipt(receiptData, business?.settings?.printer_settings);
+        toast.success('Receipt auto-printed via Bluetooth');
       } else if (printerType === 'local') {
-        // For local/system printer, use enhanced printer service
-        await enhancedPrinterService.configurePrinter({
-          id: 'system-default',
-          name: business?.settings?.selected_printer || 'Default System Printer',
-          type: 'local',
-          settings: business?.settings?.printer_settings
-        });
-        await enhancedPrinterService.printReceipt(receiptData, business?.settings?.printer_settings);
+        // For local printer, try silent printing via configured service
+        try {
+          await enhancedPrinterService.configurePrinter({
+            id: 'system-default',
+            name: business?.settings?.selected_printer || 'Default System Printer',
+            type: 'local',
+            settings: business?.settings?.printer_settings
+          });
+          await enhancedPrinterService.printReceipt(receiptData, business?.settings?.printer_settings);
+          toast.success('Receipt auto-printed to system printer');
+        } catch (printerError) {
+          // Fallback to browser print with auto-close attempt
+          console.log('Direct printing failed, using browser fallback:', printerError);
+          await handleBrowserPrintFallback(receiptData);
+        }
       } else {
-        // Network printer or other types
+        // Network printer
         await enhancedPrinterService.configurePrinter({
           id: 'network-printer',
           name: business?.settings?.selected_printer || 'Network Printer',
@@ -523,13 +531,55 @@ const POSInterface = () => {
           settings: business?.settings?.printer_settings
         });
         await enhancedPrinterService.printReceipt(receiptData, business?.settings?.printer_settings);
+        toast.success('Receipt auto-printed to network printer');
       }
-      
-      toast.success('Receipt auto-printed successfully');
       
     } catch (error) {
       console.error('Auto-print failed:', error);
-      toast.error('Auto-print failed: ' + error.message);
+      // Don't show error toast for auto-print to avoid disrupting the sale flow
+      console.log('Auto-print failed silently, transaction still completed successfully');
+    }
+  };
+
+  const handleBrowserPrintFallback = async (receiptData) => {
+    try {
+      const receiptHTML = generateReceiptHTML(receiptData);
+      
+      // Create a hidden iframe for printing
+      const printFrame = document.createElement('iframe');
+      printFrame.style.position = 'absolute';
+      printFrame.style.left = '-9999px';
+      printFrame.style.top = '-9999px';
+      printFrame.style.width = '1px';
+      printFrame.style.height = '1px';
+      document.body.appendChild(printFrame);
+      
+      const printDocument = printFrame.contentDocument || printFrame.contentWindow.document;
+      printDocument.open();
+      printDocument.write(receiptHTML);
+      printDocument.close();
+      
+      // Wait for content to load
+      await new Promise(resolve => {
+        printFrame.onload = resolve;
+        setTimeout(resolve, 1000); // Fallback timeout
+      });
+      
+      // Attempt to print
+      if (printFrame.contentWindow) {
+        printFrame.contentWindow.print();
+        
+        // Clean up after printing
+        setTimeout(() => {
+          document.body.removeChild(printFrame);
+        }, 2000);
+        
+        toast.success('Receipt sent to printer (browser fallback)');
+      }
+      
+    } catch (error) {
+      console.error('Browser print fallback failed:', error);
+      toast.info('Auto-print not available - transaction completed successfully');
     }
   };
 
