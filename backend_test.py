@@ -3972,6 +3972,184 @@ class POSAPITester:
         self.log("=== UPDATED PRODUCTS API TESTING COMPLETED ===", "INFO")
         return True
 
+    def test_products_api_critical_pos_bug(self):
+        """Test products API endpoints to fix critical POS Products Display bug"""
+        self.log("=== TESTING PRODUCTS API FOR CRITICAL POS BUG FIX ===", "INFO")
+        
+        # Test 1: Basic products API without any query parameters
+        success, response = self.run_test(
+            "GET Products API (No Parameters)",
+            "GET",
+            "/api/products",
+            200
+        )
+        
+        if success:
+            if isinstance(response, list):
+                self.log(f"✅ Products API returned {len(response)} products", "PASS")
+                self.tests_passed += 1
+                
+                # Check if products have required fields for POS
+                if len(response) > 0:
+                    first_product = response[0]
+                    required_fields = ['id', 'name', 'price', 'quantity']
+                    missing_fields = []
+                    
+                    for field in required_fields:
+                        if field not in first_product:
+                            missing_fields.append(field)
+                    
+                    if not missing_fields:
+                        self.log("✅ Products have all required fields for POS", "PASS")
+                        self.tests_passed += 1
+                    else:
+                        self.log(f"❌ Products missing required fields: {missing_fields}", "FAIL")
+                    self.tests_run += 1
+                    
+                    # Log sample product data structure
+                    self.log(f"Sample product structure: {json.dumps(first_product, indent=2)}")
+                else:
+                    self.log("⚠️ No products found in database", "WARN")
+            else:
+                self.log(f"❌ Products API returned non-list response: {type(response)}", "FAIL")
+        else:
+            self.log("❌ Products API failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test 2: Products API with category filtering (if categories exist)
+        success, response = self.run_test(
+            "GET Categories for Filtering Test",
+            "GET",
+            "/api/categories",
+            200
+        )
+        
+        if success and isinstance(response, list) and len(response) > 0:
+            category_id = response[0].get('id')
+            if category_id:
+                success, filtered_response = self.run_test(
+                    "GET Products API (With Category Filter)",
+                    "GET",
+                    "/api/products",
+                    200,
+                    params={"category_id": category_id}
+                )
+                
+                if success:
+                    self.log(f"✅ Products API with category filter returned {len(filtered_response) if isinstance(filtered_response, list) else 0} products", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ Products API with category filter failed", "FAIL")
+                self.tests_run += 1
+        
+        # Test 3: Products API with search functionality
+        success, response = self.run_test(
+            "GET Products API (With Search)",
+            "GET",
+            "/api/products",
+            200,
+            params={"search": "test"}
+        )
+        
+        if success:
+            self.log(f"✅ Products API with search returned {len(response) if isinstance(response, list) else 0} products", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Products API with search failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test 4: Products API with status filter
+        success, response = self.run_test(
+            "GET Products API (Active Status)",
+            "GET",
+            "/api/products",
+            200,
+            params={"status": "active"}
+        )
+        
+        if success:
+            self.log(f"✅ Products API with status filter returned {len(response) if isinstance(response, list) else 0} products", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Products API with status filter failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test 5: Products API with pagination
+        success, response = self.run_test(
+            "GET Products API (With Pagination)",
+            "GET",
+            "/api/products",
+            200,
+            params={"limit": 10, "skip": 0}
+        )
+        
+        if success:
+            self.log(f"✅ Products API with pagination returned {len(response) if isinstance(response, list) else 0} products", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Products API with pagination failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test 6: Verify empty category_id parameter handling (critical for POS bug)
+        success, response = self.run_test(
+            "GET Products API (Empty Category ID)",
+            "GET",
+            "/api/products",
+            200,
+            params={"category_id": ""}
+        )
+        
+        if success:
+            self.log(f"✅ Products API handles empty category_id correctly, returned {len(response) if isinstance(response, list) else 0} products", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Products API failed with empty category_id", "FAIL")
+        self.tests_run += 1
+        
+        # Test 7: Test products API response structure for POS compatibility
+        success, response = self.run_test(
+            "GET Products API (Structure Verification)",
+            "GET",
+            "/api/products",
+            200
+        )
+        
+        if success and isinstance(response, list) and len(response) > 0:
+            # Check critical fields for POS interface
+            sample_product = response[0]
+            pos_critical_fields = {
+                'id': 'Product ID',
+                'name': 'Product Name',
+                'price': 'Product Price',
+                'quantity': 'Stock Quantity',
+                'category_id': 'Category ID (optional)',
+                'sku': 'SKU',
+                'status': 'Product Status'
+            }
+            
+            field_check_results = {}
+            for field, description in pos_critical_fields.items():
+                if field in sample_product:
+                    field_check_results[field] = f"✅ {description}: {sample_product[field]}"
+                else:
+                    field_check_results[field] = f"❌ {description}: MISSING"
+            
+            self.log("POS Critical Fields Check:")
+            for field, result in field_check_results.items():
+                self.log(f"  {result}")
+            
+            # Count successful field checks
+            successful_fields = sum(1 for result in field_check_results.values() if result.startswith("✅"))
+            if successful_fields >= 5:  # At least 5 critical fields present
+                self.log("✅ Products API structure compatible with POS interface", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Products API structure missing critical fields for POS ({successful_fields}/7)", "FAIL")
+            self.tests_run += 1
+        
+        self.log("=== PRODUCTS API TESTING FOR POS BUG FIX COMPLETED ===", "INFO")
+        return True
+
     def run_all_tests(self):
         """Run all API tests"""
         self.log("Starting POS System Enhancements API Tests", "START")
@@ -3995,6 +4173,11 @@ class POSAPITester:
 
         if not self.test_get_current_user():
             self.log("❌ Get current user failed", "ERROR")
+
+        # CRITICAL: Test products API for POS bug fix FIRST
+        self.log("=== PRIORITY: TESTING PRODUCTS API FOR CRITICAL POS BUG FIX ===", "INFO")
+        self.test_products_api_critical_pos_bug()
+        self.log("=== PRODUCTS API CRITICAL BUG FIX TESTING COMPLETED ===", "INFO")
 
         # CRUD operations (needed for comprehensive testing)
         self.test_categories_crud()
