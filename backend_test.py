@@ -55,6 +55,8 @@ class POSAPITester:
                 response = requests.post(url, json=data, headers=test_headers, params=params)
             elif method == 'PUT':
                 response = requests.put(url, json=data, headers=test_headers, params=params)
+            elif method == 'PATCH':
+                response = requests.patch(url, json=data, headers=test_headers, params=params)
             elif method == 'DELETE':
                 response = requests.delete(url, headers=test_headers, params=params)
 
