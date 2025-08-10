@@ -384,6 +384,8 @@ const POSInterface = () => {
       // HOTFIX 6: Enhanced transaction data to ensure proper saving
       const transactionData = {
         customer_id: selectedCustomer?.id || null,
+        cashier_id: user?.id || null,
+        cashier_name: user?.email || user?.name || 'Unknown Cashier',
         items: cart.map(item => ({
           ...item,
           // Ensure cost snapshot is captured
