@@ -515,6 +515,280 @@ class POSAPITester:
 
         return success
 
+    def test_sales_api_with_cashier_fields(self):
+        """Test sales API with enhanced cashier fields as requested"""
+        self.log("=== STARTING SALES API WITH CASHIER FIELDS TESTING ===", "INFO")
+        
+        if not self.product_id or not self.customer_id:
+            self.log("❌ Cannot test sales with cashier fields - missing product or customer", "ERROR")
+            return False
+
+        # Test 1: Create sale with complete cashier information
+        sale_data_with_cashier = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",  # Mock cashier ID
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU",
+                    "quantity": 2,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.00,
+                    "total_price": 59.98
+                }
+            ],
+            "subtotal": 59.98,
+            "tax_amount": 5.40,
+            "discount_amount": 0.00,
+            "total_amount": 65.38,
+            "payment_method": "cash",
+            "received_amount": 70.00,
+            "change_amount": 4.62,
+            "notes": "Test sale with cashier fields"
+        }
+
+        success, response = self.run_test(
+            "Create Sale with Cashier Fields",
+            "POST",
+            "/api/sales",
+            200,
+            data=sale_data_with_cashier
+        )
+
+        if success:
+            self.log("✅ Sale created successfully with cashier fields")
+            # Verify response contains cashier information
+            if 'cashier_id' in response and 'cashier_name' in response:
+                self.log("✅ Response contains cashier_id and cashier_name fields")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Response missing cashier fields")
+            self.tests_run += 1
+            
+            # Store sale ID for further testing
+            if 'id' in response:
+                self.sale_id = response['id']
+        else:
+            self.log("❌ Failed to create sale with cashier fields")
+
+        # Test 2: Create sale without cashier_id (should fail validation)
+        sale_data_missing_cashier_id = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU",
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.00,
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "discount_amount": 0.00,
+            "total_amount": 32.69,
+            "payment_method": "card"
+        }
+
+        success, response = self.run_test(
+            "Create Sale Missing cashier_id (Should Fail)",
+            "POST",
+            "/api/sales",
+            422,  # Validation error expected
+            data=sale_data_missing_cashier_id
+        )
+
+        if success:
+            self.log("✅ Validation correctly rejects missing cashier_id")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Should reject sale without cashier_id")
+        self.tests_run += 1
+
+        # Test 3: Create sale without cashier_name (should fail validation)
+        sale_data_missing_cashier_name = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU",
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.00,
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "discount_amount": 0.00,
+            "total_amount": 32.69,
+            "payment_method": "card"
+        }
+
+        success, response = self.run_test(
+            "Create Sale Missing cashier_name (Should Fail)",
+            "POST",
+            "/api/sales",
+            422,  # Validation error expected
+            data=sale_data_missing_cashier_name
+        )
+
+        if success:
+            self.log("✅ Validation correctly rejects missing cashier_name")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Should reject sale without cashier_name")
+        self.tests_run += 1
+
+        # Test 4: Create multi-item sale with complete payment information
+        multi_item_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU",
+                    "quantity": 3,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.00,
+                    "total_price": 89.97
+                },
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product 2",
+                    "sku": "TEST-SKU-2",
+                    "quantity": 1,
+                    "unit_price": 19.99,
+                    "unit_price_snapshot": 19.99,
+                    "unit_cost_snapshot": 10.00,
+                    "total_price": 19.99
+                }
+            ],
+            "subtotal": 109.96,
+            "tax_amount": 9.90,
+            "discount_amount": 5.00,
+            "total_amount": 114.86,
+            "payment_method": "cash",
+            "received_amount": 120.00,
+            "change_amount": 5.14,
+            "notes": "Multi-item test sale with complete payment info"
+        }
+
+        success, response = self.run_test(
+            "Create Multi-Item Sale with Complete Payment Info",
+            "POST",
+            "/api/sales",
+            200,
+            data=multi_item_sale_data
+        )
+
+        if success:
+            self.log("✅ Multi-item sale created successfully")
+            # Verify all fields are present in response
+            required_fields = ['cashier_id', 'cashier_name', 'received_amount', 'change_amount', 'items']
+            missing_fields = [field for field in required_fields if field not in response]
+            
+            if not missing_fields:
+                self.log("✅ All required fields present in response")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Missing fields in response: {missing_fields}")
+            self.tests_run += 1
+            
+            # Verify items have cost snapshots
+            items = response.get('items', [])
+            if items and all('unit_cost_snapshot' in item for item in items):
+                self.log("✅ All items have cost snapshots")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Items missing cost snapshots")
+            self.tests_run += 1
+        else:
+            self.log("❌ Failed to create multi-item sale")
+
+        # Test 5: Verify sale retrieval includes cashier information
+        if self.sale_id:
+            success, response = self.run_test(
+                "Get Sale by ID (Verify Cashier Info)",
+                "GET",
+                f"/api/sales/{self.sale_id}",
+                200
+            )
+
+            if success:
+                if 'cashier_id' in response and 'cashier_name' in response:
+                    self.log("✅ Retrieved sale contains cashier information")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ Retrieved sale missing cashier information")
+                self.tests_run += 1
+
+        # Test 6: Test different payment methods with cashier fields
+        payment_methods = ["cash", "card", "digital_wallet", "check"]
+        
+        for payment_method in payment_methods:
+            payment_sale_data = {
+                "customer_id": self.customer_id,
+                "customer_name": "Test Customer",
+                "cashier_id": "507f1f77bcf86cd799439011",
+                "cashier_name": "admin@printsandcuts.com",
+                "items": [
+                    {
+                        "product_id": self.product_id,
+                        "product_name": "Test Product",
+                        "sku": "TEST-SKU",
+                        "quantity": 1,
+                        "unit_price": 29.99,
+                        "unit_price_snapshot": 29.99,
+                        "unit_cost_snapshot": 15.00,
+                        "total_price": 29.99
+                    }
+                ],
+                "subtotal": 29.99,
+                "tax_amount": 2.70,
+                "discount_amount": 0.00,
+                "total_amount": 32.69,
+                "payment_method": payment_method,
+                "received_amount": 35.00 if payment_method == "cash" else None,
+                "change_amount": 2.31 if payment_method == "cash" else None,
+                "notes": f"Test sale with {payment_method} payment"
+            }
+
+            success, response = self.run_test(
+                f"Create Sale with {payment_method.title()} Payment",
+                "POST",
+                "/api/sales",
+                200,
+                data=payment_sale_data
+            )
+
+            if success:
+                self.log(f"✅ Sale created successfully with {payment_method} payment")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Failed to create sale with {payment_method} payment")
+            self.tests_run += 1
+
+        self.log("=== SALES API WITH CASHIER FIELDS TESTING COMPLETED ===", "INFO")
+        return True
+
     def test_business_operations(self):
         """Test business-related operations"""
         # Get business info
