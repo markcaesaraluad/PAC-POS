@@ -123,7 +123,8 @@ const ProductManagement = () => {
   const fetchData = useCallback(async (customFilters = null) => {
     try {
       setLoading(true);
-      const queryParams = generateQueryParams(customFilters || filters);
+      const currentFilters = customFilters || filters;
+      const queryParams = generateQueryParams(currentFilters);
       
       // Handle special filter cases
       const params = { ...queryParams };
@@ -141,7 +142,7 @@ const ProductManagement = () => {
     } finally {
       setLoading(false);
     }
-  }, [generateQueryParams, filters]);
+  }, [generateQueryParams]); // Remove filters from dependency array
 
   const {
     register,
