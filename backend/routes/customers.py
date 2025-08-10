@@ -205,7 +205,8 @@ async def update_customer(
         address=updated_customer.get("address"),
         total_spent=updated_customer.get("total_spent", 0.0),
         visit_count=updated_customer.get("visit_count", 0),
-        created_at=updated_customer.get("created_at", datetime.utcnow())
+        created_at=updated_customer.get("created_at", datetime.utcnow()),
+        updated_at=updated_customer.get("updated_at", datetime.utcnow())
     )
 
 @router.delete("/{customer_id}")
