@@ -427,7 +427,28 @@ const POSInterface = () => {
       fetchData();
       
     } catch (error) {
-      const message = error.response?.data?.detail || `Failed to ${transactionMode === 'sale' ? 'complete sale' : 'create invoice'}`;
+      console.error('Transaction error:', error);
+      
+      // Improved error handling to convert complex objects to strings
+      let message;
+      if (error.response?.data?.detail) {
+        // Handle FastAPI validation errors that might be arrays or objects
+        const detail = error.response.data.detail;
+        if (typeof detail === 'string') {
+          message = detail;
+        } else if (Array.isArray(detail)) {
+          // Handle Pydantic validation errors array
+          message = detail.map(err => `${err.loc?.join('.')}: ${err.msg}`).join(', ');
+        } else if (typeof detail === 'object') {
+          // Handle object-based errors
+          message = JSON.stringify(detail);
+        } else {
+          message = 'Validation error occurred';
+        }
+      } else {
+        message = `Failed to ${transactionMode === 'sale' ? 'complete sale' : 'create invoice'}`;
+      }
+      
       toast.error(message);
     } finally {
       setIsProcessing(false);
