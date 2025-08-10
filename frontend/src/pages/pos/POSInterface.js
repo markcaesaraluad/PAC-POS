@@ -583,6 +583,122 @@ const POSInterface = () => {
     }
   };
 
+  const generateReceiptHTML = (receiptData) => {
+    const businessName = business?.name || 'Business Name';
+    const businessAddress = business?.address || '';
+    const businessEmail = business?.contact_email || '';
+    const businessPhone = business?.phone || '';
+    const logoUrl = business?.logo_url || '';
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Receipt</title>
+          <style>
+            @media print {
+              @page { margin: 0; size: 80mm auto; }
+              body { margin: 0; }
+            }
+            body {
+              font-family: 'Courier New', monospace;
+              font-size: 12px;
+              line-height: 1.2;
+              margin: 0;
+              padding: 20px;
+              width: 300px;
+            }
+            .center { text-align: center; }
+            .bold { font-weight: bold; }
+            .line { border-bottom: 1px dashed #000; margin: 5px 0; }
+            .flex { display: flex; justify-content: space-between; }
+            .logo { max-width: 100px; max-height: 60px; margin-bottom: 10px; }
+            .header { border-bottom: 1px solid #000; padding-bottom: 10px; margin-bottom: 10px; }
+            .total { border-top: 1px solid #000; padding-top: 5px; margin-top: 5px; }
+          </style>
+        </head>
+        <body>
+          <div class="header center">
+            ${logoUrl ? `<img src="${logoUrl}" alt="Logo" class="logo" />` : ''}
+            <div class="bold" style="font-size: 14px;">${businessName}</div>
+            ${businessAddress ? `<div>${businessAddress}</div>` : ''}
+            ${businessPhone ? `<div>Phone: ${businessPhone}</div>` : ''}
+            ${businessEmail ? `<div>Email: ${businessEmail}</div>` : ''}
+          </div>
+
+          <div>
+            <div class="bold">${receiptData.transaction_type.toUpperCase()}: ${receiptData.transaction_number}</div>
+            <div>Date: ${new Date(receiptData.timestamp).toLocaleString()}</div>
+            <div>Cashier: ${receiptData.cashier_name}</div>
+            ${receiptData.customer ? `<div>Customer: ${receiptData.customer.name}</div>` : ''}
+          </div>
+
+          <div class="line"></div>
+
+          ${receiptData.items.map(item => `
+            <div>
+              <div class="bold">${item.product_name}</div>
+              <div class="flex">
+                <span>${item.quantity} x ${formatAmount(item.unit_price)}</span>
+                <span>${formatAmount(item.total_price)}</span>
+              </div>
+            </div>
+          `).join('')}
+
+          <div class="line"></div>
+
+          <div class="flex">
+            <span>Subtotal:</span>
+            <span>${formatAmount(receiptData.subtotal)}</span>
+          </div>
+          ${receiptData.tax_amount > 0 ? `
+            <div class="flex">
+              <span>Tax:</span>
+              <span>${formatAmount(receiptData.tax_amount)}</span>
+            </div>
+          ` : ''}
+          ${receiptData.discount_amount > 0 ? `
+            <div class="flex">
+              <span>Discount:</span>
+              <span>-${formatAmount(receiptData.discount_amount)}</span>
+            </div>
+          ` : ''}
+          
+          <div class="flex total bold">
+            <span>TOTAL:</span>
+            <span>${formatAmount(receiptData.total_amount)}</span>
+          </div>
+
+          ${receiptData.payment_method === 'cash' ? `
+            <div class="flex">
+              <span>Cash Received:</span>
+              <span>${formatAmount(receiptData.received_amount)}</span>
+            </div>
+            <div class="flex">
+              <span>Change:</span>
+              <span>${formatAmount(receiptData.change_amount)}</span>
+            </div>
+          ` : `
+            <div class="flex">
+              <span>Payment Method:</span>
+              <span>${receiptData.payment_method}</span>
+            </div>
+          `}
+
+          ${receiptData.notes ? `
+            <div class="line"></div>
+            <div>Notes: ${receiptData.notes}</div>
+          ` : ''}
+
+          <div class="line"></div>
+          <div class="center">Thank you for your business!</div>
+          <div class="center">${business?.settings?.receipt_footer || ''}</div>
+        </body>
+      </html>
+    `;
+  };
+
   const generateReceiptData = (transactionData, transactionType = 'sale') => {
     return {
       business: business,
