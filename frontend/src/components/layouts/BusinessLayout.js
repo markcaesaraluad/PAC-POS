@@ -1,6 +1,8 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import useBusinessStatus from '../../hooks/useBusinessStatus';
+import SuspendedBusinessNotice from '../SuspendedBusinessNotice';
 import { 
   HomeIcon,
   CubeIcon,
