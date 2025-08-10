@@ -321,18 +321,23 @@ const ProductManagement = () => {
   const handleExport = async (format = 'csv') => {
     try {
       const queryParams = generateQueryParams();
-      const params = new URLSearchParams({
-        format,
-        ...queryParams
-      });
-
-      const response = await fetch(`/api/products/export?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (response.ok) {
+      const response = await productsAPI.exportProducts({ ...queryParams, format });
+      
+      const filename = `products_export_${new Date().toISOString().slice(0, 10)}.${format}`;
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success(`Products exported successfully!`);
+    } catch (error) {
+      toast.error('Export failed: ' + (error.response?.data?.detail || error.message));
+    }
+  };
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
