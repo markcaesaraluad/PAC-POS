@@ -690,19 +690,6 @@ const POSInterface = () => {
         <div className="p-3 border-b bg-white flex-shrink-0">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold text-gray-900">Products</h2>
-            <div className="flex items-center space-x-2">
-              <span className={`text-xs px-2 py-1 rounded-full ${
-                scannerActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
-              }`}>
-                Scanner {scannerActive ? 'READY' : 'OFF'}
-              </span>
-              {isScanning && (
-                <div className="flex items-center text-xs text-blue-600">
-                  <div className="animate-pulse w-2 h-2 bg-blue-500 rounded-full mr-1"></div>
-                  Scanning...
-                </div>
-              )}
-            </div>
           </div>
           
           <div className="flex space-x-2">
