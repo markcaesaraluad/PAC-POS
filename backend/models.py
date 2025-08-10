@@ -270,3 +270,43 @@ class ProfitReportSummary(BaseModel):
     total_items: int
     start_date: str
     end_date: str
+
+# Stock Adjustment Models
+class StockAdjustmentBase(BaseModel):
+    product_id: str
+    adjustment_type: str  # 'add' or 'subtract'
+    quantity_before: int
+    quantity_after: int
+    adjustment_quantity: int
+    reason: str
+    notes: Optional[str] = None
+
+class StockAdjustmentCreate(BaseModel):
+    type: str  # 'add' or 'subtract'
+    quantity: int = Field(..., gt=0)
+    reason: str
+    notes: Optional[str] = None
+
+class StockAdjustmentResponse(StockAdjustmentBase):
+    id: str
+    business_id: str
+    created_by: str
+    created_at: datetime
+
+# Bulk Import Models
+class BulkImportResponse(BaseModel):
+    success: bool
+    imported_count: int
+    error_count: int
+    errors: List[str]
+    imported_skus: List[str]
+
+# Product Label/Barcode Models
+class LabelPrintOptions(BaseModel):
+    product_ids: List[str]
+    label_size: str = "58mm"  # 58mm, 80mm, label
+    format: str = "barcode_top"  # barcode_top, barcode_bottom
+    copies: int = Field(1, ge=1, le=10)
+
+class BarcodeGenerateRequest(BaseModel):
+    product_ids: List[str]
