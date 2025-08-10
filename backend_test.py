@@ -3444,6 +3444,532 @@ class POSAPITester:
         self.log("=== DYNAMIC CURRENCY DISPLAY TESTING COMPLETED ===", "INFO")
         return True
 
+    def test_updated_products_api(self):
+        """Test all new Products API features comprehensively"""
+        self.log("=== STARTING UPDATED PRODUCTS API TESTING ===", "INFO")
+        
+        # Test 1: Basic Product Operations with new fields
+        self.log("🔄 TEST 1: Basic Product Operations with New Fields", "INFO")
+        
+        # Create product with all new fields
+        enhanced_product_data = {
+            "name": "Enhanced Test Product",
+            "description": "Product with all new fields for comprehensive testing",
+            "sku": f"ENH-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            "price": 49.99,
+            "product_cost": 25.00,
+            "quantity": 75,
+            "category_id": self.category_id,
+            "barcode": f"ENH{datetime.now().strftime('%H%M%S')}123",
+            "brand": "TestBrand",
+            "supplier": "TestSupplier",
+            "low_stock_threshold": 15,
+            "status": "active"
+        }
+        
+        success, response = self.run_test(
+            "Create Product with New Fields (brand, supplier, low_stock_threshold, status)",
+            "POST",
+            "/api/products",
+            200,
+            data=enhanced_product_data
+        )
+        
+        enhanced_product_id = None
+        if success and 'id' in response:
+            enhanced_product_id = response['id']
+            self.log(f"Enhanced product created with ID: {enhanced_product_id}")
+            
+            # Verify all new fields are stored correctly
+            if response.get('brand') == "TestBrand":
+                self.log("✅ Brand field stored correctly", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Brand field incorrect. Expected: TestBrand, Got: {response.get('brand')}", "FAIL")
+            
+            if response.get('supplier') == "TestSupplier":
+                self.log("✅ Supplier field stored correctly", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Supplier field incorrect. Expected: TestSupplier, Got: {response.get('supplier')}", "FAIL")
+            
+            if response.get('low_stock_threshold') == 15:
+                self.log("✅ Low stock threshold stored correctly", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Low stock threshold incorrect. Expected: 15, Got: {response.get('low_stock_threshold')}", "FAIL")
+            
+            if response.get('status') == "active":
+                self.log("✅ Status field stored correctly", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Status field incorrect. Expected: active, Got: {response.get('status')}", "FAIL")
+            
+            self.tests_run += 4
+        
+        # Test product listing with new status and low_stock filters
+        success, response = self.run_test(
+            "Get Products with Status Filter (active)",
+            "GET",
+            "/api/products",
+            200,
+            params={"status": "active"}
+        )
+        
+        if success and isinstance(response, list):
+            self.log(f"✅ Products filtered by status: {len(response)} active products found", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Status filter failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test low stock filter
+        success, response = self.run_test(
+            "Get Products with Low Stock Filter",
+            "GET",
+            "/api/products",
+            200,
+            params={"low_stock": "true"}
+        )
+        
+        if success:
+            self.log(f"✅ Low stock filter working: {len(response) if isinstance(response, list) else 0} products", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Low stock filter failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test 2: Bulk Import/Export Features
+        self.log("🔄 TEST 2: Bulk Import/Export Features", "INFO")
+        
+        # Test download CSV template
+        success, response = self.run_test(
+            "Download CSV Import Template",
+            "GET",
+            "/api/products/download-template",
+            200,
+            params={"format": "csv"}
+        )
+        
+        if success:
+            self.log("✅ CSV template download working", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ CSV template download failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test download Excel template
+        success, response = self.run_test(
+            "Download Excel Import Template",
+            "GET",
+            "/api/products/download-template",
+            200,
+            params={"format": "excel"}
+        )
+        
+        if success:
+            self.log("✅ Excel template download working", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Excel template download failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test bulk export with filters
+        success, response = self.run_test(
+            "Bulk Export Products (CSV with filters)",
+            "GET",
+            "/api/products/export",
+            200,
+            params={
+                "format": "csv",
+                "status": "active"
+            }
+        )
+        
+        if success:
+            self.log("✅ Bulk export (CSV) with filters working", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Bulk export (CSV) failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test bulk export Excel format
+        success, response = self.run_test(
+            "Bulk Export Products (Excel with all fields)",
+            "GET",
+            "/api/products/export",
+            200,
+            params={
+                "format": "excel",
+                "low_stock": "false"
+            }
+        )
+        
+        if success:
+            self.log("✅ Bulk export (Excel) with all new fields working", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Bulk export (Excel) failed", "FAIL")
+        self.tests_run += 1
+        
+        # Test 3: Stock Management
+        self.log("🔄 TEST 3: Stock Management Features", "INFO")
+        
+        if enhanced_product_id:
+            # Test stock adjustment - adding stock
+            stock_add_data = {
+                "type": "add",
+                "quantity": 25,
+                "reason": "Inventory restock",
+                "notes": "Added stock from new shipment"
+            }
+            
+            success, response = self.run_test(
+                "Stock Adjustment - Add Stock",
+                "POST",
+                f"/api/products/{enhanced_product_id}/stock-adjustment",
+                200,
+                data=stock_add_data
+            )
+            
+            if success:
+                old_qty = response.get('old_quantity', 0)
+                new_qty = response.get('new_quantity', 0)
+                if new_qty == old_qty + 25:
+                    self.log(f"✅ Stock addition working: {old_qty} → {new_qty}", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ Stock addition calculation incorrect: {old_qty} + 25 ≠ {new_qty}", "FAIL")
+            else:
+                self.log("❌ Stock addition failed", "FAIL")
+            self.tests_run += 1
+            
+            # Test stock adjustment - subtracting stock
+            stock_subtract_data = {
+                "type": "subtract",
+                "quantity": 10,
+                "reason": "Damaged goods",
+                "notes": "Removed damaged items from inventory"
+            }
+            
+            success, response = self.run_test(
+                "Stock Adjustment - Subtract Stock",
+                "POST",
+                f"/api/products/{enhanced_product_id}/stock-adjustment",
+                200,
+                data=stock_subtract_data
+            )
+            
+            if success:
+                old_qty = response.get('old_quantity', 0)
+                new_qty = response.get('new_quantity', 0)
+                if new_qty == old_qty - 10:
+                    self.log(f"✅ Stock subtraction working: {old_qty} → {new_qty}", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ Stock subtraction calculation incorrect: {old_qty} - 10 ≠ {new_qty}", "FAIL")
+            else:
+                self.log("❌ Stock subtraction failed", "FAIL")
+            self.tests_run += 1
+        
+        # Test 4: Product Status & Duplication
+        self.log("🔄 TEST 4: Product Status & Duplication Features", "INFO")
+        
+        if enhanced_product_id:
+            # Test status toggle to inactive
+            success, response = self.run_test(
+                "Toggle Product Status to Inactive",
+                "PATCH",
+                f"/api/products/{enhanced_product_id}/status",
+                200,
+                data={"status": "inactive"}
+            )
+            
+            if success and response.get('new_status') == 'inactive':
+                self.log("✅ Product status toggle to inactive working", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Product status toggle failed", "FAIL")
+            self.tests_run += 1
+            
+            # Test status toggle back to active
+            success, response = self.run_test(
+                "Toggle Product Status to Active",
+                "PATCH",
+                f"/api/products/{enhanced_product_id}/status",
+                200,
+                data={"status": "active"}
+            )
+            
+            if success and response.get('new_status') == 'active':
+                self.log("✅ Product status toggle to active working", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Product status toggle back to active failed", "FAIL")
+            self.tests_run += 1
+            
+            # Test product duplication without copying barcode/quantity
+            success, response = self.run_test(
+                "Duplicate Product (without barcode/quantity)",
+                "POST",
+                f"/api/products/{enhanced_product_id}/duplicate",
+                200,
+                data={
+                    "copy_barcode": False,
+                    "copy_quantity": False
+                }
+            )
+            
+            duplicate_product_id = None
+            if success:
+                duplicate_product_id = response.get('duplicate_id')
+                if duplicate_product_id:
+                    self.log(f"✅ Product duplication working: {duplicate_product_id}", "PASS")
+                    self.tests_passed += 1
+                    
+                    # Verify duplicate has different SKU and no barcode
+                    if response.get('duplicate_sku') and response.get('duplicate_sku') != enhanced_product_data['sku']:
+                        self.log("✅ Duplicate has unique SKU", "PASS")
+                        self.tests_passed += 1
+                    else:
+                        self.log("❌ Duplicate SKU not unique", "FAIL")
+                    self.tests_run += 1
+                else:
+                    self.log("❌ Duplicate product ID not returned", "FAIL")
+            else:
+                self.log("❌ Product duplication failed", "FAIL")
+            self.tests_run += 1
+            
+            # Test product duplication with copying barcode/quantity
+            success, response = self.run_test(
+                "Duplicate Product (with barcode/quantity)",
+                "POST",
+                f"/api/products/{enhanced_product_id}/duplicate",
+                200,
+                data={
+                    "copy_barcode": True,
+                    "copy_quantity": True
+                }
+            )
+            
+            if success and response.get('duplicate_id'):
+                self.log("✅ Product duplication with copy options working", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Product duplication with copy options failed", "FAIL")
+            self.tests_run += 1
+        
+        # Test 5: Barcode & Label Features
+        self.log("🔄 TEST 5: Barcode & Label Features", "INFO")
+        
+        if enhanced_product_id:
+            # Test barcode generation for products
+            success, response = self.run_test(
+                "Generate Barcodes for Products",
+                "POST",
+                "/api/products/generate-barcodes",
+                200,
+                data={
+                    "product_ids": [enhanced_product_id]
+                }
+            )
+            
+            if success:
+                updated_count = response.get('updated_count', 0)
+                self.log(f"✅ Barcode generation working: {updated_count} products updated", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Barcode generation failed", "FAIL")
+            self.tests_run += 1
+            
+            # Test label printing with different options
+            label_options = {
+                "product_ids": [enhanced_product_id],
+                "label_size": "58mm",
+                "format": "barcode_top",
+                "copies": 2
+            }
+            
+            success, response = self.run_test(
+                "Print Product Labels (58mm, barcode_top, 2 copies)",
+                "POST",
+                "/api/products/print-labels",
+                200,
+                data=label_options
+            )
+            
+            if success:
+                label_count = response.get('label_count', 0)
+                if label_count == 2:  # 1 product × 2 copies
+                    self.log(f"✅ Label printing working: {label_count} labels generated", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ Label count incorrect. Expected: 2, Got: {label_count}", "FAIL")
+            else:
+                self.log("❌ Label printing failed", "FAIL")
+            self.tests_run += 1
+            
+            # Test label printing with different size
+            label_options_80mm = {
+                "product_ids": [enhanced_product_id],
+                "label_size": "80mm",
+                "format": "barcode_bottom",
+                "copies": 1
+            }
+            
+            success, response = self.run_test(
+                "Print Product Labels (80mm, barcode_bottom, 1 copy)",
+                "POST",
+                "/api/products/print-labels",
+                200,
+                data=label_options_80mm
+            )
+            
+            if success:
+                self.log("✅ Label printing with different options working", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Label printing with different options failed", "FAIL")
+            self.tests_run += 1
+        
+        # Test 6: Quick Inline Edit
+        self.log("🔄 TEST 6: Quick Inline Edit Features", "INFO")
+        
+        if enhanced_product_id:
+            # Test quick edit price
+            success, response = self.run_test(
+                "Quick Edit - Update Price",
+                "PATCH",
+                f"/api/products/{enhanced_product_id}/quick-edit",
+                200,
+                data={
+                    "field": "price",
+                    "value": 59.99
+                }
+            )
+            
+            if success and response.get('new_value') == 59.99:
+                self.log("✅ Quick edit price working", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Quick edit price failed", "FAIL")
+            self.tests_run += 1
+            
+            # Test quick edit cost
+            success, response = self.run_test(
+                "Quick Edit - Update Cost",
+                "PATCH",
+                f"/api/products/{enhanced_product_id}/quick-edit",
+                200,
+                data={
+                    "field": "product_cost",
+                    "value": 30.00
+                }
+            )
+            
+            if success and response.get('new_value') == 30.00:
+                self.log("✅ Quick edit cost working", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Quick edit cost failed", "FAIL")
+            self.tests_run += 1
+            
+            # Test quick edit quantity
+            success, response = self.run_test(
+                "Quick Edit - Update Quantity",
+                "PATCH",
+                f"/api/products/{enhanced_product_id}/quick-edit",
+                200,
+                data={
+                    "field": "quantity",
+                    "value": 150
+                }
+            )
+            
+            if success and response.get('new_value') == 150:
+                self.log("✅ Quick edit quantity working", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Quick edit quantity failed", "FAIL")
+            self.tests_run += 1
+            
+            # Test validation for invalid values
+            success, response = self.run_test(
+                "Quick Edit - Invalid Negative Price (Should Fail)",
+                "PATCH",
+                f"/api/products/{enhanced_product_id}/quick-edit",
+                400,  # Bad request expected
+                data={
+                    "field": "price",
+                    "value": -10.00
+                }
+            )
+            
+            if success:
+                self.log("✅ Quick edit validation working (rejects negative price)", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Quick edit should reject negative price", "FAIL")
+            self.tests_run += 1
+            
+            # Test validation for invalid field
+            success, response = self.run_test(
+                "Quick Edit - Invalid Field (Should Fail)",
+                "PATCH",
+                f"/api/products/{enhanced_product_id}/quick-edit",
+                400,  # Bad request expected
+                data={
+                    "field": "name",  # Not allowed for quick edit
+                    "value": "New Name"
+                }
+            )
+            
+            if success:
+                self.log("✅ Quick edit validation working (rejects invalid field)", "PASS")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Quick edit should reject invalid field", "FAIL")
+            self.tests_run += 1
+        
+        # Test 7: Comprehensive Product Details Retrieval
+        self.log("🔄 TEST 7: Product Details with All New Fields", "INFO")
+        
+        if enhanced_product_id:
+            success, response = self.run_test(
+                "Get Product Details with All New Fields",
+                "GET",
+                f"/api/products/{enhanced_product_id}",
+                200
+            )
+            
+            if success:
+                # Verify all new fields are present in response
+                required_fields = ['brand', 'supplier', 'low_stock_threshold', 'status', 'product_cost']
+                missing_fields = []
+                
+                for field in required_fields:
+                    if field not in response:
+                        missing_fields.append(field)
+                
+                if not missing_fields:
+                    self.log("✅ All new fields present in product details", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ Missing fields in product details: {missing_fields}", "FAIL")
+                self.tests_run += 1
+        
+        # Clean up test products
+        if enhanced_product_id:
+            self.run_test(
+                "Delete Enhanced Test Product",
+                "DELETE",
+                f"/api/products/{enhanced_product_id}",
+                200
+            )
+        
+        self.log("=== UPDATED PRODUCTS API TESTING COMPLETED ===", "INFO")
+        return True
+
     def run_all_tests(self):
         """Run all API tests"""
         self.log("Starting POS System Enhancements API Tests", "START")
