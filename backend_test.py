@@ -519,35 +519,89 @@ class POSAPITester:
         """Test sales API with enhanced cashier fields as requested"""
         self.log("=== STARTING SALES API WITH CASHIER FIELDS TESTING ===", "INFO")
         
-        if not self.product_id or not self.customer_id:
-            self.log("❌ Cannot test sales with cashier fields - missing product or customer", "ERROR")
+        # Switch to business admin token for testing
+        if self.business_admin_token:
+            self.token = self.business_admin_token
+            self.log("Using business admin token for sales testing")
+        
+        # First, create a test product with required fields
+        product_data = {
+            "name": "Cashier Test Product",
+            "description": "Product for testing sales API with cashier fields",
+            "sku": f"CASHIER-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            "price": 25.99,
+            "product_cost": 12.50,  # Required field
+            "quantity": 50,
+            "category_id": self.category_id,
+            "barcode": f"CASH{datetime.now().strftime('%H%M%S')}"
+        }
+
+        success, response = self.run_test(
+            "Create Test Product for Cashier Testing",
+            "POST",
+            "/api/products",
+            200,
+            data=product_data
+        )
+        
+        test_product_id = None
+        if success and 'id' in response:
+            test_product_id = response['id']
+            self.log(f"Test product created with ID: {test_product_id}")
+        else:
+            self.log("❌ Cannot test sales with cashier fields - failed to create test product", "ERROR")
             return False
+
+        # Create a test customer if we don't have one
+        test_customer_id = self.customer_id
+        if not test_customer_id:
+            customer_data = {
+                "name": "Cashier Test Customer",
+                "email": f"cashier.test.{datetime.now().strftime('%Y%m%d%H%M%S')}@example.com",
+                "phone": "+1234567890",
+                "address": "123 Cashier Test Street"
+            }
+
+            success, response = self.run_test(
+                "Create Test Customer for Cashier Testing",
+                "POST",
+                "/api/customers",
+                200,
+                data=customer_data
+            )
+            
+            if success and 'id' in response:
+                test_customer_id = response['id']
+                self.log(f"Test customer created with ID: {test_customer_id}")
+            else:
+                self.log("❌ Cannot test sales with cashier fields - failed to create test customer", "ERROR")
+                return False
 
         # Test 1: Create sale with complete cashier information
         sale_data_with_cashier = {
-            "customer_id": self.customer_id,
-            "customer_name": "Test Customer",
+            "customer_id": test_customer_id,
+            "customer_name": "Cashier Test Customer",
             "cashier_id": "507f1f77bcf86cd799439011",  # Mock cashier ID
             "cashier_name": "admin@printsandcuts.com",
             "items": [
                 {
-                    "product_id": self.product_id,
-                    "product_name": "Test Product",
-                    "sku": "TEST-SKU",
+                    "product_id": test_product_id,
+                    "product_name": "Cashier Test Product",
+                    "sku": product_data['sku'],
                     "quantity": 2,
-                    "unit_price": 29.99,
-                    "unit_price_snapshot": 29.99,
-                    "unit_cost_snapshot": 15.00,
-                    "total_price": 59.98
+                    "unit_price": 25.99,
+                    "unit_price_snapshot": 25.99,
+                    "unit_cost_snapshot": 12.50,
+                    "total_price": 51.98
                 }
             ],
-            "subtotal": 59.98,
-            "tax_amount": 5.40,
+            "subtotal": 51.98,
+            "tax_amount": 4.68,
             "discount_amount": 0.00,
-            "total_amount": 65.38,
+            "total_amount": 56.66,
             "payment_method": "cash",
-            "received_amount": 70.00,
-            "change_amount": 4.62,
+            "received_amount": 60.00,
+            "change_amount": 3.34,
             "notes": "Test sale with cashier fields"
         }
 
@@ -571,31 +625,33 @@ class POSAPITester:
             
             # Store sale ID for further testing
             if 'id' in response:
-                self.sale_id = response['id']
+                test_sale_id = response['id']
+                self.log(f"Sale created with ID: {test_sale_id}")
         else:
             self.log("❌ Failed to create sale with cashier fields")
+            return False
 
         # Test 2: Create sale without cashier_id (should fail validation)
         sale_data_missing_cashier_id = {
-            "customer_id": self.customer_id,
-            "customer_name": "Test Customer",
+            "customer_id": test_customer_id,
+            "customer_name": "Cashier Test Customer",
             "cashier_name": "admin@printsandcuts.com",
             "items": [
                 {
-                    "product_id": self.product_id,
-                    "product_name": "Test Product",
-                    "sku": "TEST-SKU",
+                    "product_id": test_product_id,
+                    "product_name": "Cashier Test Product",
+                    "sku": product_data['sku'],
                     "quantity": 1,
-                    "unit_price": 29.99,
-                    "unit_price_snapshot": 29.99,
-                    "unit_cost_snapshot": 15.00,
-                    "total_price": 29.99
+                    "unit_price": 25.99,
+                    "unit_price_snapshot": 25.99,
+                    "unit_cost_snapshot": 12.50,
+                    "total_price": 25.99
                 }
             ],
-            "subtotal": 29.99,
-            "tax_amount": 2.70,
+            "subtotal": 25.99,
+            "tax_amount": 2.34,
             "discount_amount": 0.00,
-            "total_amount": 32.69,
+            "total_amount": 28.33,
             "payment_method": "card"
         }
 
@@ -616,25 +672,25 @@ class POSAPITester:
 
         # Test 3: Create sale without cashier_name (should fail validation)
         sale_data_missing_cashier_name = {
-            "customer_id": self.customer_id,
-            "customer_name": "Test Customer",
+            "customer_id": test_customer_id,
+            "customer_name": "Cashier Test Customer",
             "cashier_id": "507f1f77bcf86cd799439011",
             "items": [
                 {
-                    "product_id": self.product_id,
-                    "product_name": "Test Product",
-                    "sku": "TEST-SKU",
+                    "product_id": test_product_id,
+                    "product_name": "Cashier Test Product",
+                    "sku": product_data['sku'],
                     "quantity": 1,
-                    "unit_price": 29.99,
-                    "unit_price_snapshot": 29.99,
-                    "unit_cost_snapshot": 15.00,
-                    "total_price": 29.99
+                    "unit_price": 25.99,
+                    "unit_price_snapshot": 25.99,
+                    "unit_cost_snapshot": 12.50,
+                    "total_price": 25.99
                 }
             ],
-            "subtotal": 29.99,
-            "tax_amount": 2.70,
+            "subtotal": 25.99,
+            "tax_amount": 2.34,
             "discount_amount": 0.00,
-            "total_amount": 32.69,
+            "total_amount": 28.33,
             "payment_method": "card"
         }
 
@@ -655,39 +711,39 @@ class POSAPITester:
 
         # Test 4: Create multi-item sale with complete payment information
         multi_item_sale_data = {
-            "customer_id": self.customer_id,
-            "customer_name": "Test Customer",
+            "customer_id": test_customer_id,
+            "customer_name": "Cashier Test Customer",
             "cashier_id": "507f1f77bcf86cd799439011",
             "cashier_name": "admin@printsandcuts.com",
             "items": [
                 {
-                    "product_id": self.product_id,
-                    "product_name": "Test Product",
-                    "sku": "TEST-SKU",
+                    "product_id": test_product_id,
+                    "product_name": "Cashier Test Product",
+                    "sku": product_data['sku'],
                     "quantity": 3,
-                    "unit_price": 29.99,
-                    "unit_price_snapshot": 29.99,
-                    "unit_cost_snapshot": 15.00,
-                    "total_price": 89.97
+                    "unit_price": 25.99,
+                    "unit_price_snapshot": 25.99,
+                    "unit_cost_snapshot": 12.50,
+                    "total_price": 77.97
                 },
                 {
-                    "product_id": self.product_id,
-                    "product_name": "Test Product 2",
-                    "sku": "TEST-SKU-2",
+                    "product_id": test_product_id,
+                    "product_name": "Cashier Test Product 2",
+                    "sku": "CASHIER-ITEM-2",
                     "quantity": 1,
-                    "unit_price": 19.99,
-                    "unit_price_snapshot": 19.99,
-                    "unit_cost_snapshot": 10.00,
-                    "total_price": 19.99
+                    "unit_price": 15.99,
+                    "unit_price_snapshot": 15.99,
+                    "unit_cost_snapshot": 8.00,
+                    "total_price": 15.99
                 }
             ],
-            "subtotal": 109.96,
-            "tax_amount": 9.90,
+            "subtotal": 93.96,
+            "tax_amount": 8.46,
             "discount_amount": 5.00,
-            "total_amount": 114.86,
+            "total_amount": 97.42,
             "payment_method": "cash",
-            "received_amount": 120.00,
-            "change_amount": 5.14,
+            "received_amount": 100.00,
+            "change_amount": 2.58,
             "notes": "Multi-item test sale with complete payment info"
         }
 
@@ -724,11 +780,11 @@ class POSAPITester:
             self.log("❌ Failed to create multi-item sale")
 
         # Test 5: Verify sale retrieval includes cashier information
-        if self.sale_id:
+        if 'test_sale_id' in locals():
             success, response = self.run_test(
                 "Get Sale by ID (Verify Cashier Info)",
                 "GET",
-                f"/api/sales/{self.sale_id}",
+                f"/api/sales/{test_sale_id}",
                 200
             )
 
@@ -745,29 +801,29 @@ class POSAPITester:
         
         for payment_method in payment_methods:
             payment_sale_data = {
-                "customer_id": self.customer_id,
-                "customer_name": "Test Customer",
+                "customer_id": test_customer_id,
+                "customer_name": "Cashier Test Customer",
                 "cashier_id": "507f1f77bcf86cd799439011",
                 "cashier_name": "admin@printsandcuts.com",
                 "items": [
                     {
-                        "product_id": self.product_id,
-                        "product_name": "Test Product",
-                        "sku": "TEST-SKU",
+                        "product_id": test_product_id,
+                        "product_name": "Cashier Test Product",
+                        "sku": product_data['sku'],
                         "quantity": 1,
-                        "unit_price": 29.99,
-                        "unit_price_snapshot": 29.99,
-                        "unit_cost_snapshot": 15.00,
-                        "total_price": 29.99
+                        "unit_price": 25.99,
+                        "unit_price_snapshot": 25.99,
+                        "unit_cost_snapshot": 12.50,
+                        "total_price": 25.99
                     }
                 ],
-                "subtotal": 29.99,
-                "tax_amount": 2.70,
+                "subtotal": 25.99,
+                "tax_amount": 2.34,
                 "discount_amount": 0.00,
-                "total_amount": 32.69,
+                "total_amount": 28.33,
                 "payment_method": payment_method,
-                "received_amount": 35.00 if payment_method == "cash" else None,
-                "change_amount": 2.31 if payment_method == "cash" else None,
+                "received_amount": 30.00 if payment_method == "cash" else None,
+                "change_amount": 1.67 if payment_method == "cash" else None,
                 "notes": f"Test sale with {payment_method} payment"
             }
 
