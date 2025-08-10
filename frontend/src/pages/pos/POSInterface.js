@@ -150,6 +150,17 @@ const POSInterface = () => {
     if (saved) {
       setHeldOrders(JSON.parse(saved));
     }
+    
+    // Load receipt preferences from localStorage
+    const receiptPreviewState = sessionStorage.getItem('pos-receipt-preview-expanded');
+    if (receiptPreviewState) {
+      setShowReceiptPreview(JSON.parse(receiptPreviewState));
+    }
+    
+    const receiptCollapsedState = localStorage.getItem('pos-receipt-collapsed');
+    if (receiptCollapsedState) {
+      setReceiptCollapsed(JSON.parse(receiptCollapsedState));
+    }
   }, [fetchData]);
 
   // Separate useEffect for barcode scanner to avoid dependency issues
