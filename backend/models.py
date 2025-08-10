@@ -82,6 +82,10 @@ class ProductBase(BaseModel):
     product_cost: float = Field(..., ge=0, description="Product cost - required for profit tracking")
     quantity: int = 0
     image_url: Optional[str] = None
+    brand: Optional[str] = None
+    supplier: Optional[str] = None
+    low_stock_threshold: int = 10
+    status: str = "active"
 
 class ProductCreate(ProductBase):
     pass
