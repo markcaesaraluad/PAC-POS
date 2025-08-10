@@ -4493,7 +4493,11 @@ def main():
     tester = POSAPITester()
     
     try:
-        success = tester.run_all_tests()
+        # Check if we should run focused tests
+        if len(sys.argv) > 1 and sys.argv[1] == "--focused":
+            success = tester.run_focused_tests()
+        else:
+            success = tester.run_all_tests()
         return 0 if success else 1
     except KeyboardInterrupt:
         print("\n⚠️ Tests interrupted by user")
