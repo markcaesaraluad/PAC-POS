@@ -680,7 +680,7 @@ const POSInterface = () => {
   return (
     <div className="h-screen flex bg-gray-50">
       {/* Left Panel - Products */}
-      <div className="w-2/5 bg-white border-r flex flex-col">
+      <div className="w-2/3 bg-white border-r flex flex-col">
         {/* Header */}
         <div className="p-3 border-b bg-white flex-shrink-0">
           <div className="flex items-center justify-between mb-3">
