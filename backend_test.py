@@ -4587,6 +4587,12 @@ class POSAPITester:
         # Core POS functionality (needed for data generation)
         self.test_invoice_workflow()
         self.test_sales_operations()
+        
+        # NEW: Test Sales API with Cashier Fields (as requested)
+        self.log("=== STARTING SALES API WITH CASHIER FIELDS TESTING ===", "INFO")
+        self.test_sales_api_with_cashier_fields()
+        self.log("=== SALES API WITH CASHIER FIELDS TESTING COMPLETED ===", "INFO")
+        
         self.test_business_operations()
 
         # === NEW POS SYSTEM ENHANCEMENTS TESTING ===
