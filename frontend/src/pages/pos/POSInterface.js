@@ -1196,9 +1196,11 @@ const POSInterface = () => {
                     )}
                   </div>
                 </div>
-
-                {/* Action Buttons */}
-                <div className="flex space-x-3 pt-4">
+              </div>
+              
+              {/* Action Buttons - Fixed at bottom */}
+              <div className="border-t p-4 bg-white rounded-b-lg">
+                <div className="flex space-x-3">
                   <button
                     onClick={() => setShowPaymentModal(false)}
                     className="btn-secondary flex-1"
