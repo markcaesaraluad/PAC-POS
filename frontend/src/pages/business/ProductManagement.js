@@ -117,8 +117,7 @@ const ProductManagement = () => {
   } = useGlobalFilter({
     defaultFilters: {},
     persistenceKey: 'products-filter',
-    enablePersistence: true,
-    onFilterChange: () => {} // Placeholder, will be updated later
+    enablePersistence: true
   });
 
   const fetchData = useCallback(async (customFilters = null) => {
@@ -143,16 +142,6 @@ const ProductManagement = () => {
       setLoading(false);
     }
   }, [generateQueryParams, filters]);
-
-  // Handle filter changes and refresh data  
-  const handleFilterChange = useCallback((newFilters) => {
-    fetchData(newFilters);
-  }, [fetchData]);
-
-  // Update the useGlobalFilter's onFilterChange after handleFilterChange is defined
-  useEffect(() => {
-    // This ensures the onFilterChange callback is properly set
-  }, [handleFilterChange]);
 
   const {
     register,
