@@ -4278,6 +4278,216 @@ class POSAPITester:
         self.log("=== SUPER ADMIN BUSINESS ACCESS CONTROL TESTING COMPLETED ===", "INFO")
         return True
 
+    def test_focused_products_api_issues(self):
+        """Test focused Products API functionality - specific failing endpoints"""
+        self.log("=== STARTING FOCUSED PRODUCTS API TESTING ===", "INFO")
+        
+        # Test 1: Authentication Check - Business Admin login
+        self.log("🔍 TEST 1: Authentication Check - Business Admin Login", "INFO")
+        success, response = self.run_test(
+            "Business Admin Login Verification",
+            "POST",
+            "/api/auth/login",
+            200,
+            data={
+                "email": "admin@printsandcuts.com",
+                "password": "admin123456",
+                "business_subdomain": "prints-cuts-tagum"
+            }
+        )
+        if success and 'access_token' in response:
+            self.business_admin_token = response['access_token']
+            self.token = self.business_admin_token
+            self.log("✅ Business admin authentication working")
+        else:
+            self.log("❌ Business admin authentication failed")
+            return False
+        
+        # Get current user to establish business context
+        success, response = self.run_test(
+            "Get Current User for Business Context",
+            "GET",
+            "/api/auth/me",
+            200
+        )
+        if success and 'business_id' in response:
+            self.business_id = response['business_id']
+            self.log(f"✅ Business context established: {self.business_id}")
+        
+        # Test 2: Basic Product Operations - Creation and Listing
+        self.log("🔍 TEST 2: Basic Product Operations", "INFO")
+        
+        # Create a simple product first
+        product_data = {
+            "name": "Focus Test Product",
+            "description": "Product for focused testing",
+            "sku": f"FOCUS-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            "price": 25.99,
+            "product_cost": 12.50,
+            "quantity": 50,
+            "barcode": f"FOCUS{datetime.now().strftime('%H%M%S')}"
+        }
+        
+        success, response = self.run_test(
+            "Create Product (Basic Operation)",
+            "POST",
+            "/api/products",
+            200,
+            data=product_data
+        )
+        
+        focus_product_id = None
+        if success and 'id' in response:
+            focus_product_id = response['id']
+            self.log(f"✅ Product created successfully: {focus_product_id}")
+        else:
+            self.log("❌ Product creation failed")
+        
+        # Test product listing
+        success, response = self.run_test(
+            "List Products (Basic Operation)",
+            "GET",
+            "/api/products",
+            200
+        )
+        
+        if success:
+            products = response if isinstance(response, list) else response.get('products', [])
+            self.log(f"✅ Product listing working - found {len(products)} products")
+        else:
+            self.log("❌ Product listing failed")
+        
+        # Test 3: Single Endpoint Test - CSV Template Download
+        self.log("🔍 TEST 3: CSV Template Download Endpoint", "INFO")
+        
+        success, response = self.run_test(
+            "Download CSV Template (Specific Failing Endpoint)",
+            "GET",
+            "/api/products/download-template",
+            200,
+            params={"format": "csv"}
+        )
+        
+        if success:
+            self.log("✅ CSV template download working")
+        else:
+            self.log("❌ CSV template download failed - this is the specific issue")
+            # Get more detailed error information
+            url = f"{self.base_url}/api/products/download-template?format=csv"
+            headers = {'Authorization': f'Bearer {self.token}'}
+            try:
+                response = requests.get(url, headers=headers)
+                self.log(f"Detailed error - Status: {response.status_code}")
+                self.log(f"Detailed error - Response: {response.text[:1000]}")
+            except Exception as e:
+                self.log(f"Detailed error - Exception: {str(e)}")
+        
+        # Test Excel template as well
+        success, response = self.run_test(
+            "Download Excel Template",
+            "GET",
+            "/api/products/download-template",
+            200,
+            params={"format": "excel"}
+        )
+        
+        if success:
+            self.log("✅ Excel template download working")
+        else:
+            self.log("❌ Excel template download also failing")
+        
+        # Test 4: Status Endpoint Test - PATCH status
+        self.log("🔍 TEST 4: Product Status Toggle Endpoint", "INFO")
+        
+        if focus_product_id:
+            success, response = self.run_test(
+                "Toggle Product Status (Specific Failing Endpoint)",
+                "PATCH",
+                f"/api/products/{focus_product_id}/status",
+                200,
+                data={"status": "inactive"}
+            )
+            
+            if success:
+                self.log("✅ Product status toggle working")
+            else:
+                self.log("❌ Product status toggle failed - this is the specific issue")
+                # Get more detailed error information
+                url = f"{self.base_url}/api/products/{focus_product_id}/status"
+                headers = {'Authorization': f'Bearer {self.token}', 'Content-Type': 'application/json'}
+                try:
+                    response = requests.patch(url, json={"status": "inactive"}, headers=headers)
+                    self.log(f"Detailed error - Status: {response.status_code}")
+                    self.log(f"Detailed error - Response: {response.text[:1000]}")
+                except Exception as e:
+                    self.log(f"Detailed error - Exception: {str(e)}")
+            
+            # Test toggle back to active
+            success, response = self.run_test(
+                "Toggle Product Status Back to Active",
+                "PATCH",
+                f"/api/products/{focus_product_id}/status",
+                200,
+                data={"status": "active"}
+            )
+        else:
+            self.log("❌ Cannot test status endpoint - no product ID available")
+        
+        # Additional failing endpoints from the test results
+        self.log("🔍 ADDITIONAL TESTS: Other Known Failing Endpoints", "INFO")
+        
+        # Test bulk export (known to fail)
+        success, response = self.run_test(
+            "Bulk Export Products (Known Issue)",
+            "GET",
+            "/api/products/export",
+            200,
+            params={"format": "csv"}
+        )
+        
+        if not success:
+            self.log("❌ Bulk export failing as expected")
+        
+        # Test quick edit endpoint (known to fail)
+        if focus_product_id:
+            success, response = self.run_test(
+                "Quick Edit Product (Known Issue)",
+                "PATCH",
+                f"/api/products/{focus_product_id}/quick-edit",
+                200,
+                data={"price": 30.99}
+            )
+            
+            if not success:
+                self.log("❌ Quick edit failing as expected")
+        
+        # Clean up test product
+        if focus_product_id:
+            self.run_test(
+                "Delete Focus Test Product",
+                "DELETE",
+                f"/api/products/{focus_product_id}",
+                200
+            )
+        
+        self.log("=== FOCUSED PRODUCTS API TESTING COMPLETED ===", "INFO")
+        return True
+
+    def run_focused_tests(self):
+        """Run only the focused Products API tests"""
+        self.log("=== STARTING FOCUSED PRODUCTS API TESTING ===", "INFO")
+        
+        # Run the focused test
+        self.test_focused_products_api_issues()
+        
+        # Final summary
+        self.log("=== FOCUSED TESTING COMPLETED ===", "INFO")
+        self.log(f"Tests run: {self.tests_run}")
+        self.log(f"Tests passed: {self.tests_passed}")
+        self.log(f"Success rate: {(self.tests_passed/self.tests_run)*100:.1f}%")
+        
+        return self.tests_passed > 0
+
 def main():
     """Main test execution"""
     tester = POSAPITester()
