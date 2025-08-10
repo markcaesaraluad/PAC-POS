@@ -63,6 +63,35 @@ async def get_current_user(token_data=Depends(verify_token)):
     
     return user
 
+async def check_business_status(current_user=Depends(get_current_user)):
+    """
+    Check if business is active and user has access.
+    Super Admin can access any business regardless of status.
+    """
+    # Super Admin can access any business
+    if current_user["role"] == UserRole.SUPER_ADMIN:
+        return current_user
+    
+    # If user has business_id, check business status
+    if current_user.get("business_id"):
+        businesses_collection = await get_collection("businesses")
+        business = await businesses_collection.find_one({"_id": ObjectId(current_user["business_id"])})
+        
+        if not business:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Business not found",
+            )
+        
+        # Block access if business is suspended
+        if business.get("status") == "suspended":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: Business is suspended",
+            )
+    
+    return current_user
+
 async def require_role(required_roles: list):
     def role_checker(current_user=Depends(get_current_user)):
         if current_user["role"] not in required_roles:
