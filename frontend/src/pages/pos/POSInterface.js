@@ -55,23 +55,6 @@ const POSInterface = () => {
   const [modalNotes, setModalNotes] = useState('');
   const [receivedAmount, setReceivedAmount] = useState('');
   
-  // Receipt preview state with responsive defaults and session persistence
-  const getInitialReceiptToggle = () => {
-    const saved = sessionStorage.getItem('pos-receipt-preview-expanded');
-    if (saved !== null) {
-      return JSON.parse(saved);
-    }
-    // Default: expanded on desktop (>= 768px), collapsed on mobile
-    return window.innerWidth >= 768;
-  };
-  
-  const [showReceiptPreview, setShowReceiptPreview] = useState(getInitialReceiptToggle());
-  const [previewReceiptData, setPreviewReceiptData] = useState(null);
-  const [receiptCollapsed, setReceiptCollapsed] = useState(() => {
-    const saved = localStorage.getItem('pos-receipt-collapsed');
-    return saved ? JSON.parse(saved) : (window.innerWidth < 768);
-  });
-  
   // Barcode state
   const [scannerActive, setScannerActive] = useState(true);
   const [barcodeBuffer, setBarcodeBuffer] = useState('');
