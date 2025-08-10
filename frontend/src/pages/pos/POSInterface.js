@@ -225,7 +225,6 @@ const POSInterface = () => {
     setNotes('');
     setReceivedAmount('');
     setPaymentMethod('cash');
-    setPreviewReceiptData(null);
   };
 
   const holdOrder = () => {
