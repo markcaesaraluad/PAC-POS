@@ -138,7 +138,35 @@ async def update_business_status(
     
     return {"message": "Business status updated successfully"}
 
-@router.get("/businesses/{business_id}/users", response_model=List[UserResponse])
+@router.get("/businesses/{business_id}", response_model=BusinessResponse)
+async def get_business_by_id(
+    business_id: str,
+    current_user=Depends(get_super_admin)
+):
+    """Super Admin can access any business regardless of status"""
+    businesses_collection = await get_collection("businesses")
+    business = await businesses_collection.find_one({"_id": ObjectId(business_id)})
+    
+    if not business:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Business not found",
+        )
+    
+    return BusinessResponse(
+        id=str(business["_id"]),
+        name=business["name"],
+        description=business.get("description"),
+        subdomain=business["subdomain"],
+        contact_email=business["contact_email"],
+        phone=business.get("phone"),
+        address=business.get("address"),
+        status=business.get("status", "active"),
+        logo_url=business.get("logo_url"),
+        settings=business.get("settings", {}),
+        created_at=business.get("created_at", datetime.utcnow()),
+        updated_at=business.get("updated_at", datetime.utcnow())
+    )
 async def get_business_users(
     business_id: str,
     current_user=Depends(get_super_admin)
