@@ -68,6 +68,41 @@ export const productsAPI = {
   deleteProduct: (id) => apiClient.delete(`/api/products/${id}`),
   getProductByBarcode: (barcode) => apiClient.get(`/api/products/barcode/${barcode}`),
   getProductCostHistory: (id) => apiClient.get(`/api/products/${id}/cost-history`),
+  
+  // Bulk Operations
+  bulkImport: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiClient.post('/api/products/bulk-import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+  exportProducts: (params = {}) => {
+    return apiClient.get('/api/products/export', { 
+      params,
+      responseType: 'blob'
+    });
+  },
+  downloadTemplate: (format = 'csv') => {
+    return apiClient.get('/api/products/download-template', {
+      params: { format },
+      responseType: 'blob'
+    });
+  },
+  
+  // Stock Management
+  adjustStock: (id, adjustmentData) => apiClient.post(`/api/products/${id}/stock-adjustment`, adjustmentData),
+  
+  // Product Status & Duplication
+  toggleStatus: (id, status) => apiClient.patch(`/api/products/${id}/status`, { status }),
+  duplicateProduct: (id, options = {}) => apiClient.post(`/api/products/${id}/duplicate`, options),
+  
+  // Barcode & Label Features
+  generateBarcodes: (productIds) => apiClient.post('/api/products/generate-barcodes', { product_ids: productIds }),
+  printLabels: (options) => apiClient.post('/api/products/print-labels', options),
+  
+  // Quick Edit
+  quickEdit: (id, fieldData) => apiClient.patch(`/api/products/${id}/quick-edit`, fieldData),
 };
 
 export const categoriesAPI = {
