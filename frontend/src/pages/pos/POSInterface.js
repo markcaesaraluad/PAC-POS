@@ -83,7 +83,6 @@ const POSInterface = () => {
     if (!barcode || barcode.length < 3) return; // Minimum barcode length
     
     try {
-      setIsScanning(false);
       const response = await productsAPI.getProductByBarcode(barcode.trim());
       addToCart(response.data);
       
