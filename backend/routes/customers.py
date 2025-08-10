@@ -178,7 +178,8 @@ async def update_customer(
                 "name": customer_update.name,
                 "email": customer_update.email,
                 "phone": customer_update.phone,
-                "address": customer_update.address
+                "address": customer_update.address,
+                "updated_at": datetime.utcnow()
             }
         }
     )
