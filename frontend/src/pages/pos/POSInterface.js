@@ -1061,11 +1061,11 @@ const POSInterface = () => {
         </div>
       </div>
 
-      {/* Payment Modal */}
+      {/* Payment Modal - HOTFIX 6: Fixed overflow issue */}
       {showPaymentModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg max-w-md w-full mx-4 max-h-96 overflow-y-auto">
-            <div className="p-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] flex flex-col">
+            <div className="p-6 flex-1 overflow-visible">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Payment</h3>
                 <button
