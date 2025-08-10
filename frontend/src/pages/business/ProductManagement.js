@@ -303,31 +303,16 @@ const ProductManagement = () => {
 
     setImportLoading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', importFile);
-
-      const response = await fetch('/api/products/bulk-import', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: formData
-      });
-
-      const result = await response.json();
+      const result = await productsAPI.bulkImport(importFile);
       
-      if (response.ok) {
-        toast.success(`Import completed! ${result.imported_count} products imported.`);
-        if (result.error_count > 0) {
-          toast.error(`${result.error_count} products had errors.`);
-        }
-        setShowImportModal(false);
-        fetchData();
-      } else {
-        throw new Error(result.detail || 'Import failed');
+      toast.success(`Import completed! ${result.data.imported_count} products imported.`);
+      if (result.data.error_count > 0) {
+        toast.error(`${result.data.error_count} products had errors.`);
       }
+      setShowImportModal(false);
+      fetchData();
     } catch (error) {
-      toast.error('Import failed: ' + error.message);
+      toast.error('Import failed: ' + (error.response?.data?.detail || error.message));
     } finally {
       setImportLoading(false);
     }
