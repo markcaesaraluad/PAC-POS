@@ -111,7 +111,7 @@ async def get_super_admin(current_user=Depends(get_current_user)):
         )
     return current_user
 
-async def get_business_admin_or_super(current_user=Depends(get_current_user)):
+async def get_business_admin_or_super(current_user=Depends(check_business_status)):
     if current_user["role"] not in [UserRole.SUPER_ADMIN, UserRole.BUSINESS_ADMIN]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -119,5 +119,5 @@ async def get_business_admin_or_super(current_user=Depends(get_current_user)):
         )
     return current_user
 
-async def get_any_authenticated_user(current_user=Depends(get_current_user)):
+async def get_any_authenticated_user(current_user=Depends(check_business_status)):
     return current_user
