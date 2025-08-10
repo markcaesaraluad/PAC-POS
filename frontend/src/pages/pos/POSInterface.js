@@ -392,19 +392,7 @@ const POSInterface = () => {
     handleTransaction();
   };
 
-  // Toggle receipt preview with session persistence
-  const toggleReceiptPreview = () => {
-    const newState = !showReceiptPreview;
-    setShowReceiptPreview(newState);
-    sessionStorage.setItem('pos-receipt-preview-expanded', JSON.stringify(newState));
-  };
 
-  // Receipt collapse toggle
-  const toggleReceiptCollapse = () => {
-    const newState = !receiptCollapsed;
-    setReceiptCollapsed(newState);
-    localStorage.setItem('pos-receipt-collapsed', JSON.stringify(newState));
-  };
 
   const handleTransaction = async () => {
     if (cart.length === 0) {
