@@ -278,11 +278,11 @@ frontend:
 
   - task: "POS Interface & Sales Processing"
     implemented: true
-    working: true
+    working: false
     file: "frontend/src/pages/pos/POSInterface.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "testing"
@@ -293,6 +293,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "✅ NEW SINGLE-FRAME POS LAYOUT FULLY TESTED AND WORKING: Comprehensive testing completed successfully. Three-panel layout working perfectly (Left 40% - Products, Middle 35% - Cart, Right 25% - Receipt Preview). All elements visible simultaneously: product search/barcode input, category tabs, product grid (5 products), cart section, customer selection, payment methods, receipt preview panel. Receipt Preview Panel working: generates preview with business details, print/save options available. Hold Order Functionality working: hold button functional, held orders dropdown appears, resume functionality working. Single-frame experience maintained: no modals present, all functionality accessible without navigation, complete transaction flow visible in one screen. Responsive design tested on desktop (1920x1080), tablet (768x1024), and mobile (390x844) - layout adapts correctly. Minor: Inline customer creation form visibility needs improvement but core functionality present. Overall: NEW single-frame POS layout successfully replaces modal-based approach and meets all requirements."
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL POS PRODUCTS DISPLAY BUG CONFIRMED: Comprehensive testing reveals the critical 'No products found' bug is STILL PRESENT despite previous reports. ROOT CAUSE IDENTIFIED: Customers API returns 500 error, causing Promise.all() in fetchData() to fail completely. Even though Products API works perfectly (returns 41 products with 200 status), the Promise.all failure prevents products from being set in React state. TECHNICAL DETAILS: Authentication working (✅), Products API working (✅ 41 products), Categories API working (✅ 3 categories), Customers API failing (❌ 500 error). The frontend shows 'No products found' because the catch block in fetchData() runs when Promise.all fails, preventing setProducts() from executing. SOLUTION NEEDED: Fix customers API 500 error OR modify frontend to handle partial API failures gracefully. This is a critical production issue affecting core POS functionality."
 
   - task: "Sales History & Management"
     implemented: true
