@@ -60,7 +60,7 @@ const SalesHistory = () => {
     hasActiveFilters
   } = useGlobalFilter({
     defaultFilters: {
-      date_preset: 'last7days'
+      date_preset: 'today' // HOTFIX 2: Default to today instead of last7days
     },
     persistenceKey: 'sales-history-filter',
     enablePersistence: true,
