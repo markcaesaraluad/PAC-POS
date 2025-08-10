@@ -4293,6 +4293,12 @@ class POSAPITester:
         self.test_products_api_critical_pos_bug()
         self.log("=== PRODUCTS API CRITICAL BUG FIX TESTING COMPLETED ===", "INFO")
 
+        # URGENT: Test customers API 500 error investigation
+        self.log("=== URGENT: INVESTIGATING CUSTOMERS API 500 ERROR ===", "INFO")
+        self.test_customers_api_500_investigation()
+        self.test_pos_api_integration()
+        self.log("=== CUSTOMERS API INVESTIGATION COMPLETED ===", "INFO")
+
         # CRUD operations (needed for comprehensive testing)
         self.test_categories_crud()
         self.test_products_crud()
