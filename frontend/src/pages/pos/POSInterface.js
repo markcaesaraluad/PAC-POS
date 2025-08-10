@@ -968,7 +968,7 @@ const POSInterface = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="p-3 space-y-2">
+          <div className="p-3 space-y-2" style={{overflow: 'visible'}}>
             <button
               onClick={openPaymentModal}
               disabled={cart.length === 0 || isProcessing}
