@@ -43,7 +43,8 @@ async def create_customer(
         "address": customer.address,
         "total_spent": 0.0,
         "visit_count": 0,
-        "created_at": datetime.utcnow()
+        "created_at": datetime.utcnow(),
+        "updated_at": datetime.utcnow()
     }
     
     await customers_collection.insert_one(customer_doc)
