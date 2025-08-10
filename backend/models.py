@@ -100,6 +100,10 @@ class ProductUpdate(BaseModel):
     product_cost: Optional[float] = Field(None, ge=0, description="Product cost for profit tracking")
     quantity: Optional[int] = None
     image_url: Optional[str] = None
+    brand: Optional[str] = None
+    supplier: Optional[str] = None
+    low_stock_threshold: Optional[int] = None
+    status: Optional[str] = None
 
 class ProductResponse(ProductBase):
     id: str
