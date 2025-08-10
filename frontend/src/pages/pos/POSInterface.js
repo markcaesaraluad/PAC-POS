@@ -498,14 +498,26 @@ const POSInterface = () => {
 
   const handleAutoPrint = async (transactionData, transactionType) => {
     try {
-      const printerStatus = bluetoothPrinterService.getStatus();
-      if (!printerStatus.isConnected) {
-        toast.info('Printer not connected - auto-print skipped');
-        return;
-      }
-
+      const printerType = business?.settings?.printer_type || 'local';
       const receiptData = generateReceiptData(transactionData, transactionType);
-      await bluetoothPrinterService.printReceipt(receiptData, business?.settings?.printer_settings);
+      
+      if (printerType === 'bluetooth') {
+        // Use Bluetooth printer service
+        const printerStatus = bluetoothPrinterService.getStatus();
+        if (!printerStatus.isConnected) {
+          toast.info('Bluetooth printer not connected - auto-print skipped');
+          return;
+        }
+        await bluetoothPrinterService.printReceipt(receiptData, business?.settings?.printer_settings);
+      } else {
+        // Use enhanced printer service for local/network printers
+        await enhancedPrinterService.printReceipt(receiptData, {
+          printerType: printerType,
+          printerName: business?.settings?.selected_printer || 'default',
+          settings: business?.settings?.printer_settings
+        });
+      }
+      
       toast.success('Receipt auto-printed successfully');
       
     } catch (error) {
