@@ -195,6 +195,9 @@ class SaleItemCreate(SaleItemBase):
 class SaleItemResponse(SaleItemBase):
     id: str
 
+# Alias for backward compatibility
+SaleItem = SaleItemResponse
+
 class SaleBase(BaseModel):
     customer_id: Optional[str] = None
     customer_name: Optional[str] = None
