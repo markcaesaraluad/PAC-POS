@@ -255,6 +255,23 @@ class InvoiceBase(BaseModel):
 class InvoiceCreate(InvoiceBase):
     items: List[InvoiceItemCreate]
 
+class InvoiceUpdate(BaseModel):
+    customer_id: Optional[str] = None
+    customer_name: Optional[str] = None
+    subtotal: Optional[float] = None
+    tax_amount: Optional[float] = None
+    discount_amount: Optional[float] = None
+    total_amount: Optional[float] = None
+    due_date: Optional[datetime] = None
+    notes: Optional[str] = None
+    status: Optional[str] = None
+
+class InvoiceStatus(str, Enum):
+    DRAFT = "draft"
+    SENT = "sent"
+    PAID = "paid"
+    OVERDUE = "overdue"
+
 class InvoiceResponse(InvoiceBase):
     id: str
     business_id: str
