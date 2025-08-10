@@ -257,24 +257,6 @@ const BusinessSettings = () => {
       setLogoUploading(false);
     }
   };
-    }
-
-    try {
-      setSaving(true);
-      await businessAPI.updateSettings(settings);
-      
-      // Refresh currency context to update throughout the app
-      await refreshCurrency();
-      
-      toast.success('Settings saved successfully');
-    } catch (error) {
-      const errorMessage = error.response?.data?.detail || 'Failed to save settings';
-      toast.error(errorMessage);
-      console.error('Error saving settings:', error);
-    } finally {
-      setSaving(false);
-    }
-  };
 
   // Enhanced Printer Functions
   const handleEnhancedPrinterTest = async (testType = 'connection') => {
