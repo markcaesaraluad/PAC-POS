@@ -160,27 +160,175 @@ async def get_products(
     
     return [create_product_response(product) for product in products]
 
-@router.get("/{product_id}", response_model=ProductResponse)
-async def get_product(
-    product_id: str,
+@router.get("/download-template")
+async def download_import_template(
+    format: str = Query("csv", regex="^(csv|excel)$")
+):
+    """Download bulk import template"""
+    
+    # Template data
+    template_data = [
+        {
+            'name': 'Sample Product 1',
+            'sku': 'SAMPLE-001',
+            'barcode': '1234567890123',
+            'category': 'Electronics',
+            'product_cost': 10.00,
+            'price': 19.99,
+            'quantity': 50,
+            'status': 'active',
+            'description': 'Sample product description',
+            'brand': 'Sample Brand',
+            'supplier': 'Sample Supplier',
+            'low_stock_threshold': 5
+        },
+        {
+            'name': 'Sample Product 2',
+            'sku': '',  # Will be auto-generated
+            'barcode': '',
+            'category': 'Books',
+            'product_cost': 5.00,
+            'price': 12.99,
+            'quantity': 25,
+            'status': 'active',
+            'description': '',
+            'brand': '',
+            'supplier': '',
+            'low_stock_threshold': 10
+        }
+    ]
+    
+    df = pd.DataFrame(template_data)
+    
+    if format == "csv":
+        output = io.StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        
+        return StreamingResponse(
+            io.BytesIO(output.getvalue().encode()),
+            media_type="application/octet-stream",
+            headers={"Content-Disposition": "attachment; filename=products_import_template.csv"}
+        )
+    else:  # excel
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, sheet_name='Products', index=False)
+        output.seek(0)
+        
+        return StreamingResponse(
+            output,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": "attachment; filename=products_import_template.xlsx"}
+        )
+
+@router.get("/export")
+async def export_products(
+    format: str = Query("csv", regex="^(csv|excel)$"),
+    search: Optional[str] = None,
+    category_id: Optional[str] = None,
+    low_stock: Optional[bool] = None,
+    status: Optional[str] = None,
     current_user=Depends(get_any_authenticated_user)
 ):
+    """Export products to CSV or Excel"""
     products_collection = await get_collection("products")
+    categories_collection = await get_collection("categories")
     
     business_id = current_user["business_id"]
     
-    product = await products_collection.find_one({
-        "_id": ObjectId(product_id),
-        "business_id": ObjectId(business_id)
-    })
+    # Build filter query (same as main products endpoint)
+    filter_query = {"business_id": ObjectId(business_id)}
     
-    if not product:
+    if search:
+        filter_query["$or"] = [
+            {"name": {"$regex": search, "$options": "i"}},
+            {"sku": {"$regex": search, "$options": "i"}},
+            {"barcode": {"$regex": search, "$options": "i"}}
+        ]
+    
+    if category_id:
+        filter_query["category_id"] = ObjectId(category_id)
+    
+    if low_stock:
+        # Add low stock filter logic here
+        filter_query["$expr"] = {"$lte": ["$quantity", "$low_stock_threshold"]}
+    
+    if status:
+        filter_query["status"] = status
+    
+    # Get products with category names
+    pipeline = [
+        {"$match": filter_query},
+        {
+            "$lookup": {
+                "from": "categories",
+                "localField": "category_id",
+                "foreignField": "_id",
+                "as": "category"
+            }
+        },
+        {
+            "$addFields": {
+                "category_name": {"$ifNull": [{"$first": "$category.name"}, ""]}
+            }
+        },
+        {"$sort": {"name": 1}}
+    ]
+    
+    products = await products_collection.aggregate(pipeline).to_list(length=None)
+    
+    if not products:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Product not found",
+            detail="No products found matching criteria"
         )
     
-    return create_product_response(product)
+    # Prepare data for export
+    export_data = []
+    for product in products:
+        export_data.append({
+            'Name': product['name'],
+            'SKU': product['sku'],
+            'Barcode': product.get('barcode', ''),
+            'Category': product.get('category_name', ''),
+            'Product_Cost': product.get('product_cost', 0),
+            'Price': product['price'],
+            'Quantity': product['quantity'],
+            'Status': product.get('status', 'active'),
+            'Description': product.get('description', ''),
+            'Brand': product.get('brand', ''),
+            'Supplier': product.get('supplier', ''),
+            'Low_Stock_Threshold': product.get('low_stock_threshold', 10)
+        })
+    
+    df = pd.DataFrame(export_data)
+    
+    # Generate filename
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"products_export_{timestamp}"
+    
+    if format == "csv":
+        output = io.StringIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+        
+        return StreamingResponse(
+            io.BytesIO(output.getvalue().encode()),
+            media_type="application/octet-stream",
+            headers={"Content-Disposition": f"attachment; filename={filename}.csv"}
+        )
+    else:  # excel
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, sheet_name='Products', index=False)
+        output.seek(0)
+        
+        return StreamingResponse(
+            output,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename={filename}.xlsx"}
+        )
 
 @router.get("/barcode/{barcode}", response_model=ProductResponse)
 async def get_product_by_barcode(
@@ -195,6 +343,28 @@ async def get_product_by_barcode(
         "barcode": barcode,
         "business_id": ObjectId(business_id),
         "is_active": True
+    })
+    
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Product not found",
+        )
+    
+    return create_product_response(product)
+
+@router.get("/{product_id}", response_model=ProductResponse)
+async def get_product(
+    product_id: str,
+    current_user=Depends(get_any_authenticated_user)
+):
+    products_collection = await get_collection("products")
+    
+    business_id = current_user["business_id"]
+    
+    product = await products_collection.find_one({
+        "_id": ObjectId(product_id),
+        "business_id": ObjectId(business_id)
     })
     
     if not product:
