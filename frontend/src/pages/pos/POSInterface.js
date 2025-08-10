@@ -159,10 +159,16 @@ const POSInterface = () => {
     }
     
     try {
-      const response = await productsAPI.getProducts({
-        search: searchTerm,
-        category_id: selectedCategory
-      });
+      // Build params object, only include non-empty values
+      const params = {};
+      if (searchTerm) {
+        params.search = searchTerm;
+      }
+      if (selectedCategory) {
+        params.category_id = selectedCategory;
+      }
+      
+      const response = await productsAPI.getProducts(params);
       setProducts(response.data);
     } catch (error) {
       console.error('Search failed:', error);
