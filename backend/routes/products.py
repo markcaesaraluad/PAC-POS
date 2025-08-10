@@ -1112,68 +1112,6 @@ async def print_product_labels(
         "label_data": label_format
     }
 
-@router.get("/download-template")
-async def download_import_template(
-    format: str = Query("csv", regex="^(csv|excel)$")
-):
-    """Download bulk import template"""
-    
-    # Template data
-    template_data = [
-        {
-            'name': 'Sample Product 1',
-            'sku': 'SAMPLE-001',
-            'barcode': '1234567890123',
-            'category': 'Electronics',
-            'product_cost': 10.00,
-            'price': 19.99,
-            'quantity': 50,
-            'status': 'active',
-            'description': 'Sample product description',
-            'brand': 'Sample Brand',
-            'supplier': 'Sample Supplier',
-            'low_stock_threshold': 5
-        },
-        {
-            'name': 'Sample Product 2',
-            'sku': '',  # Will be auto-generated
-            'barcode': '',
-            'category': 'Books',
-            'product_cost': 5.00,
-            'price': 12.99,
-            'quantity': 25,
-            'status': 'active',
-            'description': '',
-            'brand': '',
-            'supplier': '',
-            'low_stock_threshold': 10
-        }
-    ]
-    
-    df = pd.DataFrame(template_data)
-    
-    if format == "csv":
-        output = io.StringIO()
-        df.to_csv(output, index=False)
-        output.seek(0)
-        
-        return StreamingResponse(
-            io.BytesIO(output.getvalue().encode()),
-            media_type="application/octet-stream",
-            headers={"Content-Disposition": "attachment; filename=products_import_template.csv"}
-        )
-    else:  # excel
-        output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, sheet_name='Products', index=False)
-        output.seek(0)
-        
-        return StreamingResponse(
-            output,
-            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            headers={"Content-Disposition": "attachment; filename=products_import_template.xlsx"}
-        )
-
 # Quick inline edit endpoint
 @router.patch("/{product_id}/quick-edit")
 async def quick_edit_product(
