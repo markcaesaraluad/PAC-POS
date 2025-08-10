@@ -5343,14 +5343,65 @@ class POSAPITester:
         
         return self.tests_passed > 0
 
+def run_enhanced_sales_api_testing():
+    """Run focused testing for enhanced sales API with new item fields"""
+    tester = POSAPITester()
+    
+    tester.log("=== STARTING ENHANCED SALES API TESTING ===", "INFO")
+    
+    # Essential setup tests
+    setup_tests = [
+        ("Health Check", tester.test_health_check),
+        ("Super Admin Setup", tester.test_super_admin_setup),
+        ("Business Admin Login", tester.test_business_admin_login),
+        ("Get Current User", tester.test_get_current_user),
+        ("Categories CRUD", tester.test_categories_crud),
+    ]
+    
+    # Run setup tests
+    for test_name, test_func in setup_tests:
+        try:
+            tester.log(f"Running {test_name}...", "INFO")
+            success = test_func()
+            if not success and test_name in ["Business Admin Login", "Get Current User"]:
+                tester.log(f"❌ Critical setup test failed: {test_name}", "ERROR")
+                return False, 0, 0
+        except Exception as e:
+            tester.log(f"Error in {test_name}: {str(e)}", "ERROR")
+            if test_name in ["Business Admin Login", "Get Current User"]:
+                return False, 0, 0
+    
+    # Run the main enhanced sales API testing
+    try:
+        tester.log("Running Enhanced Sales API Testing...", "INFO")
+        tester.test_sales_api_with_enhanced_item_fields()
+    except Exception as e:
+        tester.log(f"Error in Enhanced Sales API Testing: {str(e)}", "ERROR")
+    
+    # Final summary
+    tester.log("=== ENHANCED SALES API TESTING COMPLETED ===", "INFO")
+    tester.log(f"Tests Run: {tester.tests_run}", "INFO")
+    tester.log(f"Tests Passed: {tester.tests_passed}", "INFO")
+    success_rate = (tester.tests_passed/tester.tests_run)*100 if tester.tests_run > 0 else 0
+    tester.log(f"Success Rate: {success_rate:.1f}%", "INFO")
+    
+    return tester.tests_passed > 0, tester.tests_passed, tester.tests_run
+
 def main():
     """Main test execution"""
     tester = POSAPITester()
     
     try:
-        # Check if we should run focused tests
-        if len(sys.argv) > 1 and sys.argv[1] == "--focused":
-            success = tester.run_focused_tests()
+        # Check command line arguments
+        if len(sys.argv) > 1:
+            if sys.argv[1] == "--focused":
+                success = tester.run_focused_tests()
+            elif sys.argv[1] == "enhanced_sales":
+                success, passed, total = run_enhanced_sales_api_testing()
+                return 0 if success else 1
+            else:
+                print("Usage: python backend_test.py [--focused|enhanced_sales]")
+                return 1
         else:
             success = tester.run_all_tests()
         return 0 if success else 1
