@@ -73,9 +73,31 @@ const BusinessSettings = () => {
   ];
 
   useEffect(() => {
-    loadBusinessInfo();
-    checkPrinterStatus();
-    loadAvailablePrinters();
+    const initializeSettings = async () => {
+      await loadBusinessInfo();
+      checkPrinterStatus();
+      loadAvailablePrinters();
+      
+      // HOTFIX 4: Load selected printer after everything is loaded
+      const response = await businessAPI.getInfo();
+      const businessSettings = response.data.settings || {};
+      
+      if (businessSettings.selected_printer) {
+        const printers = enhancedPrinterService.getAvailablePrinters();
+        const savedPrinter = printers.find(p => p.id === businessSettings.selected_printer);
+        if (savedPrinter) {
+          setSelectedPrinter(savedPrinter);
+          // Also configure the printer service
+          try {
+            await enhancedPrinterService.configurePrinter(savedPrinter);
+          } catch (error) {
+            console.error('Failed to configure saved printer:', error);
+          }
+        }
+      }
+    };
+    
+    initializeSettings();
   }, []);
 
   const loadAvailablePrinters = () => {
