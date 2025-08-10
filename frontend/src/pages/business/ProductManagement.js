@@ -32,12 +32,13 @@ import {
   DocumentArrowUpIcon,
   PrinterIcon,
   PhotoIcon,
-  DuplicateIcon,
+  DocumentDuplicateIcon,
   AdjustmentsHorizontalIcon,
   CheckCircleIcon,
   BeakerIcon,
   TagIcon,
   ArrowPathIcon,
+} from '@heroicons/react/24/outline';
   CloudArrowUpIcon,
   CogIcon
 } from '@heroicons/react/24/outline';
