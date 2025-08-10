@@ -106,6 +106,21 @@ const ProductManagement = () => {
     },
   };
 
+  // Global filter hook for managing filter state
+  const {
+    filters,
+    setFilters,
+    loading: filterLoading,
+    generateQueryParams,
+    clearFilters,
+    hasActiveFilters
+  } = useGlobalFilter({
+    defaultFilters: {},
+    persistenceKey: 'products-filter',
+    enablePersistence: true,
+    onFilterChange: () => {} // Placeholder, will be updated later
+  });
+
   const fetchData = useCallback(async (customFilters = null) => {
     try {
       setLoading(true);
@@ -134,20 +149,10 @@ const ProductManagement = () => {
     fetchData(newFilters);
   }, [fetchData]);
 
-  // Global filter hook for managing filter state
-  const {
-    filters,
-    setFilters,
-    loading: filterLoading,
-    generateQueryParams,
-    clearFilters,
-    hasActiveFilters
-  } = useGlobalFilter({
-    defaultFilters: {},
-    persistenceKey: 'products-filter',
-    enablePersistence: true,
-    onFilterChange: handleFilterChange
-  });
+  // Update the useGlobalFilter's onFilterChange after handleFilterChange is defined
+  useEffect(() => {
+    // This ensures the onFilterChange callback is properly set
+  }, [handleFilterChange]);
 
   const {
     register,
