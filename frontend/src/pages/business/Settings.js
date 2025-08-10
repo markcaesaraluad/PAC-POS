@@ -133,6 +133,21 @@ const BusinessSettings = () => {
       const response = await businessAPI.getInfo();
       setBusinessInfo(response.data);
       
+      // Load business details
+      setBusinessDetails({
+        name: response.data.name || '',
+        description: response.data.description || '',
+        address: response.data.address || '',
+        phone: response.data.phone || '',
+        contact_email: response.data.contact_email || '',
+        logo_url: response.data.logo_url || null
+      });
+      
+      // Set logo preview if exists
+      if (response.data.logo_url) {
+        setLogoPreview(response.data.logo_url);
+      }
+      
       // Load existing settings or use defaults
       const businessSettings = response.data.settings || {};
       setSettings(prevSettings => ({
