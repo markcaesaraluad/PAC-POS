@@ -3505,6 +3505,11 @@ class POSAPITester:
         self.test_pdf_export_functionality()
         self.log("=== PDF EXPORT FUNCTIONALITY TESTING COMPLETED ===", "INFO")
 
+        # Test 6: Super Admin Business Access Control (NEW)
+        self.log("=== STARTING SUPER ADMIN BUSINESS ACCESS CONTROL TESTING ===", "INFO")
+        self.test_super_admin_business_access_control()
+        self.log("=== SUPER ADMIN BUSINESS ACCESS CONTROL TESTING COMPLETED ===", "INFO")
+
         # === EXISTING COMPREHENSIVE TESTING ===
         
         # Reports Functionality Testing
