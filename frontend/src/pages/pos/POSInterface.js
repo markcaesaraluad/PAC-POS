@@ -369,15 +369,22 @@ const POSInterface = () => {
 
     const totals = calculateTotals();
     
-    // HOTFIX 7: Fixed payment validation logic
+    // HOTFIX 7: Fixed payment validation logic with proper rounding
     // For sales, payment validation is already done in confirmPayment()
     // But double-check here for safety
     if (transactionMode === 'sale' && paymentMethod === 'cash') {
-      const requiredAmount = parseFloat(totals.subtotal) - parseFloat(totals.discount) + parseFloat(totals.taxAmount);
+      const subtotal = parseFloat(totals.subtotal);
+      const discount = parseFloat(totals.discount) || 0;
+      const taxAmount = parseFloat(totals.taxAmount);
+      const requiredAmount = subtotal - discount + taxAmount;
       const receivedAmountNum = parseFloat(receivedAmount) || 0;
       
-      if (receivedAmountNum < requiredAmount) {
-        toast.error(`Insufficient payment. Required: ${formatAmount(requiredAmount)}, Received: ${formatAmount(receivedAmountNum)}`);
+      // Round to 2 decimal places for proper comparison
+      const roundedRequired = Math.round(requiredAmount * 100) / 100;
+      const roundedReceived = Math.round(receivedAmountNum * 100) / 100;
+      
+      if (roundedReceived < roundedRequired) {
+        toast.error(`Insufficient payment. Required: ${formatAmount(roundedRequired)}, Received: ${formatAmount(roundedReceived)}`);
         return;
       }
     }
