@@ -122,9 +122,9 @@ const ProductManagement = () => {
   });
 
   // Handle filter changes and refresh data
-  function handleFilterChange(newFilters) {
+  const handleFilterChange = useCallback((newFilters) => {
     fetchData(newFilters);
-  }
+  }, [fetchData]);
 
   const {
     register,
