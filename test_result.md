@@ -392,7 +392,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "PHASE 1 CORE FUNCTIONALITY TESTING COMPLETED"
+    - "Super Admin Business Access Control - COMPLETED"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
