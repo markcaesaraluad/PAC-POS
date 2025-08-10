@@ -49,6 +49,10 @@ async def login(user_credentials: UserLogin, request: Request):
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="User does not belong to this business",
                 )
+            
+            # Check if business is suspended (but allow login to show suspended message)
+            # Business status will be checked at endpoint level
+                
         elif user["role"] != "super_admin":
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
