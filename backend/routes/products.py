@@ -12,6 +12,29 @@ from fastapi.responses import StreamingResponse
 
 router = APIRouter()
 
+# Helper function to create ProductResponse
+def create_product_response(product_doc):
+    return ProductResponse(
+        id=str(product_doc["_id"]),
+        business_id=str(product_doc["business_id"]),
+        name=product_doc["name"],
+        description=product_doc.get("description"),
+        sku=product_doc["sku"],
+        barcode=product_doc.get("barcode"),
+        category_id=str(product_doc["category_id"]) if product_doc.get("category_id") else None,
+        price=product_doc["price"],
+        product_cost=product_doc.get("product_cost"),
+        quantity=product_doc["quantity"],
+        image_url=product_doc.get("image_url"),
+        brand=product_doc.get("brand"),
+        supplier=product_doc.get("supplier"),
+        low_stock_threshold=product_doc.get("low_stock_threshold", 10),
+        status=product_doc.get("status", "active"),
+        is_active=product_doc.get("is_active", True),
+        created_at=product_doc.get("created_at", datetime.utcnow()),
+        updated_at=product_doc.get("updated_at", datetime.utcnow())
+    )
+
 @router.post("", response_model=ProductResponse)
 async def create_product(
     product: ProductCreate,
@@ -86,32 +109,14 @@ async def create_product(
     }
     await cost_history_collection.insert_one(cost_history_doc)
     
-    return ProductResponse(
-        id=str(product_doc["_id"]),
-        business_id=str(product_doc["business_id"]),
-        name=product_doc["name"],
-        description=product_doc["description"],
-        sku=product_doc["sku"],
-        barcode=product_doc["barcode"],
-        category_id=str(product_doc["category_id"]) if product_doc["category_id"] else None,
-        price=product_doc["price"],
-        product_cost=product_doc["product_cost"],
-        quantity=product_doc["quantity"],
-        image_url=product_doc["image_url"],
-        brand=product_doc["brand"],
-        supplier=product_doc["supplier"],
-        low_stock_threshold=product_doc["low_stock_threshold"],
-        status=product_doc["status"],
-        is_active=product_doc["is_active"],
-        created_at=product_doc["created_at"],
-        updated_at=product_doc["updated_at"]
-    )
+    return create_product_response(product_doc)
 
 @router.get("", response_model=List[ProductResponse])
 async def get_products(
     category_id: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
     low_stock: Optional[bool] = Query(False),
+    status: Optional[str] = Query(None),
     limit: int = Query(50, le=100),
     skip: int = Query(0, ge=0),
     current_user=Depends(get_any_authenticated_user)
@@ -127,9 +132,14 @@ async def get_products(
     
     # Build query
     query = {
-        "business_id": ObjectId(business_id),
-        "is_active": True
+        "business_id": ObjectId(business_id)
     }
+    
+    # Add status filter
+    if status:
+        query["status"] = status
+    else:
+        query["is_active"] = True  # Default to active products
     
     if category_id:
         query["category_id"] = ObjectId(category_id)
@@ -142,34 +152,13 @@ async def get_products(
         ]
     
     if low_stock:
-        # Get business settings for low stock threshold
-        businesses_collection = await get_collection("businesses")
-        business = await businesses_collection.find_one({"_id": ObjectId(business_id)})
-        threshold = business.get("settings", {}).get("low_stock_threshold", 10)
-        query["quantity"] = {"$lte": threshold}
+        # Use product-specific low stock threshold
+        query["$expr"] = {"$lte": ["$quantity", "$low_stock_threshold"]}
     
     products_cursor = products_collection.find(query).skip(skip).limit(limit)
     products = await products_cursor.to_list(length=None)
     
-    return [
-        ProductResponse(
-            id=str(product["_id"]),
-            business_id=str(product["business_id"]),
-            name=product["name"],
-            description=product.get("description"),
-            sku=product["sku"],
-            barcode=product.get("barcode"),
-            category_id=str(product["category_id"]) if product.get("category_id") else None,
-            price=product["price"],
-            product_cost=product.get("product_cost"),
-            quantity=product["quantity"],
-            image_url=product.get("image_url"),
-            is_active=product.get("is_active", True),
-            created_at=product.get("created_at", datetime.utcnow()),
-            updated_at=product.get("updated_at", datetime.utcnow())
-        )
-        for product in products
-    ]
+    return [create_product_response(product) for product in products]
 
 @router.get("/{product_id}", response_model=ProductResponse)
 async def get_product(
@@ -191,22 +180,7 @@ async def get_product(
             detail="Product not found",
         )
     
-    return ProductResponse(
-        id=str(product["_id"]),
-        business_id=str(product["business_id"]),
-        name=product["name"],
-        description=product.get("description"),
-        sku=product["sku"],
-        barcode=product.get("barcode"),
-        category_id=str(product["category_id"]) if product.get("category_id") else None,
-        price=product["price"],
-        product_cost=product.get("product_cost"),
-        quantity=product["quantity"],
-        image_url=product.get("image_url"),
-        is_active=product.get("is_active", True),
-        created_at=product.get("created_at", datetime.utcnow()),
-        updated_at=product.get("updated_at", datetime.utcnow())
-    )
+    return create_product_response(product)
 
 @router.get("/barcode/{barcode}", response_model=ProductResponse)
 async def get_product_by_barcode(
@@ -229,22 +203,7 @@ async def get_product_by_barcode(
             detail="Product not found",
         )
     
-    return ProductResponse(
-        id=str(product["_id"]),
-        business_id=str(product["business_id"]),
-        name=product["name"],
-        description=product.get("description"),
-        sku=product["sku"],
-        barcode=product.get("barcode"),
-        category_id=str(product["category_id"]) if product.get("category_id") else None,
-        price=product["price"],
-        product_cost=product.get("product_cost"),
-        quantity=product["quantity"],
-        image_url=product.get("image_url"),
-        is_active=product.get("is_active", True),
-        created_at=product.get("created_at", datetime.utcnow()),
-        updated_at=product.get("updated_at", datetime.utcnow())
-    )
+    return create_product_response(product)
 
 @router.put("/{product_id}", response_model=ProductResponse)
 async def update_product(
@@ -314,22 +273,7 @@ async def update_product(
         "business_id": ObjectId(business_id)
     })
     
-    return ProductResponse(
-        id=str(updated_product["_id"]),
-        business_id=str(updated_product["business_id"]),
-        name=updated_product["name"],
-        description=updated_product.get("description"),
-        sku=updated_product["sku"],
-        barcode=updated_product.get("barcode"),
-        category_id=str(updated_product["category_id"]) if updated_product.get("category_id") else None,
-        price=updated_product["price"],
-        product_cost=updated_product.get("product_cost"),
-        quantity=updated_product["quantity"],
-        image_url=updated_product.get("image_url"),
-        is_active=updated_product.get("is_active", True),
-        created_at=updated_product.get("created_at", datetime.utcnow()),
-        updated_at=updated_product.get("updated_at", datetime.utcnow())
-    )
+    return create_product_response(updated_product)
 
 @router.get("/{product_id}/cost-history", response_model=List[ProductCostHistoryResponse])
 async def get_product_cost_history(
@@ -1059,3 +1003,95 @@ async def download_import_template(
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             headers={"Content-Disposition": "attachment; filename=products_import_template.xlsx"}
         )
+
+# Quick inline edit endpoint
+@router.patch("/{product_id}/quick-edit")
+async def quick_edit_product(
+    product_id: str,
+    field_data: dict,
+    current_user=Depends(get_business_admin_or_super)
+):
+    """Quick edit specific fields with validation"""
+    products_collection = await get_collection("products")
+    
+    business_id = current_user["business_id"]
+    if current_user["role"] == "super_admin":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Super admin must specify business context",
+        )
+    
+    # Validate allowed fields for quick edit
+    allowed_fields = ['price', 'product_cost', 'quantity']
+    field_name = field_data.get('field')
+    field_value = field_data.get('value')
+    
+    if field_name not in allowed_fields:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Field '{field_name}' is not allowed for quick edit"
+        )
+    
+    # Validate field value
+    if field_name in ['price', 'product_cost']:
+        try:
+            field_value = float(field_value)
+            if field_value < 0:
+                raise ValueError("Value cannot be negative")
+        except (ValueError, TypeError):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid numeric value"
+            )
+    elif field_name == 'quantity':
+        try:
+            field_value = int(field_value)
+            if field_value < 0:
+                raise ValueError("Quantity cannot be negative")
+        except (ValueError, TypeError):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid quantity value"
+            )
+    
+    # Update product
+    update_data = {
+        field_name: field_value,
+        "updated_at": datetime.utcnow()
+    }
+    
+    result = await products_collection.update_one(
+        {
+            "_id": ObjectId(product_id),
+            "business_id": ObjectId(business_id)
+        },
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Product not found"
+        )
+    
+    # Handle cost history if cost was updated
+    if field_name == 'product_cost':
+        cost_history_collection = await get_collection("product_cost_history")
+        cost_history_doc = {
+            "_id": ObjectId(),
+            "business_id": ObjectId(business_id),
+            "product_id": ObjectId(product_id),
+            "cost": field_value,
+            "effective_from": datetime.utcnow(),
+            "changed_by": ObjectId(current_user["_id"]),
+            "notes": "Quick edit via inline update",
+            "created_at": datetime.utcnow()
+        }
+        await cost_history_collection.insert_one(cost_history_doc)
+    
+    return {
+        "success": True,
+        "product_id": product_id,
+        "field": field_name,
+        "new_value": field_value
+    }
