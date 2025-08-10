@@ -161,11 +161,6 @@ const ProductManagement = () => {
     fetchData();
   }, []);
 
-  // Watch for filter changes and refetch data
-  useEffect(() => {
-    fetchData();
-  }, [filters, fetchData]);
-
   const loadCategories = async () => {
     try {
       const response = await categoriesAPI.getCategories();
