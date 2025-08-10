@@ -176,6 +176,89 @@ const BusinessSettings = () => {
       return;
     }
 
+    setSaving(true);
+    try {
+      await businessAPI.updateSettings(settings);
+      
+      // Refresh currency context to apply changes across the app
+      await refreshCurrency();
+      
+      toast.success('Settings saved successfully!');
+    } catch (error) {
+      toast.error('Failed to save settings: ' + (error.response?.data?.detail || error.message));
+      console.error('Error saving settings:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveBusinessDetails = async () => {
+    setSaving(true);
+    try {
+      await businessAPI.updateDetails(businessDetails);
+      await loadBusinessInfo(); // Reload to get updated data
+      toast.success('Business details updated successfully!');
+    } catch (error) {
+      toast.error('Failed to save business details: ' + (error.response?.data?.detail || error.message));
+      console.error('Error saving business details:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleLogoUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Invalid file type. Only JPEG, PNG, GIF, WebP allowed.');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB');
+      return;
+    }
+
+    setLogoUploading(true);
+    try {
+      const response = await businessAPI.uploadLogo(file);
+      
+      // Update business details with new logo URL
+      const newLogoUrl = response.data.logo_url;
+      setBusinessDetails(prev => ({ ...prev, logo_url: newLogoUrl }));
+      
+      // Update preview with cache busting
+      setLogoPreview(`${newLogoUrl}?t=${Date.now()}`);
+      
+      toast.success('Logo uploaded successfully!');
+    } catch (error) {
+      toast.error('Failed to upload logo: ' + (error.response?.data?.detail || error.message));
+      console.error('Error uploading logo:', error);
+    } finally {
+      setLogoUploading(false);
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    setLogoUploading(true);
+    try {
+      await businessAPI.removeLogo();
+      setBusinessDetails(prev => ({ ...prev, logo_url: null }));
+      setLogoPreview(null);
+      toast.success('Logo removed successfully!');
+    } catch (error) {
+      toast.error('Failed to remove logo: ' + (error.response?.data?.detail || error.message));
+      console.error('Error removing logo:', error);
+    } finally {
+      setLogoUploading(false);
+    }
+  };
+    }
+
     try {
       setSaving(true);
       await businessAPI.updateSettings(settings);
