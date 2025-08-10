@@ -64,6 +64,11 @@ const POSInterface = () => {
   // Held orders state
   const [heldOrders, setHeldOrders] = useState([]);
   
+  // Receipt state
+  const [showReceiptPreview, setShowReceiptPreview] = useState(false);
+  const [receiptCollapsed, setReceiptCollapsed] = useState(false);
+  const [previewReceiptData, setPreviewReceiptData] = useState(null);
+  
   const barcodeInputRef = useRef(null);
 
   // Move function definitions before useEffect to avoid hoisting issues
