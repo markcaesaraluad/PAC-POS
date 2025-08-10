@@ -815,8 +815,8 @@ const POSInterface = () => {
                 placeholder="Search products or scan barcode..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleProductSearch()}
                 className="input pl-10 text-sm"
+                autoFocus
               />
             </div>
             <select
