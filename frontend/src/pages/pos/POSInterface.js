@@ -388,8 +388,10 @@ const POSInterface = () => {
         cashier_name: user?.email || user?.name || 'Unknown Cashier',
         items: cart.map(item => ({
           ...item,
-          // Ensure cost snapshot is captured
-          unit_cost_snapshot: item.unit_cost_snapshot || 0
+          // Ensure all required fields are present
+          sku: item.product_sku || item.sku, // Ensure SKU is included
+          unit_price_snapshot: item.unit_price, // Required field: price at time of sale
+          unit_cost_snapshot: item.unit_cost_snapshot || 0 // Ensure cost snapshot is captured
         })),
         subtotal: parseFloat(totals.subtotal),
         tax_amount: parseFloat(totals.taxAmount),
