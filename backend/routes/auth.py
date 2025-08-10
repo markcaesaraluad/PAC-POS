@@ -108,9 +108,9 @@ async def get_current_user_info(current_user=Depends(get_any_authenticated_user)
     return UserResponse(
         id=str(current_user["_id"]),
         email=current_user["email"],
-        full_name=current_user["full_name"],
         role=current_user["role"],
         business_id=str(current_user.get("business_id")) if current_user.get("business_id") else None,
         is_active=current_user.get("is_active", True),
-        created_at=current_user.get("created_at", datetime.utcnow())
+        created_at=current_user.get("created_at", datetime.utcnow()),
+        updated_at=current_user.get("updated_at", datetime.utcnow())
     )
