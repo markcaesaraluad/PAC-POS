@@ -4150,6 +4150,120 @@ class POSAPITester:
         self.log("=== PRODUCTS API TESTING FOR POS BUG FIX COMPLETED ===", "INFO")
         return True
 
+    def test_customers_api_500_investigation(self):
+        """Investigate the specific customers API 500 error causing POS issues"""
+        self.log("=== INVESTIGATING CUSTOMERS API 500 ERROR ===", "INFO")
+        
+        # Test 1: Direct GET /api/customers call
+        success, response = self.run_test(
+            "GET /api/customers (Direct Test)",
+            "GET",
+            "/api/customers",
+            200
+        )
+        
+        if not success:
+            self.log(f"❌ CUSTOMERS API FAILED: Status code not 200", "ERROR")
+            self.log(f"Response: {response}", "ERROR")
+            return False
+        else:
+            self.log(f"✅ Customers API working - returned {len(response) if isinstance(response, list) else 'unknown'} customers", "PASS")
+        
+        # Test 2: Test with different parameters
+        success, response = self.run_test(
+            "GET /api/customers with limit",
+            "GET",
+            "/api/customers",
+            200,
+            params={"limit": 10}
+        )
+        
+        # Test 3: Test with search parameter
+        success, response = self.run_test(
+            "GET /api/customers with search",
+            "GET",
+            "/api/customers",
+            200,
+            params={"search": "test"}
+        )
+        
+        # Test 4: Test authentication specifically for customers
+        self.log("Testing customers API authentication...", "INFO")
+        original_token = self.token
+        
+        # Test without token
+        self.token = None
+        success, response = self.run_test(
+            "GET /api/customers without auth (should fail)",
+            "GET",
+            "/api/customers",
+            401
+        )
+        
+        # Restore token
+        self.token = original_token
+        
+        # Test 5: Check business context
+        success, response = self.run_test(
+            "Get current user info for business context",
+            "GET",
+            "/api/auth/me",
+            200
+        )
+        
+        if success:
+            self.log(f"Current user business_id: {response.get('business_id')}", "INFO")
+            self.log(f"Current user role: {response.get('role')}", "INFO")
+        
+        return True
+
+    def test_pos_api_integration(self):
+        """Test the specific API calls that POS interface makes"""
+        self.log("=== TESTING POS API INTEGRATION ===", "INFO")
+        
+        # Test the exact sequence that POS interface calls
+        # 1. Products API
+        success, products_response = self.run_test(
+            "POS Products API Call",
+            "GET",
+            "/api/products",
+            200
+        )
+        
+        if success:
+            self.log(f"✅ Products API: {len(products_response) if isinstance(products_response, list) else 'unknown'} products", "PASS")
+        else:
+            self.log("❌ Products API failed", "FAIL")
+        
+        # 2. Categories API
+        success, categories_response = self.run_test(
+            "POS Categories API Call",
+            "GET",
+            "/api/categories",
+            200
+        )
+        
+        if success:
+            self.log(f"✅ Categories API: {len(categories_response) if isinstance(categories_response, list) else 'unknown'} categories", "PASS")
+        else:
+            self.log("❌ Categories API failed", "FAIL")
+        
+        # 3. Customers API (the problematic one)
+        success, customers_response = self.run_test(
+            "POS Customers API Call",
+            "GET",
+            "/api/customers",
+            200
+        )
+        
+        if success:
+            self.log(f"✅ Customers API: {len(customers_response) if isinstance(customers_response, list) else 'unknown'} customers", "PASS")
+        else:
+            self.log("❌ CUSTOMERS API FAILED - THIS IS THE ROOT CAUSE", "ERROR")
+            self.log(f"Response: {customers_response}", "ERROR")
+        
+        return success
+
     def run_all_tests(self):
         """Run all API tests"""
         self.log("Starting POS System Enhancements API Tests", "START")
