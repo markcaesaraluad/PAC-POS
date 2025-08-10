@@ -428,22 +428,9 @@ const ProductManagement = () => {
   const toggleProductStatus = async (productId, currentStatus) => {
     try {
       const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-      
-      const response = await fetch(`/api/products/${productId}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ status: newStatus })
-      });
-
-      if (response.ok) {
-        toast.success(`Product ${newStatus === 'active' ? 'activated' : 'deactivated'}`);
-        fetchData();
-      } else {
-        throw new Error('Status update failed');
-      }
+      await productsAPI.toggleStatus(productId, newStatus);
+      toast.success(`Product ${newStatus === 'active' ? 'activated' : 'deactivated'}`);
+      fetchData();
     } catch (error) {
       toast.error('Failed to update product status');
     }
