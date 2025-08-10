@@ -63,8 +63,14 @@ const POSInterface = () => {
   // Move function definitions before useEffect to avoid hoisting issues
   const fetchData = useCallback(async () => {
     try {
+      // Build params object, only include category_id if it's not empty
+      const params = {};
+      if (selectedCategory) {
+        params.category_id = selectedCategory;
+      }
+      
       const [productsResponse, categoriesResponse, customersResponse] = await Promise.all([
-        productsAPI.getProducts({ category_id: selectedCategory }),
+        productsAPI.getProducts(params),
         categoriesAPI.getCategories(),
         customersAPI.getCustomers()
       ]);
