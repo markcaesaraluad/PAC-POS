@@ -766,7 +766,7 @@ const ProductManagement = () => {
                         className="text-cyan-600 hover:text-cyan-900"
                         title="Duplicate Product"
                       >
-                        <DuplicateIcon className="h-4 w-4" />
+                        <DocumentDuplicateIcon className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteProduct(product.id, product.name)}
