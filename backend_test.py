@@ -515,9 +515,9 @@ class POSAPITester:
 
         return success
 
-    def test_sales_api_with_cashier_fields(self):
-        """Test sales API with enhanced cashier fields as requested"""
-        self.log("=== STARTING SALES API WITH CASHIER FIELDS TESTING ===", "INFO")
+    def test_sales_api_with_enhanced_item_fields(self):
+        """Test sales API with enhanced item fields (sku, unit_price_snapshot, unit_cost_snapshot) as requested"""
+        self.log("=== STARTING SALES API WITH ENHANCED ITEM FIELDS TESTING ===", "INFO")
         
         # Switch to business admin token for testing
         if self.business_admin_token:
