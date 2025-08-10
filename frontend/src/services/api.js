@@ -55,6 +55,15 @@ export const superAdminAPI = {
 export const businessAPI = {
   getInfo: () => apiClient.get('/api/business/info'),
   updateSettings: (settings) => apiClient.put('/api/business/settings', settings),
+  updateDetails: (details) => apiClient.put('/api/business/details', details),
+  uploadLogo: (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return apiClient.post('/api/business/logo-upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  },
+  removeLogo: () => apiClient.delete('/api/business/logo'),
   getUsers: () => apiClient.get('/api/business/users'),
   createUser: (userData) => apiClient.post('/api/business/users', userData),
   updateUserStatus: (userId, status) => apiClient.put(`/api/business/users/${userId}/status`, { is_active: status }),
