@@ -112,7 +112,9 @@ async def create_sale(
         id=str(sale_doc["_id"]),
         business_id=str(sale_doc["business_id"]),
         cashier_id=str(sale_doc["cashier_id"]),
+        cashier_name=sale_doc["cashier_name"],
         customer_id=str(sale_doc["customer_id"]) if sale_doc["customer_id"] else None,
+        customer_name=sale_doc.get("customer_name"),
         sale_number=sale_doc["sale_number"],
         items=[SaleItem(**item) for item in items_with_cost_snapshots],
         subtotal=sale_doc["subtotal"],
@@ -120,8 +122,12 @@ async def create_sale(
         discount_amount=sale_doc["discount_amount"],
         total_amount=sale_doc["total_amount"],
         payment_method=sale_doc["payment_method"],
+        received_amount=sale_doc.get("received_amount"),
+        change_amount=sale_doc.get("change_amount"),
+        notes=sale_doc.get("notes"),
         status=sale_doc["status"],
-        created_at=sale_doc["created_at"]
+        created_at=sale_doc["created_at"],
+        updated_at=sale_doc["updated_at"]
     )
 
 @router.get("", response_model=List[SaleResponse])
