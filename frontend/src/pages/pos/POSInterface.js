@@ -139,54 +139,7 @@ const POSInterface = () => {
     if (saved) {
       setHeldOrders(JSON.parse(saved));
     }
-    
-    // Load receipt preferences from localStorage
-    const receiptPreviewState = sessionStorage.getItem('pos-receipt-preview-expanded');
-    if (receiptPreviewState) {
-      setShowReceiptPreview(JSON.parse(receiptPreviewState));
-    }
-    
-    const receiptCollapsedState = localStorage.getItem('pos-receipt-collapsed');
-    if (receiptCollapsedState) {
-      setReceiptCollapsed(JSON.parse(receiptCollapsedState));
-    }
   }, [fetchData]);
-
-  // Separate useEffect for barcode scanner to avoid dependency issues
-  useEffect(() => {
-    if (!scannerActive) return;
-
-    const handleKeyDown = (event) => {
-      const currentTime = Date.now();
-      
-      // Regular character detection
-      if (event.key.length === 1) {
-        if (currentTime - lastBarcodeTime > 100) {
-          setBarcodeBuffer(event.key);
-          setLastBarcodeTime(currentTime);
-          setIsScanning(true);
-        } else {
-          setBarcodeBuffer(prev => prev + event.key);
-          setLastBarcodeTime(currentTime);
-        }
-      }
-      
-      // Enter key - process barcode
-      if (event.key === 'Enter' && barcodeBuffer.length > 0) {
-        event.preventDefault();
-        handleBarcodeScanned(barcodeBuffer);
-        setBarcodeBuffer('');
-        setIsScanning(false);
-      }
-    };
-
-    // Add global keydown listener for barcode scanner
-    document.addEventListener('keydown', handleKeyDown);
-    
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [scannerActive, lastBarcodeTime, barcodeBuffer, handleBarcodeScanned]);
 
   useEffect(() => {
     if (business?.settings?.tax_rate) {
