@@ -466,23 +466,14 @@ const POSInterface = () => {
         response = await salesAPI.createSale(transactionData);
         toast.success(`Sale completed! Sale #${response.data.sale_number}`);
         
-        // Generate receipt data for preview and printing
-        const receiptData = generateReceiptData(response.data, 'sale');
-        setPreviewReceiptData(receiptData);
-        setShowReceiptPreview(true);
-        
-        // Auto-print if enabled
+        // Auto-print if enabled - no preview needed
         if (business?.settings?.printer_settings?.auto_print) {
+          const receiptData = generateReceiptData(response.data, 'sale');
           await handleAutoPrint(response.data, 'sale');
         }
       } else {
         response = await invoicesAPI.createInvoice(transactionData);
         toast.success(`Invoice created! Invoice #${response.data.invoice_number}`);
-        
-        // Generate receipt data for preview
-        const receiptData = generateReceiptData(response.data, 'invoice');
-        setPreviewReceiptData(receiptData);
-        setShowReceiptPreview(true);
       }
 
       // Clear cart and reset values
