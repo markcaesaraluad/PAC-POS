@@ -337,3 +337,15 @@ class LabelPrintOptions(BaseModel):
 
 class BarcodeGenerateRequest(BaseModel):
     product_ids: List[str]
+
+# Authentication Models
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+    business_subdomain: Optional[str] = None
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse
+    business: Optional[BusinessResponse] = None
