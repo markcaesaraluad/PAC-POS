@@ -58,7 +58,8 @@ async def create_customer(
         address=customer_doc["address"],
         total_spent=customer_doc["total_spent"],
         visit_count=customer_doc["visit_count"],
-        created_at=customer_doc["created_at"]
+        created_at=customer_doc["created_at"],
+        updated_at=customer_doc["updated_at"]
     )
 
 @router.get("", response_model=List[CustomerResponse])
