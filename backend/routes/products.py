@@ -61,6 +61,10 @@ async def create_product(
         "product_cost": product.product_cost,
         "quantity": product.quantity,
         "image_url": product.image_url,
+        "brand": product.brand,
+        "supplier": product.supplier,
+        "low_stock_threshold": product.low_stock_threshold,
+        "status": product.status,
         "is_active": True,
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow()
