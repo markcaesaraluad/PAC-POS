@@ -533,18 +533,30 @@ const POSInterface = () => {
     }
 
     try {
-      const printerStatus = bluetoothPrinterService.getStatus();
-      if (!printerStatus.isConnected) {
-        if (!bluetoothPrinterService.isBluetoothSupported()) {
-          toast.error('Bluetooth not supported in this browser');
-          return;
+      const printerType = business?.settings?.printer_type || 'local';
+      
+      if (printerType === 'bluetooth') {
+        // Use Bluetooth printer service
+        const printerStatus = bluetoothPrinterService.getStatus();
+        if (!printerStatus.isConnected) {
+          if (!bluetoothPrinterService.isBluetoothSupported()) {
+            toast.error('Bluetooth not supported in this browser');
+            return;
+          }
+          
+          toast.info('Connecting to POS-9200-L printer...');
+          await bluetoothPrinterService.connect();
         }
-        
-        toast.info('Connecting to POS-9200-L printer...');
-        await bluetoothPrinterService.connect();
+        await bluetoothPrinterService.printReceipt(previewReceiptData, business?.settings?.printer_settings);
+      } else {
+        // Use enhanced printer service for local/network printers
+        await enhancedPrinterService.printReceipt(previewReceiptData, {
+          printerType: printerType,
+          printerName: business?.settings?.selected_printer || 'default',
+          settings: business?.settings?.printer_settings
+        });
       }
-
-      await bluetoothPrinterService.printReceipt(previewReceiptData, business?.settings?.printer_settings);
+      
       toast.success('Receipt printed successfully');
       
     } catch (error) {
