@@ -573,6 +573,167 @@ const BusinessSettings = () => {
           </div>
         )}
 
+        {/* Business Details */}
+        {activeTab === 'business' && (
+          <div className="card">
+            <div className="card-body space-y-6">
+              <div className="flex items-center space-x-2">
+                <BuildingOfficeIcon className="h-6 w-6 text-gray-600" />
+                <h3 className="text-lg font-medium text-gray-900">Business Details</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Business Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={businessDetails.name}
+                    onChange={(e) => setBusinessDetails({...businessDetails, name: e.target.value})}
+                    className="input w-full"
+                    placeholder="Enter business name"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Contact Email *
+                  </label>
+                  <input
+                    type="email"
+                    value={businessDetails.contact_email}
+                    onChange={(e) => setBusinessDetails({...businessDetails, contact_email: e.target.value})}
+                    className="input w-full"
+                    placeholder="Enter contact email"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    value={businessDetails.phone}
+                    onChange={(e) => setBusinessDetails({...businessDetails, phone: e.target.value})}
+                    className="input w-full"
+                    placeholder="Enter phone number"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Address
+                  </label>
+                  <textarea
+                    rows="3"
+                    value={businessDetails.address}
+                    onChange={(e) => setBusinessDetails({...businessDetails, address: e.target.value})}
+                    className="input w-full"
+                    placeholder="Enter business address"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Description
+                  </label>
+                  <textarea
+                    rows="3"
+                    value={businessDetails.description}
+                    onChange={(e) => setBusinessDetails({...businessDetails, description: e.target.value})}
+                    className="input w-full"
+                    placeholder="Enter business description"
+                  />
+                </div>
+              </div>
+
+              {/* Logo Upload Section */}
+              <div className="border-t pt-6">
+                <h4 className="font-medium text-gray-900 mb-4">Business Logo</h4>
+                <div className="flex items-start space-x-6">
+                  <div className="flex-1">
+                    <div className="flex items-center justify-center w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg relative overflow-hidden">
+                      {logoPreview ? (
+                        <img
+                          src={logoPreview}
+                          alt="Business Logo"
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <div className="text-center">
+                          <BuildingOfficeIcon className="mx-auto h-8 w-8 text-gray-400" />
+                          <span className="text-xs text-gray-500 mt-2">No Logo</span>
+                        </div>
+                      )}
+                      
+                      <input
+                        type="file"
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        accept="image/*"
+                        onChange={handleLogoUpload}
+                        disabled={logoUploading}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-600 mb-4">
+                      Upload a logo for your business. This will appear on receipts and reports.
+                    </p>
+                    <div className="space-y-2">
+                      <p className="text-xs text-gray-500">
+                        • Supported formats: JPEG, PNG, GIF, WebP
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        • Maximum size: 5MB
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        • Recommended: Square aspect ratio (1:1)
+                      </p>
+                    </div>
+                    
+                    <div className="flex space-x-3 mt-4">
+                      <button
+                        type="button"
+                        onClick={() => document.querySelector('input[type="file"]').click()}
+                        disabled={logoUploading}
+                        className="btn-secondary text-sm"
+                      >
+                        {logoUploading ? 'Uploading...' : 'Choose File'}
+                      </button>
+                      
+                      {logoPreview && (
+                        <button
+                          type="button"
+                          onClick={handleRemoveLogo}
+                          disabled={logoUploading}
+                          className="btn-danger text-sm"
+                        >
+                          Remove Logo
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  onClick={handleSaveBusinessDetails}
+                  disabled={saving}
+                  className="btn-primary"
+                >
+                  {saving ? 'Saving...' : 'Save Business Details'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Enhanced Printer Settings */}
         {activeTab === 'printer' && (
           <div className="space-y-6">
