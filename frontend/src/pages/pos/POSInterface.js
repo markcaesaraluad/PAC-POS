@@ -90,16 +90,20 @@ const POSInterface = () => {
     
     try {
       const response = await productsAPI.getProductByBarcode(barcode.trim());
-      addToCart(response.data);
+      const product = response.data;
       
-      // Clear search field after successful scan
+      // Add product to cart
+      addToCart(product);
+      
+      // Clear search field after successful scan and maintain focus
       setSearchTerm('');
       if (barcodeInputRef.current) {
         barcodeInputRef.current.value = '';
+        barcodeInputRef.current.focus(); // Keep focus for next scan
       }
       
       // Visual and audio feedback for successful scan
-      toast.success(`✅ Scanned: ${response.data.name} added to cart`, {
+      toast.success(`✅ ${product.name} added to cart`, {
         duration: 2000,
         position: 'top-center'
       });
@@ -110,28 +114,30 @@ const POSInterface = () => {
         setTimeout(() => {
           if (barcodeInputRef.current) {
             barcodeInputRef.current.style.backgroundColor = '';
+            barcodeInputRef.current.focus(); // Ensure focus is maintained
           }
         }, 1000);
       }
     } catch (error) {
       console.error('Barcode scan error:', error);
-      toast.error(`❌ Product not found: ${barcode}`, {
+      
+      // Show "Item not found" as requested
+      toast.error(`Item not found`, {
         duration: 3000,
         position: 'top-center'
       });
       
-      // Visual error feedback
+      // Clear search field and maintain focus for next attempt
+      setSearchTerm('');
       if (barcodeInputRef.current) {
-        barcodeInputRef.current.style.backgroundColor = '#f8d7da';
-        barcodeInputRef.current.value = `✗ Not found: ${barcode}`;
+        barcodeInputRef.current.style.backgroundColor = '#f8d7da'; // Light red
+        barcodeInputRef.current.value = '';
         setTimeout(() => {
-          // Clear error styling and search field
           if (barcodeInputRef.current) {
             barcodeInputRef.current.style.backgroundColor = '';
-            barcodeInputRef.current.value = '';
+            barcodeInputRef.current.focus(); // Keep focus for next scan attempt
           }
-          setSearchTerm('');
-        }, 2000);
+        }, 1500);
       }
     }
   }, []);
