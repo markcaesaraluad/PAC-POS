@@ -83,9 +83,9 @@ async def get_categories(current_user=Depends(get_any_authenticated_user)):
             business_id=str(category["business_id"]),
             name=category["name"],
             description=category.get("description"),
-            color=category.get("color", "#3B82F6"),
-            product_count=product_count,
-            created_at=category.get("created_at", datetime.utcnow())
+            is_active=category.get("is_active", True),
+            created_at=category.get("created_at", datetime.utcnow()),
+            updated_at=category.get("updated_at", datetime.utcnow())
         ))
     
     return category_responses
