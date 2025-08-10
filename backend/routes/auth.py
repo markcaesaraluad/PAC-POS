@@ -72,11 +72,11 @@ async def login(user_credentials: UserLogin, request: Request):
     user_response = UserResponse(
         id=str(user["_id"]),
         email=user["email"],
-        full_name=user["full_name"],
         role=user["role"],
         business_id=str(user.get("business_id")) if user.get("business_id") else None,
         is_active=user.get("is_active", True),
-        created_at=user.get("created_at", datetime.utcnow())
+        created_at=user.get("created_at", datetime.utcnow()),
+        updated_at=user.get("updated_at", datetime.utcnow())
     )
     
     business_response = None
