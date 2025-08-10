@@ -944,7 +944,7 @@ const POSInterface = () => {
           </div>
 
           {/* Cart Summary */}
-          <div className="p-3 border-b">
+          <div className="p-3 border-b" style={{overflow: 'visible'}}>
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
                 <span>Subtotal:</span>
