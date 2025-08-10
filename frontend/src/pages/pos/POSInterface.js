@@ -23,7 +23,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const POSInterface = () => {
-  const { business } = useAuth();
+  const { business, user } = useAuth();
   const { formatAmount } = useCurrency();
   
   // Core state
