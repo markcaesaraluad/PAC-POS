@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 
 class Phase3ValidationTester:
-    def __init__(self, base_url="https://c5e297fc-0b24-49ca-97d7-7ab4548e3561.preview.emergentagent.com"):
+    def __init__(self, base_url="https://c0ab9037-c0e6-4a6d-9f88-62db3dc10976.preview.emergentagent.com"):
         self.base_url = base_url
         self.token = None
         self.business_admin_token = None
