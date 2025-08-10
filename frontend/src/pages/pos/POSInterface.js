@@ -3,6 +3,7 @@ import { productsAPI, categoriesAPI, customersAPI, salesAPI, invoicesAPI } from 
 import { useAuth } from '../../context/AuthContext';
 import { useCurrency } from '../../context/CurrencyContext';
 import bluetoothPrinterService from '../../services/bluetoothPrinter';
+import enhancedPrinterService from '../../services/printerService';
 import { toast } from 'react-hot-toast';
 import { 
   CubeIcon, 
