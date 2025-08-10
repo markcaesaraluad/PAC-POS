@@ -19,6 +19,12 @@ import {
 const BusinessLayout = ({ children }) => {
   const location = useLocation();
   const { user, business, logout } = useAuth();
+  const { isBusinessSuspended, isLoading, businessName, userRole } = useBusinessStatus();
+
+  // Show suspended notice for non-super-admin users
+  if (!isLoading && isBusinessSuspended && userRole !== 'super_admin') {
+    return <SuspendedBusinessNotice businessName={businessName} />;
+  }
 
   // Define base navigation items
   const baseNavigation = [
