@@ -3550,6 +3550,202 @@ class POSAPITester:
             self.log(f"❌ {failed} tests failed", "FAILURE")
             return False
 
+    def test_super_admin_business_access_control(self):
+        """Test Super Admin Business Access Control implementation"""
+        self.log("=== STARTING SUPER ADMIN BUSINESS ACCESS CONTROL TESTING ===", "INFO")
+        
+        # Ensure we're using super admin token
+        if not self.super_admin_token:
+            self.log("❌ Super admin token not available", "ERROR")
+            return False
+        
+        self.token = self.super_admin_token
+        
+        # Test 1: Super Admin can list all businesses
+        success, businesses_response = self.run_test(
+            "Super Admin List All Businesses",
+            "GET",
+            "/api/super-admin/businesses",
+            200
+        )
+        
+        business_id = None
+        if success and isinstance(businesses_response, list) and len(businesses_response) > 0:
+            business_id = businesses_response[0].get('id')
+            self.log(f"Found business ID: {business_id}")
+            self.log(f"Business status: {businesses_response[0].get('status', 'unknown')}")
+        else:
+            self.log("❌ No businesses found for testing", "ERROR")
+            return False
+        
+        # Test 2: Super Admin can update business status to suspended
+        success, response = self.run_test(
+            "Super Admin Suspend Business",
+            "PUT",
+            f"/api/super-admin/businesses/{business_id}/status",
+            200,
+            data={"status": "suspended"}
+        )
+        
+        if success:
+            self.log("✅ Business successfully suspended by Super Admin")
+        else:
+            self.log("❌ Failed to suspend business", "ERROR")
+            return False
+        
+        # Test 3: Super Admin can still access suspended business details
+        success, business_details = self.run_test(
+            "Super Admin Access Suspended Business Details",
+            "GET",
+            f"/api/super-admin/businesses/{business_id}",
+            200
+        )
+        
+        if success:
+            self.log("✅ Super Admin can access suspended business details")
+            if business_details.get('status') == 'suspended':
+                self.log("✅ Business status confirmed as suspended")
+            else:
+                self.log(f"⚠️ Business status: {business_details.get('status')}")
+        else:
+            self.log("❌ Super Admin cannot access suspended business details", "ERROR")
+        
+        # Test 4: Test Business Admin login to suspended business (should work)
+        success, login_response = self.run_test(
+            "Business Admin Login to Suspended Business",
+            "POST",
+            "/api/auth/login",
+            200,
+            data={
+                "email": "admin@printsandcuts.com",
+                "password": "admin123456",
+                "business_subdomain": "prints-cuts-tagum"
+            }
+        )
+        
+        business_admin_token = None
+        if success and 'access_token' in login_response:
+            business_admin_token = login_response['access_token']
+            self.log("✅ Business Admin can login to suspended business")
+        else:
+            self.log("❌ Business Admin cannot login to suspended business", "ERROR")
+        
+        # Test 5: Business Admin cannot access business endpoints when suspended
+        if business_admin_token:
+            # Switch to business admin token
+            original_token = self.token
+            self.token = business_admin_token
+            
+            # Test business info endpoint (should be blocked)
+            success, response = self.run_test(
+                "Business Admin Access Business Info (Suspended - Should Fail)",
+                "GET",
+                "/api/business/info",
+                403  # Should return 403 Forbidden
+            )
+            
+            if success:
+                self.log("✅ Business Admin correctly blocked from business info endpoint")
+                if "Access denied: Business is suspended" in str(response.get('detail', '')):
+                    self.log("✅ Correct error message returned")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"⚠️ Error message: {response.get('detail', 'No detail')}")
+                self.tests_run += 1
+            else:
+                self.log("❌ Business Admin should be blocked from business info endpoint", "ERROR")
+            
+            # Test products endpoint (should be blocked)
+            success, response = self.run_test(
+                "Business Admin Access Products (Suspended - Should Fail)",
+                "GET",
+                "/api/products",
+                403  # Should return 403 Forbidden
+            )
+            
+            if success:
+                self.log("✅ Business Admin correctly blocked from products endpoint")
+                if "Access denied: Business is suspended" in str(response.get('detail', '')):
+                    self.log("✅ Correct error message returned")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"⚠️ Error message: {response.get('detail', 'No detail')}")
+                self.tests_run += 1
+            else:
+                self.log("❌ Business Admin should be blocked from products endpoint", "ERROR")
+            
+            # Test categories endpoint (should be blocked)
+            success, response = self.run_test(
+                "Business Admin Access Categories (Suspended - Should Fail)",
+                "GET",
+                "/api/categories",
+                403  # Should return 403 Forbidden
+            )
+            
+            if success:
+                self.log("✅ Business Admin correctly blocked from categories endpoint")
+                if "Access denied: Business is suspended" in str(response.get('detail', '')):
+                    self.log("✅ Correct error message returned")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"⚠️ Error message: {response.get('detail', 'No detail')}")
+                self.tests_run += 1
+            else:
+                self.log("❌ Business Admin should be blocked from categories endpoint", "ERROR")
+            
+            # Restore super admin token
+            self.token = original_token
+        
+        # Test 6: Super Admin can still access any business endpoints regardless of suspension
+        # Note: Super Admin endpoints don't require business context, so we test the super admin specific endpoints
+        success, response = self.run_test(
+            "Super Admin Access Business Details (Suspended Business)",
+            "GET",
+            f"/api/super-admin/businesses/{business_id}",
+            200
+        )
+        
+        if success:
+            self.log("✅ Super Admin can access suspended business details via super admin endpoint")
+        else:
+            self.log("❌ Super Admin should be able to access suspended business details", "ERROR")
+        
+        # Test 7: Reactivate business for cleanup
+        success, response = self.run_test(
+            "Super Admin Reactivate Business",
+            "PUT",
+            f"/api/super-admin/businesses/{business_id}/status",
+            200,
+            data={"status": "active"}
+        )
+        
+        if success:
+            self.log("✅ Business successfully reactivated by Super Admin")
+        else:
+            self.log("❌ Failed to reactivate business", "ERROR")
+        
+        # Test 8: Verify business admin can access endpoints after reactivation
+        if business_admin_token:
+            self.token = business_admin_token
+            
+            success, response = self.run_test(
+                "Business Admin Access Business Info (After Reactivation)",
+                "GET",
+                "/api/business/info",
+                200
+            )
+            
+            if success:
+                self.log("✅ Business Admin can access business info after reactivation")
+            else:
+                self.log("❌ Business Admin should be able to access business info after reactivation", "ERROR")
+            
+            # Restore super admin token
+            self.token = self.super_admin_token
+        
+        self.log("=== SUPER ADMIN BUSINESS ACCESS CONTROL TESTING COMPLETED ===", "INFO")
+        return True
+
 def main():
     """Main test execution"""
     tester = POSAPITester()
