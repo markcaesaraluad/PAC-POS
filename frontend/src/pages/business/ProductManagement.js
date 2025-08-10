@@ -368,26 +368,12 @@ const ProductManagement = () => {
     if (!selectedProductForStock) return;
 
     try {
-      const response = await fetch(`/api/products/${selectedProductForStock.id}/stock-adjustment`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(adjustmentData)
-      });
-
-      const result = await response.json();
-      
-      if (response.ok) {
-        toast.success(`Stock adjusted: ${result.old_quantity} → ${result.new_quantity}`);
-        setShowStockModal(false);
-        fetchData();
-      } else {
-        throw new Error(result.detail || 'Stock adjustment failed');
-      }
+      const result = await productsAPI.adjustStock(selectedProductForStock.id, adjustmentData);
+      toast.success(`Stock adjusted: ${result.data.old_quantity} → ${result.data.new_quantity}`);
+      setShowStockModal(false);
+      fetchData();
     } catch (error) {
-      toast.error('Stock adjustment failed: ' + error.message);
+      toast.error('Stock adjustment failed: ' + (error.response?.data?.detail || error.message));
     }
   };
 
