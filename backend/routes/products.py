@@ -98,6 +98,10 @@ async def create_product(
         product_cost=product_doc["product_cost"],
         quantity=product_doc["quantity"],
         image_url=product_doc["image_url"],
+        brand=product_doc["brand"],
+        supplier=product_doc["supplier"],
+        low_stock_threshold=product_doc["low_stock_threshold"],
+        status=product_doc["status"],
         is_active=product_doc["is_active"],
         created_at=product_doc["created_at"],
         updated_at=product_doc["updated_at"]
