@@ -559,13 +559,24 @@ const POSInterface = () => {
           await bluetoothPrinterService.connect();
         }
         await bluetoothPrinterService.printReceipt(previewReceiptData, business?.settings?.printer_settings);
-      } else {
-        // Use enhanced printer service for local/network printers
-        await enhancedPrinterService.printReceipt(previewReceiptData, {
-          printerType: printerType,
-          printerName: business?.settings?.selected_printer || 'default',
+      } else if (printerType === 'local') {
+        // For local/system printer, use enhanced printer service
+        await enhancedPrinterService.configurePrinter({
+          id: 'system-default',
+          name: business?.settings?.selected_printer || 'Default System Printer',
+          type: 'local',
           settings: business?.settings?.printer_settings
         });
+        await enhancedPrinterService.printReceipt(previewReceiptData, business?.settings?.printer_settings);
+      } else {
+        // Network printer or other types
+        await enhancedPrinterService.configurePrinter({
+          id: 'network-printer',
+          name: business?.settings?.selected_printer || 'Network Printer',
+          type: printerType,
+          settings: business?.settings?.printer_settings
+        });
+        await enhancedPrinterService.printReceipt(previewReceiptData, business?.settings?.printer_settings);
       }
       
       toast.success('Receipt printed successfully');
