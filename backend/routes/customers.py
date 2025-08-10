@@ -136,7 +136,8 @@ async def get_customer(
         address=customer.get("address"),
         total_spent=customer.get("total_spent", 0.0),
         visit_count=customer.get("visit_count", 0),
-        created_at=customer.get("created_at", datetime.utcnow())
+        created_at=customer.get("created_at", datetime.utcnow()),
+        updated_at=customer.get("updated_at", datetime.utcnow())
     )
 
 @router.put("/{customer_id}", response_model=CustomerResponse)
