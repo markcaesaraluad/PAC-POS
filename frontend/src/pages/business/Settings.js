@@ -34,6 +34,16 @@ const BusinessSettings = () => {
   const [printerTestLoading, setPrinterTestLoading] = useState(false);
   const [printerTestResults, setPrinterTestResults] = useState(null);
   
+  // Separate state for business details
+  const [businessDetails, setBusinessDetails] = useState({
+    name: '',
+    description: '',
+    address: '',
+    phone: '',
+    contact_email: '',
+    logo_url: null
+  });
+  
   const [settings, setSettings] = useState({
     currency: 'USD',
     tax_rate: 0,
@@ -62,6 +72,7 @@ const BusinessSettings = () => {
 
   const tabs = [
     { id: 'general', name: 'General', icon: CogIcon },
+    { id: 'business', name: 'Business Details', icon: BuildingOfficeIcon },
     { id: 'printer', name: 'Printer Settings', icon: PrinterIcon },
     { id: 'receipts', name: 'Receipts', icon: DocumentTextIcon },
   ];
