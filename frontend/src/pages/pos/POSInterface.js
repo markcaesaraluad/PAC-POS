@@ -329,13 +329,17 @@ const POSInterface = () => {
   const confirmPayment = () => {
     const totals = calculateModalTotals();
     
-    // HOTFIX 1: Fixed payment validation logic
+    // HOTFIX 1: Fixed payment validation logic with proper rounding
     if (modalPaymentMethod === 'cash') {
       const received = parseFloat(modalReceivedAmount) || 0;
       const total = parseFloat(totals.total);
       
-      if (received < total) {
-        toast.error(`Insufficient payment. Required: ${formatAmount(total)}, Received: ${formatAmount(received)}`);
+      // Round to 2 decimal places for proper comparison
+      const roundedReceived = Math.round(received * 100) / 100;
+      const roundedTotal = Math.round(total * 100) / 100;
+      
+      if (roundedReceived < roundedTotal) {
+        toast.error(`Insufficient payment. Required: ${formatAmount(roundedTotal)}, Received: ${formatAmount(roundedReceived)}`);
         return;
       }
       setReceivedAmount(received);
