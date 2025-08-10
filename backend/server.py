@@ -24,6 +24,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount static files for logo uploads
+if not os.path.exists("/app/uploads"):
+    os.makedirs("/app/uploads", exist_ok=True)
+
+app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")
+
 # Security
 security = HTTPBearer()
 
