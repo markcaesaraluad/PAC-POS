@@ -369,3 +369,16 @@ class Token(BaseModel):
     token_type: str = "bearer"
     user: UserResponse
     business: Optional[BusinessResponse] = None
+
+# Export Models
+class ExportOptions(BaseModel):
+    format: str = "excel"  # excel, csv, pdf
+    date_range: Optional[str] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+
+class ExportResponse(BaseModel):
+    success: bool
+    file_url: Optional[str] = None
+    filename: Optional[str] = None
+    message: str
