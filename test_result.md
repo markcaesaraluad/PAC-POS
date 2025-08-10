@@ -398,8 +398,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Super Admin Business Access Control - COMPLETED"
-  stuck_tasks: []
+    - "POS Interface & Sales Processing - CRITICAL BUG"
+  stuck_tasks:
+    - "POS Interface & Sales Processing"
   test_all: false
   test_priority: "high_first"
 
