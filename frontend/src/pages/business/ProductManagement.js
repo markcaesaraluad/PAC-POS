@@ -338,22 +338,23 @@ const ProductManagement = () => {
       toast.error('Export failed: ' + (error.response?.data?.detail || error.message));
     }
   };
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `products_${Date.now()}.${format === 'excel' ? 'xlsx' : 'csv'}`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        
-        toast.success(`Products exported to ${format.toUpperCase()}`);
-      } else {
-        throw new Error('Export failed');
-      }
+
+  const downloadTemplate = async (format = 'csv') => {
+    try {
+      const response = await productsAPI.downloadTemplate(format);
+      const filename = `products_template.${format}`;
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Template downloaded successfully!');
     } catch (error) {
-      toast.error('Export failed: ' + error.message);
+      toast.error('Template download failed');
     }
   };
 
