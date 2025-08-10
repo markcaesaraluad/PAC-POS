@@ -923,9 +923,9 @@ const POSInterface = () => {
         </div>
 
         {/* Sticky Action Area - Always Visible at Bottom */}
-        <div className="border-t bg-white flex-shrink-0">
+        <div className="border-t bg-white flex-shrink-0" style={{overflow: 'visible'}}>
           {/* Customer Selection */}
-          <div className="p-3 border-b">
+          <div className="p-3 border-b" style={{overflow: 'visible'}}>
             <select
               value={selectedCustomer?.id || ''}
               onChange={(e) => {
