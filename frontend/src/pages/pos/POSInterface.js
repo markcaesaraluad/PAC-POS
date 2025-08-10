@@ -152,6 +152,66 @@ const POSInterface = () => {
     }
   }, [business]);
 
+  // Barcode scanner focus management and auto-scan functionality
+  useEffect(() => {
+    const keepFocusOnBarcodeInput = () => {
+      if (barcodeInputRef.current && document.activeElement !== barcodeInputRef.current) {
+        // Only refocus if we're on the POS page and not in a modal
+        if (!showPaymentModal) {
+          barcodeInputRef.current.focus();
+        }
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      // If we're not in the barcode input and not in a modal, redirect focus
+      if (!showPaymentModal && document.activeElement !== barcodeInputRef.current && 
+          !document.activeElement?.classList.contains('input') &&
+          !document.activeElement?.tagName === 'SELECT' &&
+          !document.activeElement?.tagName === 'BUTTON') {
+        if (barcodeInputRef.current) {
+          barcodeInputRef.current.focus();
+          // Add the typed character to the input
+          if (e.key.length === 1) {
+            setSearchTerm(prev => prev + e.key);
+          }
+        }
+      }
+    };
+
+    const handleBarcodeSubmit = (e) => {
+      if (e.key === 'Enter' && barcodeInputRef.current === document.activeElement) {
+        e.preventDefault();
+        const barcode = searchTerm.trim();
+        if (barcode) {
+          handleBarcodeScanned(barcode);
+        } else {
+          handleProductSearch();
+        }
+      }
+    };
+
+    // Set up event listeners
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keypress', handleBarcodeSubmit);
+    
+    // Focus on mount and periodically maintain focus
+    const focusInterval = setInterval(keepFocusOnBarcodeInput, 1000);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keypress', handleBarcodeSubmit);
+      clearInterval(focusInterval);
+    };
+  }, [searchTerm, showPaymentModal, handleBarcodeScanned]);
+
+  // Initial focus on barcode input
+  useEffect(() => {
+    if (barcodeInputRef.current && !loading) {
+      barcodeInputRef.current.focus();
+    }
+  }, [loading]);
+
   const handleProductSearch = async () => {
     if (!searchTerm && !selectedCategory) {
       fetchData();
