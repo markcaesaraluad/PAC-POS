@@ -111,13 +111,8 @@ const BusinessSettings = () => {
         }
       }));
 
-      // Load selected printer if saved
-      if (businessSettings.selected_printer) {
-        const savedPrinter = availablePrinters.find(p => p.id === businessSettings.selected_printer);
-        if (savedPrinter) {
-          setSelectedPrinter(savedPrinter);
-        }
-      }
+      // HOTFIX 4: Load selected printer after availablePrinters is set
+      // This needs to be done after loadAvailablePrinters() in useEffect
     } catch (error) {
       toast.error('Failed to load business information');
       console.error('Error loading business info:', error);
