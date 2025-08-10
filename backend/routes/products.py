@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status, Depends, Query, File, UploadFile
 from typing import List, Optional
-from models import ProductCreate, ProductResponse, ProductUpdate, ProductCostHistoryResponse
+from models import ProductCreate, ProductResponse, ProductUpdate, ProductCostHistoryResponse, StockAdjustmentCreate, BulkImportResponse, LabelPrintOptions, BarcodeGenerateRequest
 from auth_utils import get_business_admin_or_super, get_any_authenticated_user
 from database import get_collection
 from bson import ObjectId
