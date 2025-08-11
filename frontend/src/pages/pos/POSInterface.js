@@ -203,7 +203,7 @@ const POSInterface = () => {
           { timeout: 10000, enableHighAccuracy: true }
         );
       } else {
-        toast.info('📍 Using system timezone (location not supported)', { duration: 3000 });
+        toast('📍 Using system timezone (location not supported)', { duration: 3000 });
       }
     } catch (error) {
       console.error('Location initialization error:', error);
