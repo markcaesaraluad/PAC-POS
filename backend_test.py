@@ -4876,6 +4876,271 @@ class POSAPITester:
 
 
 
+    def test_new_pos_features(self):
+        """Test the new POS features as requested in the review"""
+        self.log("=== TESTING NEW POS FEATURES ===", "INFO")
+        
+        # Switch to business admin token for testing
+        if self.business_admin_token:
+            self.token = self.business_admin_token
+            self.log("Using business admin token for POS features testing")
+        
+        # Test 1: Business settings API for receipt header/footer functionality
+        self.log("🔍 TEST 1: Business Settings API - Receipt Header/Footer", "INFO")
+        
+        success, response = self.run_test(
+            "Get Business Info (Check Receipt Settings)",
+            "GET",
+            "/api/business/info",
+            200
+        )
+        
+        if success:
+            settings = response.get("settings", {})
+            receipt_header = settings.get("receipt_header")
+            receipt_footer = settings.get("receipt_footer")
+            
+            if receipt_header is not None and receipt_footer is not None:
+                self.log("✅ Business info includes receipt_header and receipt_footer settings")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Business info missing receipt_header or receipt_footer settings")
+            self.tests_run += 1
+            
+            # Test updating receipt settings
+            updated_settings = {
+                "currency": settings.get("currency", "USD"),
+                "tax_rate": settings.get("tax_rate", 0.0),
+                "receipt_header": "Welcome to Our Enhanced POS Store!",
+                "receipt_footer": "Thank you for your business - Enhanced POS System",
+                "low_stock_threshold": settings.get("low_stock_threshold", 10),
+                "printer_settings": settings.get("printer_settings", {})
+            }
+            
+            success, response = self.run_test(
+                "Update Business Settings (Receipt Header/Footer)",
+                "PUT",
+                "/api/business/settings",
+                200,
+                data=updated_settings
+            )
+            
+            if success:
+                self.log("✅ Business settings updated successfully with receipt header/footer")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Failed to update business settings")
+            self.tests_run += 1
+        
+        # Test 2: Business logo upload/retrieval for receipts
+        self.log("🔍 TEST 2: Business Logo Upload/Retrieval", "INFO")
+        
+        # Test logo removal first (to ensure clean state)
+        success, response = self.run_test(
+            "Remove Business Logo (Clean State)",
+            "DELETE",
+            "/api/business/logo",
+            200
+        )
+        
+        # Test getting business info after logo removal
+        success, response = self.run_test(
+            "Get Business Info After Logo Removal",
+            "GET",
+            "/api/business/info",
+            200
+        )
+        
+        if success:
+            logo_url = response.get("logo_url")
+            if logo_url is None:
+                self.log("✅ Logo successfully removed - logo_url is None")
+                self.tests_passed += 1
+            else:
+                self.log(f"⚠️ Logo URL still present after removal: {logo_url}")
+            self.tests_run += 1
+        
+        # Test 3: Authentication and business context loading
+        self.log("🔍 TEST 3: Authentication and Business Context Loading", "INFO")
+        
+        success, response = self.run_test(
+            "Get Current User (Business Context)",
+            "GET",
+            "/api/auth/me",
+            200
+        )
+        
+        if success:
+            business_id = response.get("business_id")
+            role = response.get("role")
+            email = response.get("email")
+            
+            if business_id and role and email:
+                self.log(f"✅ Authentication working - User: {email}, Role: {role}, Business: {business_id}")
+                self.tests_passed += 1
+                self.business_id = business_id
+            else:
+                self.log("❌ Authentication response missing required fields")
+            self.tests_run += 1
+        
+        # Test 4: Products APIs for barcode scanning
+        self.log("🔍 TEST 4: Products APIs for Barcode Scanning", "INFO")
+        
+        # Create a test product with barcode for scanning
+        test_product_data = {
+            "name": "POS Test Product for Barcode",
+            "description": "Product for testing barcode scanning in POS",
+            "sku": f"POS-BARCODE-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            "price": 15.99,
+            "product_cost": 8.50,
+            "quantity": 25,
+            "category_id": self.category_id,
+            "barcode": f"POS{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        }
+        
+        success, response = self.run_test(
+            "Create Product with Barcode for POS Testing",
+            "POST",
+            "/api/products",
+            200,
+            data=test_product_data
+        )
+        
+        test_barcode = None
+        test_product_id = None
+        if success and 'id' in response:
+            test_barcode = response.get('barcode')
+            test_product_id = response.get('id')
+            self.log(f"✅ Test product created with barcode: {test_barcode}")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Failed to create test product with barcode")
+        self.tests_run += 1
+        
+        # Test barcode lookup
+        if test_barcode:
+            success, response = self.run_test(
+                "Get Product by Barcode (POS Scanning)",
+                "GET",
+                f"/api/products/barcode/{test_barcode}",
+                200
+            )
+            
+            if success:
+                product_name = response.get('name')
+                product_price = response.get('price')
+                product_quantity = response.get('quantity')
+                
+                if product_name and product_price is not None and product_quantity is not None:
+                    self.log(f"✅ Barcode scan successful - Product: {product_name}, Price: ${product_price}, Stock: {product_quantity}")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ Barcode scan response missing required product data")
+            else:
+                self.log("❌ Barcode scan failed")
+            self.tests_run += 1
+        
+        # Test 5: Sales creation with enhanced transaction data
+        self.log("🔍 TEST 5: Sales Creation with Enhanced Transaction Data", "INFO")
+        
+        if test_product_id and self.customer_id:
+            enhanced_sale_data = {
+                "customer_id": self.customer_id,
+                "customer_name": "POS Test Customer",
+                "cashier_id": "507f1f77bcf86cd799439011",  # Mock cashier ID
+                "cashier_name": "admin@printsandcuts.com",
+                "items": [
+                    {
+                        "product_id": test_product_id,
+                        "product_name": "POS Test Product for Barcode",
+                        "sku": test_product_data['sku'],
+                        "quantity": 2,
+                        "unit_price": 15.99,
+                        "unit_price_snapshot": 15.99,
+                        "unit_cost_snapshot": 8.50,
+                        "total_price": 31.98
+                    }
+                ],
+                "subtotal": 31.98,
+                "tax_amount": 2.88,
+                "discount_amount": 0.00,
+                "total_amount": 34.86,
+                "payment_method": "cash",
+                "received_amount": 40.00,
+                "change_amount": 5.14,
+                "notes": "POS enhanced transaction test"
+            }
+            
+            success, response = self.run_test(
+                "Create Sale with Enhanced Transaction Data",
+                "POST",
+                "/api/sales",
+                200,
+                data=enhanced_sale_data
+            )
+            
+            if success:
+                sale_id = response.get('id')
+                cashier_name = response.get('cashier_name')
+                received_amount = response.get('received_amount')
+                change_amount = response.get('change_amount')
+                items = response.get('items', [])
+                
+                # Verify enhanced fields are present
+                enhanced_fields_present = True
+                if items and len(items) > 0:
+                    first_item = items[0]
+                    required_fields = ['sku', 'unit_price_snapshot', 'unit_cost_snapshot']
+                    missing_fields = [field for field in required_fields if field not in first_item]
+                    
+                    if missing_fields:
+                        self.log(f"❌ Enhanced sale missing fields: {missing_fields}")
+                        enhanced_fields_present = False
+                    else:
+                        self.log("✅ All enhanced transaction fields present in sale response")
+                
+                if (sale_id and cashier_name and received_amount is not None and 
+                    change_amount is not None and enhanced_fields_present):
+                    self.log(f"✅ Enhanced sale created - ID: {sale_id}, Cashier: {cashier_name}, Change: ${change_amount}")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ Enhanced sale creation missing required fields")
+            else:
+                self.log("❌ Failed to create enhanced sale")
+            self.tests_run += 1
+        
+        # Test 6: Database connections and core functionality
+        self.log("🔍 TEST 6: Database Connections and Core Functionality", "INFO")
+        
+        # Test multiple API endpoints to verify database connectivity
+        endpoints_to_test = [
+            ("Products API", "GET", "/api/products", 200),
+            ("Categories API", "GET", "/api/categories", 200),
+            ("Customers API", "GET", "/api/customers", 200),
+            ("Sales API", "GET", "/api/sales", 200),
+            ("Business Info API", "GET", "/api/business/info", 200)
+        ]
+        
+        database_connectivity_score = 0
+        for endpoint_name, method, endpoint, expected_status in endpoints_to_test:
+            success, response = self.run_test(
+                f"Database Connectivity - {endpoint_name}",
+                method,
+                endpoint,
+                expected_status
+            )
+            
+            if success:
+                database_connectivity_score += 1
+                self.tests_passed += 1
+            self.tests_run += 1
+        
+        connectivity_percentage = (database_connectivity_score / len(endpoints_to_test)) * 100
+        self.log(f"✅ Database connectivity score: {database_connectivity_score}/{len(endpoints_to_test)} ({connectivity_percentage:.1f}%)")
+        
+        self.log("=== NEW POS FEATURES TESTING COMPLETED ===", "INFO")
+        return True
+
     def run_all_tests(self):
         """Run all API tests"""
         self.log("Starting POS System Enhancements API Tests", "START")
