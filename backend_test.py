@@ -515,6 +515,72 @@ class POSAPITester:
 
         return success
 
+    def test_sales_history_api_failures(self):
+        """Test the specific Sales History API failures with date_preset parameter"""
+        self.log("=== TESTING SALES HISTORY API FAILURES ===", "INFO")
+        
+        # Switch to business admin token for testing
+        if self.business_admin_token:
+            self.token = self.business_admin_token
+            self.log("Using business admin token for sales history testing")
+        
+        # TEST 1: Sales API with date_preset=today (this should fail with 500 error)
+        success, response = self.run_test(
+            "Get Sales with date_preset=today (Expected to Fail)",
+            "GET",
+            "/api/sales",
+            500,  # Expecting 500 error as reported
+            params={"date_preset": "today"}
+        )
+        
+        if success:
+            self.log("✅ Confirmed: Sales API with date_preset parameter returns 500 error as expected")
+        else:
+            self.log("❌ Sales API with date_preset parameter did not return expected 500 error")
+        
+        # TEST 2: Invoices API with date_preset=today (this should fail with 500 error)
+        success, response = self.run_test(
+            "Get Invoices with date_preset=today (Expected to Fail)",
+            "GET",
+            "/api/invoices",
+            500,  # Expecting 500 error as reported
+            params={"date_preset": "today"}
+        )
+        
+        if success:
+            self.log("✅ Confirmed: Invoices API with date_preset parameter returns 500 error as expected")
+        else:
+            self.log("❌ Invoices API with date_preset parameter did not return expected 500 error")
+        
+        # TEST 3: Test Sales API without date_preset (should work)
+        success, response = self.run_test(
+            "Get Sales without date_preset (Should Work)",
+            "GET",
+            "/api/sales",
+            200
+        )
+        
+        if success:
+            self.log("✅ Sales API works correctly without date_preset parameter")
+        else:
+            self.log("❌ Sales API fails even without date_preset parameter")
+        
+        # TEST 4: Test Invoices API without date_preset (should work)
+        success, response = self.run_test(
+            "Get Invoices without date_preset (Should Work)",
+            "GET",
+            "/api/invoices",
+            200
+        )
+        
+        if success:
+            self.log("✅ Invoices API works correctly without date_preset parameter")
+        else:
+            self.log("❌ Invoices API fails even without date_preset parameter")
+        
+        self.log("=== SALES HISTORY API FAILURES TESTING COMPLETED ===", "INFO")
+        return True
+
     def test_sales_api_with_enhanced_item_fields(self):
         """Test sales API with enhanced item fields (sku, unit_price_snapshot, unit_cost_snapshot) as requested"""
         self.log("=== STARTING SALES API WITH ENHANCED ITEM FIELDS TESTING ===", "INFO")
