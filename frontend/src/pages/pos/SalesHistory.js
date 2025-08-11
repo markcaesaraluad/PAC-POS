@@ -380,19 +380,233 @@ const SalesHistory = () => {
     `;
   };
 
+  // FEATURE 8: Enhanced PDF save functionality
   const saveReceiptAsPDF = async () => {
     try {
       setActionLoading('pdf');
       
-      // Simulate PDF generation and download
-      const filename = `${reprintTransaction.type}_${reprintTransaction.type === 'sale' ? reprintTransaction.sale_number : reprintTransaction.invoice_number}_reprint.pdf`;
-      toast.success(`PDF saved as ${filename}`);
+      // Generate receipt data for PDF
+      const receiptData = generatePrintReceiptData();
+      
+      // Create a clean HTML version for PDF generation
+      const pdfHTML = generatePDFReceiptHTML(receiptData);
+      
+      // Create a temporary iframe for PDF generation
+      const pdfFrame = document.createElement('iframe');
+      pdfFrame.style.position = 'absolute';
+      pdfFrame.style.left = '-9999px';
+      pdfFrame.style.width = '800px';
+      pdfFrame.style.height = '600px';
+      document.body.appendChild(pdfFrame);
+      
+      const pdfDocument = pdfFrame.contentDocument;
+      pdfDocument.open();
+      pdfDocument.write(pdfHTML);
+      pdfDocument.close();
+      
+      // Wait for content to load and trigger print as PDF
+      setTimeout(() => {
+        try {
+          // Set up print options for PDF
+          pdfFrame.contentWindow.focus();
+          pdfFrame.contentWindow.print();
+          
+          // Clean up after delay
+          setTimeout(() => {
+            try {
+              document.body.removeChild(pdfFrame);
+            } catch (e) {
+              console.log('PDF iframe cleanup error (non-critical)');
+            }
+          }, 3000);
+          
+          const filename = `${reprintTransaction.type}_${reprintTransaction.type === 'sale' ? reprintTransaction.sale_number : reprintTransaction.invoice_number}_reprint.pdf`;
+          toast.success(`PDF ready for download: ${filename}`);
+          
+        } catch (pdfError) {
+          console.error('PDF generation error:', pdfError);
+          toast.error('PDF generation failed - try using browser print dialog');
+        }
+      }, 1000);
       
     } catch (error) {
+      console.error('PDF save error:', error);
       toast.error('Failed to save PDF');
     } finally {
       setActionLoading(null);
     }
+  };
+
+  // Generate PDF-optimized HTML
+  const generatePDFReceiptHTML = (receiptData) => {
+    const businessLogo = receiptData.business?.logo_url || '';
+    const receiptHeader = receiptData.business?.settings?.receipt_header || business?.settings?.receipt_header || '';
+    const receiptFooter = receiptData.business?.settings?.receipt_footer || business?.settings?.receipt_footer || '';
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Receipt PDF - ${receiptData.transaction_type} ${receiptData.transaction_number}</title>
+          <style>
+            @media print {
+              @page { 
+                size: A4; 
+                margin: 20mm;
+              }
+              body { margin: 0; }
+            }
+            body {
+              font-family: 'Courier New', monospace;
+              font-size: 12px;
+              line-height: 1.4;
+              margin: 0;
+              padding: 20px;
+              max-width: 400px;
+              margin: 0 auto;
+            }
+            .center { text-align: center; }
+            .bold { font-weight: bold; }
+            .line { border-bottom: 1px dashed #000; margin: 8px 0; }
+            .flex { display: flex; justify-content: space-between; }
+            .logo { 
+              max-width: 150px; 
+              max-height: 100px; 
+              margin: 0 auto 10px auto; 
+              display: block; 
+            }
+            .header { 
+              border-bottom: 2px solid #000; 
+              padding-bottom: 15px; 
+              margin-bottom: 15px; 
+            }
+            .total { 
+              border-top: 2px solid #000; 
+              padding-top: 8px; 
+              margin-top: 8px; 
+              font-size: 14px;
+              font-weight: bold;
+            }
+            .reprint-notice { 
+              background-color: #ffe6e6; 
+              border: 2px solid #ff9999; 
+              padding: 10px; 
+              margin: 15px 0; 
+              font-weight: bold;
+              text-align: center;
+            }
+            .item-row {
+              margin: 5px 0;
+              border-bottom: 1px dotted #ccc;
+              padding-bottom: 3px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header center">
+            ${businessLogo ? `<img src="${businessLogo}" alt="Business Logo" class="logo" />` : ''}
+            <div class="bold" style="font-size: 18px;">${receiptData.business.name}</div>
+            ${receiptData.business.address ? `<div>${receiptData.business.address}</div>` : ''}
+            ${receiptData.business.phone ? `<div>Tel: ${receiptData.business.phone}</div>` : ''}
+            ${receiptData.business.contact_email ? `<div>Email: ${receiptData.business.contact_email}</div>` : ''}
+            ${receiptHeader ? `<div style="margin: 10px 0; white-space: pre-line; font-style: italic;">${receiptHeader}</div>` : ''}
+          </div>
+
+          <div class="reprint-notice">
+            *** RECEIPT REPRINT ***<br>
+            Printed: ${receiptData.reprint_timestamp.toLocaleString()}
+          </div>
+
+          <div style="margin: 15px 0;">
+            <div class="bold" style="font-size: 16px;">${receiptData.transaction_type}: ${receiptData.transaction_number}</div>
+            <div>Original Date: ${receiptData.timestamp.toLocaleString()}</div>
+            <div>Cashier: ${receiptData.cashier_name}</div>
+            ${receiptData.customer ? `<div>Customer: ${receiptData.customer.name}</div>` : '<div>Customer: Walk-in Customer</div>'}
+          </div>
+
+          <div class="line"></div>
+
+          <div style="margin: 15px 0;">
+            <div class="bold" style="margin-bottom: 10px;">ITEMS:</div>
+            ${receiptData.items.map(item => `
+              <div class="item-row">
+                <div class="bold">${item.product_name}</div>
+                <div class="flex" style="margin-top: 3px;">
+                  <span>${item.quantity} x ${formatAmount(item.unit_price)}</span>
+                  <span class="bold">${formatAmount(item.total_price)}</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="line"></div>
+
+          <div style="margin: 15px 0;">
+            <div class="flex">
+              <span>Subtotal:</span>
+              <span>${formatAmount(receiptData.subtotal)}</span>
+            </div>
+            ${receiptData.tax_amount > 0 ? `
+              <div class="flex">
+                <span>Tax:</span>
+                <span>${formatAmount(receiptData.tax_amount)}</span>
+              </div>
+            ` : ''}
+            ${receiptData.discount_amount > 0 ? `
+              <div class="flex">
+                <span>Discount:</span>
+                <span style="color: green;">-${formatAmount(receiptData.discount_amount)}</span>
+              </div>
+            ` : ''}
+            
+            <div class="flex total">
+              <span>TOTAL AMOUNT:</span>
+              <span>${formatAmount(receiptData.total_amount)}</span>
+            </div>
+
+            ${receiptData.payment_method === 'cash' ? `
+              <div style="margin-top: 10px;">
+                <div class="flex">
+                  <span>Cash Received:</span>
+                  <span>${formatAmount(receiptData.received_amount)}</span>
+                </div>
+                <div class="flex">
+                  <span>Change Given:</span>
+                  <span>${formatAmount(receiptData.change_amount)}</span>
+                </div>
+              </div>
+            ` : `
+              <div style="margin-top: 10px;">
+                <div class="flex">
+                  <span>Payment Method:</span>
+                  <span>${receiptData.payment_method.toUpperCase()}</span>
+                </div>
+              </div>
+            `}
+          </div>
+
+          ${receiptData.notes ? `
+            <div class="line"></div>
+            <div style="margin: 15px 0;">
+              <div class="bold">Notes:</div>
+              <div style="margin-top: 5px; font-style: italic;">${receiptData.notes}</div>
+            </div>
+          ` : ''}
+
+          <div class="line"></div>
+          <div class="center" style="margin: 20px 0;">
+            <div class="bold">Thank you for your business!</div>
+            ${receiptFooter ? `<div style="margin-top: 10px; white-space: pre-line; font-style: italic;">${receiptFooter}</div>` : ''}
+          </div>
+          
+          <div class="center" style="font-size: 10px; color: #666; margin-top: 30px;">
+            <div>This is a computer-generated receipt reprint.</div>
+            <div>Generated on: ${new Date().toLocaleString()}</div>
+          </div>
+        </body>
+      </html>
+    `;
   };
 
   if (loading) {
