@@ -60,7 +60,7 @@ export const AuthProvider = ({ children }) => {
           // For business users, fetch business information
           if (response.data.role !== 'super_admin') {
             try {
-              const businessResponse = await authAPI.getBusinessInfo();
+              const businessResponse = await businessAPI.getInfo();
               business = businessResponse.data;
             } catch (businessError) {
               console.error('Failed to load business info:', businessError);
