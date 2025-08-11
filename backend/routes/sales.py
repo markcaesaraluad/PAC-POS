@@ -201,7 +201,7 @@ async def get_sales(
     sales = await sales_cursor.to_list(length=None)
     
     # Get current time outside the list comprehension to avoid scope issues
-    current_time = datetime.utcnow()
+    current_time = datetime.now(timezone.utc)
     
     return [
         SaleResponse(
