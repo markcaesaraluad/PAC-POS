@@ -1027,16 +1027,16 @@ Follow us on social media @ourstore"
                   <div className="space-y-1">
                     <div className="flex justify-between">
                       <span>Sample Item</span>
-                      <span>$10.00</span>
+                      <span>{formatAmount(10.00)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Test Product</span>
-                      <span>$5.50</span>
+                      <span>{formatAmount(5.50)}</span>
                     </div>
                     <div className="border-t pt-1 mt-2">
                       <div className="flex justify-between font-bold">
                         <span>TOTAL</span>
-                        <span>$15.50</span>
+                        <span>{formatAmount(15.50)}</span>
                       </div>
                     </div>
                   </div>
