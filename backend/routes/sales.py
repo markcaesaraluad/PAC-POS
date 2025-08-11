@@ -135,6 +135,9 @@ async def get_sales(
     limit: int = Query(50, le=100),
     skip: int = Query(0, ge=0),
     customer_id: Optional[str] = Query(None),
+    date_preset: Optional[str] = Query(None),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
     current_user=Depends(get_any_authenticated_user)
 ):
     sales_collection = await get_collection("sales")
