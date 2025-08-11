@@ -148,6 +148,9 @@ async def get_invoices(
     invoices_cursor = invoices_collection.find(query).sort("created_at", -1).skip(skip).limit(limit)
     invoices = await invoices_cursor.to_list(length=None)
     
+    # Get current time before list comprehension to avoid scope issues
+    current_time = datetime.now(timezone.utc)
+    
     return [
         InvoiceResponse(
             id=str(invoice["_id"]),
@@ -171,8 +174,8 @@ async def get_invoices(
             notes=invoice.get("notes"),
             due_date=invoice.get("due_date"),
             status=invoice.get("status", InvoiceStatus.DRAFT),
-            created_at=invoice.get("created_at", datetime.now(timezone.utc)),
-            updated_at=invoice.get("updated_at", datetime.now(timezone.utc)),
+            created_at=invoice.get("created_at", current_time),
+            updated_at=invoice.get("updated_at", current_time),
             sent_at=invoice.get("sent_at"),
             converted_at=invoice.get("converted_at")
         )
