@@ -452,8 +452,9 @@ metadata:
 
 test_plan:
   current_focus:
+    - "CRITICAL PAYMENT VALIDATION BUG - RECEIVEDAMOUNT STATE ISSUE"
+  stuck_tasks: 
     - "AUTOPRINT RELIABILITY TESTING - MULTIPLE TRANSACTIONS"
-  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
