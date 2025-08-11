@@ -738,7 +738,7 @@ const SalesHistory = () => {
                         <button
                           onClick={() => {
                             // TODO: Implement detail modal
-                            toast.info('Detail view not yet implemented');
+                            toast('Detail view not yet implemented');
                           }}
                           className="text-blue-600 hover:text-blue-900"
                           title="View Details"
