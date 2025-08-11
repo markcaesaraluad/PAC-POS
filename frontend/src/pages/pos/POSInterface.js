@@ -27,6 +27,7 @@ import {
 const POSInterface = () => {
   const { business, user } = useAuth();
   const { formatAmount } = useCurrency();
+  const navigate = useNavigate();
   
   // Core state
   const [products, setProducts] = useState([]);
