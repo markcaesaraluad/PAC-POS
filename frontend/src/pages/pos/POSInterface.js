@@ -96,7 +96,7 @@ const POSInterface = () => {
       const response = await productsAPI.getProductByBarcode(barcode.trim());
       const product = response.data;
       
-      // Add product to cart
+      // Auto-add product to cart (FEATURE 1: Barcode Scanner – Auto Add to Cart)
       addToCart(product);
       
       // Clear search field after successful scan and maintain focus
@@ -106,7 +106,7 @@ const POSInterface = () => {
         barcodeInputRef.current.focus(); // Keep focus for next scan
       }
       
-      // Visual and audio feedback for successful scan
+      // Enhanced visual feedback for successful scan
       toast.success(`✅ ${product.name} added to cart`, {
         duration: 2000,
         position: 'top-center'
@@ -120,12 +120,12 @@ const POSInterface = () => {
             barcodeInputRef.current.style.backgroundColor = '';
             barcodeInputRef.current.focus(); // Ensure focus is maintained
           }
-        }, 1000);
+        }, 800); // Shorter duration for better UX
       }
     } catch (error) {
       console.error('Barcode scan error:', error);
       
-      // Show "Item not found" as requested
+      // Show "Item not found" as requested, but keep field focused
       toast.error(`Item not found`, {
         duration: 3000,
         position: 'top-center'
@@ -134,14 +134,14 @@ const POSInterface = () => {
       // Clear search field and maintain focus for next attempt
       setSearchTerm('');
       if (barcodeInputRef.current) {
-        barcodeInputRef.current.style.backgroundColor = '#f8d7da'; // Light red
+        barcodeInputRef.current.style.backgroundColor = '#fed7d7'; // Light red
         barcodeInputRef.current.value = '';
         setTimeout(() => {
           if (barcodeInputRef.current) {
             barcodeInputRef.current.style.backgroundColor = '';
             barcodeInputRef.current.focus(); // Keep focus for next scan attempt
           }
-        }, 1500);
+        }, 1200); // Shorter duration
       }
     }
   }, []);
