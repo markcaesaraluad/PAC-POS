@@ -115,23 +115,269 @@ const SalesHistory = () => {
     setShowReprintModal(true);
   };
 
+  // FEATURE 5: Auto Print from Sales Report + FEATURE 8: Enhanced reprint modal
   const printReceipt = async () => {
     try {
       setActionLoading('print');
       
-      // In a real implementation, this would send to the printer
-      // For now, we'll simulate the print action
-      toast.success(`Receipt reprinted for ${reprintTransaction.type === 'sale' ? 'Sale' : 'Invoice'} #${reprintTransaction.type === 'sale' ? reprintTransaction.sale_number : reprintTransaction.invoice_number}`);
+      // Generate comprehensive receipt data with proper formatting
+      const receiptData = generatePrintReceiptData();
+      
+      // FEATURE 5: Auto-print directly without dialog (skip print dialog where possible)
+      const printerType = business?.settings?.printer_type || 'local';
+      
+      if (printerType === 'bluetooth') {
+        // Use Bluetooth printer service for direct ESC/POS printing
+        const printerStatus = bluetoothPrinterService.getStatus();
+        if (!printerStatus.isConnected) {
+          toast.info('Auto-print skipped - Bluetooth printer not connected');
+          return;
+        }
+        await bluetoothPrinterService.printReceipt(receiptData, business?.settings?.printer_settings);
+        toast.success('Receipt auto-printed via Bluetooth');
+      } else {
+        // For local/network printer, attempt direct printing with auto-close
+        try {
+          await enhancedPrinterService.configurePrinter({
+            id: 'system-default',
+            name: business?.settings?.selected_printer || 'Default System Printer',
+            type: 'local',
+            settings: business?.settings?.printer_settings
+          });
+          
+          await enhancedPrinterService.printReceipt(receiptData, business?.settings?.printer_settings);
+          toast.success('Receipt auto-printed to system printer');
+        } catch (printerError) {
+          // Fallback to browser print with attempted auto-close
+          await handleBrowserPrintWithAutoClose(receiptData);
+          toast.success('Receipt printed (browser)');
+        }
+      }
       
       setShowReprintModal(false);
       setReprintTransaction(null);
       setReprintPreview(null);
       
     } catch (error) {
-      toast.error('Failed to reprint receipt');
+      console.error('Print error:', error);
+      toast.error('Failed to print receipt');
     } finally {
       setActionLoading(null);
     }
+  };
+
+  // Helper function to generate print-ready receipt data
+  const generatePrintReceiptData = () => {
+    return {
+      business: business || { 
+        name: 'Prints & Cuts Tagum', 
+        address: '123 Business St', 
+        contact_email: 'contact@printsandcuts.com', 
+        phone: '+1234567890',
+        logo_url: business?.logo_url
+      },
+      transaction_number: reprintTransaction.type === 'sale' ? reprintTransaction.sale_number : reprintTransaction.invoice_number,
+      transaction_type: reprintTransaction.type.toUpperCase(),
+      timestamp: new Date(reprintTransaction.created_at),
+      customer: reprintTransaction.customer_id 
+        ? customers.find(c => c.id === reprintTransaction.customer_id) 
+        : null,
+      cashier_name: reprintTransaction.cashier_name || user?.email || 'Staff',
+      items: reprintTransaction.items,
+      subtotal: reprintTransaction.subtotal,
+      tax_amount: reprintTransaction.tax_amount,
+      discount_amount: reprintTransaction.discount_amount,
+      total_amount: reprintTransaction.total_amount,
+      payment_method: reprintTransaction.payment_method,
+      received_amount: reprintTransaction.received_amount,
+      change_amount: reprintTransaction.change_amount,
+      notes: reprintTransaction.notes,
+      reprint: true,
+      reprint_timestamp: new Date()
+    };
+  };
+
+  // Enhanced browser print with auto-close attempt
+  const handleBrowserPrintWithAutoClose = async (receiptData) => {
+    return new Promise((resolve) => {
+      try {
+        const receiptHTML = generateReceiptHTML(receiptData);
+        
+        // Create iframe for printing
+        const printFrame = document.createElement('iframe');
+        printFrame.style.position = 'absolute';
+        printFrame.style.left = '-9999px';
+        printFrame.style.width = '1px';
+        printFrame.style.height = '1px';
+        document.body.appendChild(printFrame);
+        
+        const printDocument = printFrame.contentDocument;
+        printDocument.open();
+        printDocument.write(receiptHTML);
+        printDocument.close();
+        
+        // Attempt to print and auto-close dialog
+        setTimeout(() => {
+          try {
+            printFrame.contentWindow.print();
+            
+            // Try to auto-close print dialog (may not work in all browsers)
+            setTimeout(() => {
+              if (printFrame.contentWindow) {
+                printFrame.contentWindow.close();
+              }
+            }, 1000);
+            
+            // Clean up iframe
+            setTimeout(() => {
+              try {
+                document.body.removeChild(printFrame);
+              } catch (e) {
+                console.log('Iframe cleanup error (non-critical)');
+              }
+              resolve();
+            }, 2000);
+            
+          } catch (printError) {
+            console.error('Print error:', printError);
+            resolve();
+          }
+        }, 500);
+        
+      } catch (error) {
+        console.error('Browser print setup failed:', error);
+        resolve();
+      }
+    });
+  };
+
+  // Generate receipt HTML with enhanced formatting including logo, header, footer
+  const generateReceiptHTML = (receiptData) => {
+    const businessLogo = receiptData.business?.logo_url || '';
+    const receiptHeader = receiptData.business?.settings?.receipt_header || business?.settings?.receipt_header || '';
+    const receiptFooter = receiptData.business?.settings?.receipt_footer || business?.settings?.receipt_footer || '';
+    
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <title>Receipt Reprint</title>
+          <style>
+            @media print {
+              @page { margin: 0; size: 80mm auto; }
+              body { margin: 0; }
+            }
+            body {
+              font-family: 'Courier New', 'Consolas', monospace;
+              font-size: 10px;
+              line-height: 1.1;
+              margin: 0;
+              padding: 15px;
+              width: 280px;
+            }
+            .center { text-align: center; }
+            .bold { font-weight: bold; }
+            .line { border-bottom: 1px dashed #000; margin: 4px 0; }
+            .flex { display: flex; justify-content: space-between; }
+            .logo { max-width: 120px; max-height: 80px; margin: 0 auto 8px auto; display: block; }
+            .header { border-bottom: 1px solid #000; padding-bottom: 8px; margin-bottom: 8px; }
+            .total { border-top: 1px solid #000; padding-top: 4px; margin-top: 4px; }
+            .reprint-notice { 
+              background-color: #fee; 
+              border: 1px solid #fcc; 
+              padding: 4px; 
+              margin: 8px 0; 
+              font-size: 9px;
+              font-weight: bold;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header center">
+            ${businessLogo ? `<img src="${businessLogo}" alt="Logo" class="logo" />` : ''}
+            <div class="bold" style="font-size: 14px;">${receiptData.business.name}</div>
+            ${receiptData.business.address ? `<div style="font-size: 9px;">${receiptData.business.address}</div>` : ''}
+            ${receiptData.business.phone ? `<div style="font-size: 9px;">Tel: ${receiptData.business.phone}</div>` : ''}
+            ${receiptData.business.contact_email ? `<div style="font-size: 9px;">Email: ${receiptData.business.contact_email}</div>` : ''}
+            ${receiptHeader ? `<div style="font-size: 9px; margin: 6px 0; white-space: pre-line;">${receiptHeader}</div>` : ''}
+          </div>
+
+          <div class="reprint-notice center">
+            *** REPRINT ***<br>
+            ${receiptData.reprint_timestamp.toLocaleString()}
+          </div>
+
+          <div>
+            <div class="bold">${receiptData.transaction_type}: ${receiptData.transaction_number}</div>
+            <div style="font-size: 9px;">Date: ${receiptData.timestamp.toLocaleString()}</div>
+            <div style="font-size: 9px;">Cashier: ${receiptData.cashier_name}</div>
+            ${receiptData.customer ? `<div style="font-size: 9px;">Customer: ${receiptData.customer.name}</div>` : '<div style="font-size: 9px;">Customer: Walk-in</div>'}
+          </div>
+
+          <div class="line"></div>
+
+          ${receiptData.items.map(item => `
+            <div style="font-size: 9px; margin: 2px 0;">
+              <div class="bold">${item.product_name}</div>
+              <div class="flex">
+                <span>${item.quantity} x ${formatAmount(item.unit_price)}</span>
+                <span>${formatAmount(item.total_price)}</span>
+              </div>
+            </div>
+          `).join('')}
+
+          <div class="line"></div>
+
+          <div class="flex" style="font-size: 9px;">
+            <span>Subtotal:</span>
+            <span>${formatAmount(receiptData.subtotal)}</span>
+          </div>
+          ${receiptData.tax_amount > 0 ? `
+            <div class="flex" style="font-size: 9px;">
+              <span>Tax:</span>
+              <span>${formatAmount(receiptData.tax_amount)}</span>
+            </div>
+          ` : ''}
+          ${receiptData.discount_amount > 0 ? `
+            <div class="flex" style="font-size: 9px;">
+              <span>Discount:</span>
+              <span>-${formatAmount(receiptData.discount_amount)}</span>
+            </div>
+          ` : ''}
+          
+          <div class="flex total bold" style="font-size: 11px;">
+            <span>TOTAL:</span>
+            <span>${formatAmount(receiptData.total_amount)}</span>
+          </div>
+
+          ${receiptData.payment_method === 'cash' ? `
+            <div class="flex" style="font-size: 9px;">
+              <span>Cash Received:</span>
+              <span>${formatAmount(receiptData.received_amount)}</span>
+            </div>
+            <div class="flex" style="font-size: 9px;">
+              <span>Change:</span>
+              <span>${formatAmount(receiptData.change_amount)}</span>
+            </div>
+          ` : `
+            <div class="flex" style="font-size: 9px;">
+              <span>Payment Method:</span>
+              <span>${receiptData.payment_method}</span>
+            </div>
+          `}
+
+          ${receiptData.notes ? `
+            <div class="line"></div>
+            <div style="font-size: 9px;">Notes: ${receiptData.notes}</div>
+          ` : ''}
+
+          <div class="line"></div>
+          <div class="center" style="font-size: 9px;">Thank you for your business!</div>
+          ${receiptFooter ? `<div class="center" style="font-size: 9px; margin: 6px 0; white-space: pre-line;">${receiptFooter}</div>` : ''}
+        </body>
+      </html>
+    `;
   };
 
   const saveReceiptAsPDF = async () => {
