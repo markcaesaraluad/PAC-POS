@@ -27,7 +27,7 @@ import {
 
 const POSInterface = () => {
   const { business, user } = useAuth();
-  const { formatAmount } = useCurrency();
+  const { formatAmount, currency } = useCurrency();
   const navigate = useNavigate();
   
   // Location and time state (FEATURE 9: Web App Date & Time)
