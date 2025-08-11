@@ -5460,6 +5460,45 @@ def run_enhanced_sales_api_testing():
     
     return tester.tests_passed > 0, tester.tests_passed, tester.tests_run
 
+    def print_summary(self):
+        """Print test summary"""
+        self.log("\n=== TEST SUMMARY ===", "INFO")
+        self.log(f"Tests Run: {self.tests_run}")
+        self.log(f"Tests Passed: {self.tests_passed}")
+        self.log(f"Tests Failed: {self.tests_run - self.tests_passed}")
+        self.log(f"Success Rate: {(self.tests_passed/self.tests_run)*100:.1f}%" if self.tests_run > 0 else "No tests run")
+        
+        if self.tests_passed == self.tests_run:
+            self.log("🎉 ALL TESTS PASSED!", "PASS")
+        else:
+            self.log("❌ Some tests failed. Check logs above for details.", "FAIL")
+
+    def run_authentication_investigation(self):
+        """Run focused authentication investigation"""
+        self.log("=== STARTING AUTHENTICATION FAILURE INVESTIGATION ===", "INFO")
+        
+        # First ensure health check passes
+        if not self.test_health_check():
+            self.log("❌ Health check failed - cannot proceed", "ERROR")
+            return
+        
+        # Run the authentication investigation
+        if self.test_authentication_failure_investigation():
+            self.log("🎉 AUTHENTICATION INVESTIGATION COMPLETED SUCCESSFULLY", "PASS")
+            self.log("✅ All authentication components are working correctly", "PASS")
+            self.log("✅ JWT token generation and validation working", "PASS")
+            self.log("✅ Business association and permissions correct", "PASS")
+            self.log("✅ Protected endpoints accessible", "PASS")
+            self.log("", "INFO")
+            self.log("🔍 CONCLUSION: Authentication system is functioning correctly.", "INFO")
+            self.log("The reported issue may be frontend-related or a temporary glitch.", "INFO")
+        else:
+            self.log("❌ AUTHENTICATION INVESTIGATION REVEALED CRITICAL ISSUES", "ERROR")
+            self.log("🚨 IMMEDIATE ACTION REQUIRED", "ERROR")
+        
+        # Print summary
+        self.print_summary()
+
 def main():
     """Main test execution"""
     tester = POSAPITester()
