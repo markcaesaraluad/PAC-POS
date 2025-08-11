@@ -50,6 +50,14 @@ const SalesHistory = () => {
     },
   };
 
+  // Handle filter changes and refresh data - memoized to prevent infinite loops
+  const handleFilterChange = useCallback((newFilters) => {
+    // This will be properly defined when fetchDataWithFilters is available
+    if (typeof fetchDataWithFilters === 'function') {
+      fetchDataWithFilters(newFilters);
+    }
+  }, []);
+
   // Global filter hook for managing filter state
   const {
     filters,
@@ -66,11 +74,6 @@ const SalesHistory = () => {
     enablePersistence: true,
     onFilterChange: handleFilterChange
   });
-
-  // Handle filter changes and refresh data - memoized to prevent infinite loops
-  const handleFilterChange = useCallback((newFilters) => {
-    fetchDataWithFilters(newFilters);
-  }, []);
 
   const fetchDataWithFilters = useCallback(async (customFilters = null) => {
     try {
