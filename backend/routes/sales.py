@@ -200,6 +200,9 @@ async def get_sales(
     sales_cursor = sales_collection.find(query).sort("created_at", -1).skip(skip).limit(limit)
     sales = await sales_cursor.to_list(length=None)
     
+    # Get current time outside the list comprehension to avoid scope issues
+    current_time = datetime.utcnow()
+    
     return [
         SaleResponse(
             id=str(sale["_id"]),
@@ -229,8 +232,8 @@ async def get_sales(
             change_amount=sale.get("change_amount"),
             notes=sale.get("notes"),
             status=sale.get("status", "completed"),
-            created_at=sale.get("created_at", datetime.utcnow()),
-            updated_at=sale.get("updated_at", datetime.utcnow())
+            created_at=sale.get("created_at", current_time),
+            updated_at=sale.get("updated_at", current_time)
         )
         for sale in sales
     ]
