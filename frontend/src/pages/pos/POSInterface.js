@@ -745,6 +745,7 @@ const POSInterface = () => {
       transaction_type: transactionType.toUpperCase(),
       timestamp: new Date(transactionData.created_at || new Date()),
       customer: selectedCustomer,
+      cashier_name: transactionData.cashier_name || user?.email || user?.name || 'System',
       items: transactionData.items || cart,
       subtotal: transactionData.subtotal,
       tax_amount: transactionData.tax_amount,
@@ -753,7 +754,7 @@ const POSInterface = () => {
       payment_method: transactionData.payment_method,
       received_amount: transactionData.received_amount,
       change_amount: transactionData.change_amount,
-      notes: transactionData.notes
+      notes: transactionData.notes || notes // Include notes from transaction or modal
     };
   };
 
