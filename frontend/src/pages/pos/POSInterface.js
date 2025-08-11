@@ -832,15 +832,6 @@ const POSInterface = () => {
     const receiptHeader = business?.settings?.receipt_header || '';
     const receiptFooter = business?.settings?.receipt_footer || '';
     
-    // Debug logging for currency and business data
-    console.log('Receipt Generation Debug:', {
-      business: business,
-      currency: currency,
-      receiptHeader: receiptHeader,
-      receiptFooter: receiptFooter,
-      formatAmount: formatAmount(19.99) // Test format
-    });
-    
     return `
       <!DOCTYPE html>
       <html>
