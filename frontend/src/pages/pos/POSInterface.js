@@ -488,9 +488,12 @@ const POSInterface = () => {
         toast.success(`Sale completed! Sale #${response.data.sale_number}`);
         
         // Auto-print if enabled - no preview needed
-        if (business?.settings?.printer_settings?.auto_print) {
+        if (business?.settings?.printer_settings?.auto_print || business?.settings?.auto_print) {
+          console.log('Auto-print enabled, attempting to print...', business?.settings);
           const receiptData = generateReceiptData(response.data, 'sale');
           await handleAutoPrint(response.data, 'sale');
+        } else {
+          console.log('Auto-print disabled or setting not found', business?.settings);
         }
       } else {
         response = await invoicesAPI.createInvoice(transactionData);
