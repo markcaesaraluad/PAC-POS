@@ -17,7 +17,7 @@ const schema = yup.object({
 
 const Login = () => {
   const { login } = useAuth();
-  const [userType, setUserType] = useState('super_admin'); // 'super_admin' or 'business'
+  const [userType, setUserType] = useState('business'); // 'business' or 'super_admin' - default to business
   const [isLoading, setIsLoading] = useState(false);
 
   const {
