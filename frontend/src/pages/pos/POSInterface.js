@@ -1201,7 +1201,14 @@ const POSInterface = () => {
                           type="button"
                           onClick={() => {
                             console.log('Quick amount clicked:', amount);
-                            setModalReceivedAmount(amount.toString());
+                            const amountStr = amount.toString();
+                            setModalReceivedAmount(amountStr);
+                            
+                            // Also update the input field directly to ensure consistency
+                            const inputElement = document.querySelector('input[placeholder="0.00"]');
+                            if (inputElement) {
+                              inputElement.value = amountStr;
+                            }
                           }}
                           className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded"
                         >
