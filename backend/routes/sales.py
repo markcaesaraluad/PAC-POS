@@ -205,16 +205,32 @@ async def get_sales(
             id=str(sale["_id"]),
             business_id=str(sale["business_id"]),
             cashier_id=str(sale["cashier_id"]),
+            cashier_name=sale.get("cashier_name", ""),
             customer_id=str(sale["customer_id"]) if sale.get("customer_id") else None,
+            customer_name=sale.get("customer_name"),
             sale_number=sale["sale_number"],
-            items=[SaleItem(**item) for item in sale["items"]],
+            items=[SaleItem(
+                id=item.get("id", str(ObjectId())),
+                product_id=item["product_id"],
+                product_name=item["product_name"],
+                sku=item.get("sku", item.get("product_sku", "")),  # Handle both sku and product_sku
+                quantity=item["quantity"],
+                unit_price=item["unit_price"],
+                unit_price_snapshot=item.get("unit_price_snapshot", item["unit_price"]),  # Fallback to unit_price
+                unit_cost_snapshot=item.get("unit_cost_snapshot", 0.0),  # Default to 0.0 for old data
+                total_price=item["total_price"]
+            ) for item in sale["items"]],
             subtotal=sale["subtotal"],
             tax_amount=sale["tax_amount"],
             discount_amount=sale["discount_amount"],
             total_amount=sale["total_amount"],
             payment_method=sale["payment_method"],
+            received_amount=sale.get("received_amount"),
+            change_amount=sale.get("change_amount"),
+            notes=sale.get("notes"),
             status=sale.get("status", "completed"),
-            created_at=sale.get("created_at", datetime.utcnow())
+            created_at=sale.get("created_at", datetime.utcnow()),
+            updated_at=sale.get("updated_at", datetime.utcnow())
         )
         for sale in sales
     ]
