@@ -5744,8 +5744,11 @@ def main():
             elif sys.argv[1] == "enhanced_sales":
                 success, passed, total = run_enhanced_sales_api_testing()
                 return 0 if success else 1
+            elif sys.argv[1] == "auth":
+                tester.run_authentication_investigation()
+                return 0
             else:
-                print("Usage: python backend_test.py [--focused|enhanced_sales]")
+                print("Usage: python backend_test.py [--focused|enhanced_sales|auth]")
                 return 1
         else:
             success = tester.run_all_tests()
