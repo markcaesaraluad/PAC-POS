@@ -562,33 +562,48 @@ const POSInterface = () => {
       const printerType = business?.settings?.printer_type || 'local';
       const receiptData = generateReceiptData(transactionData, transactionType);
       
+      console.log('Auto-print attempt:', { 
+        printerType, 
+        attempt: new Date().toISOString(),
+        transactionId: transactionData.sale_number || transactionData.invoice_number 
+      });
+      
       if (printerType === 'bluetooth') {
         // Use Bluetooth printer service for direct ESC/POS printing
         const printerStatus = bluetoothPrinterService.getStatus();
         if (!printerStatus.isConnected) {
+          console.log('Auto-print skipped - Bluetooth printer not connected');
           toast.info('Auto-print skipped - Bluetooth printer not connected');
           return;
         }
         await bluetoothPrinterService.printReceipt(receiptData, business?.settings?.printer_settings);
+        console.log('Auto-print success via Bluetooth');
         toast.success('Receipt auto-printed via Bluetooth');
       } else if (printerType === 'local') {
-        // For local printer, try silent printing via configured service
+        // For local printer, try multiple approaches for reliability
         try {
+          // Reset printer service state before each print attempt
+          console.log('Configuring local printer for auto-print...');
           await enhancedPrinterService.configurePrinter({
             id: 'system-default',
             name: business?.settings?.selected_printer || 'Default System Printer',
             type: 'local',
             settings: business?.settings?.printer_settings
           });
+          
           await enhancedPrinterService.printReceipt(receiptData, business?.settings?.printer_settings);
+          console.log('Auto-print success via enhanced printer service');
           toast.success('Receipt auto-printed to system printer');
         } catch (printerError) {
           // Fallback to browser print with auto-close attempt
           console.log('Direct printing failed, using browser fallback:', printerError);
           await handleBrowserPrintFallback(receiptData);
+          console.log('Auto-print fallback completed');
+          toast.success('Receipt auto-printed (browser fallback)');
         }
       } else {
         // Network printer
+        console.log('Configuring network printer for auto-print...');
         await enhancedPrinterService.configurePrinter({
           id: 'network-printer',
           name: business?.settings?.selected_printer || 'Network Printer',
@@ -596,13 +611,24 @@ const POSInterface = () => {
           settings: business?.settings?.printer_settings
         });
         await enhancedPrinterService.printReceipt(receiptData, business?.settings?.printer_settings);
+        console.log('Auto-print success via network printer');
         toast.success('Receipt auto-printed to network printer');
       }
       
     } catch (error) {
       console.error('Auto-print failed:', error);
-      // Don't show error toast for auto-print to avoid disrupting the sale flow
-      console.log('Auto-print failed silently, transaction still completed successfully');
+      // Try fallback browser print as last resort
+      try {
+        console.log('Attempting emergency fallback print...');
+        const receiptData = generateReceiptData(transactionData, transactionType);
+        await handleBrowserPrintFallback(receiptData);
+        console.log('Emergency fallback print completed');
+        toast.info('Receipt printed (emergency fallback)');
+      } catch (fallbackError) {
+        console.error('All auto-print methods failed:', fallbackError);
+        // Don't show error toast for auto-print to avoid disrupting the sale flow
+        console.log('Auto-print failed silently, transaction still completed successfully');
+      }
     }
   };
 
