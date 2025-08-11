@@ -62,6 +62,7 @@ const POSInterface = () => {
   const [heldOrders, setHeldOrders] = useState([]);
   
   const barcodeInputRef = useRef(null);
+  const receivedAmountInputRef = useRef(null);
 
   // Move function definitions before useEffect to avoid hoisting issues
   const fetchData = useCallback(async () => {
