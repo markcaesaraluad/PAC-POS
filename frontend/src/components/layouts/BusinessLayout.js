@@ -133,17 +133,31 @@ const BusinessLayout = ({ children }) => {
                   </div>
                 ) : (
                   // Regular navigation item without submenu
-                  <Link
-                    to={item.href}
-                    className={`flex items-center px-4 py-2 text-sm font-medium rounded-md ${
-                      isActive(item.href)
-                        ? 'bg-primary-100 text-primary-700'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
-                  >
-                    <item.icon className="mr-3 h-5 w-5" />
-                    {item.name}
-                  </Link>
+                  item.isPlaceholder ? (
+                    // FEATURE 10: Inventory placeholder (no functionality yet)
+                    <div
+                      className="flex items-center px-4 py-2 text-sm font-medium rounded-md text-gray-400 cursor-not-allowed relative"
+                      title="Coming soon - Inventory management functionality"
+                    >
+                      <item.icon className="mr-3 h-5 w-5" />
+                      {item.name}
+                      <span className="ml-auto text-xs bg-yellow-100 text-yellow-600 px-2 py-0.5 rounded-full">
+                        Soon
+                      </span>
+                    </div>
+                  ) : (
+                    <Link
+                      to={item.href}
+                      className={`flex items-center px-4 py-2 text-sm font-medium rounded-md ${
+                        isActive(item.href)
+                          ? 'bg-primary-100 text-primary-700'
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      }`}
+                    >
+                      <item.icon className="mr-3 h-5 w-5" />
+                      {item.name}
+                    </Link>
+                  )
                 )}
               </div>
             ))}
