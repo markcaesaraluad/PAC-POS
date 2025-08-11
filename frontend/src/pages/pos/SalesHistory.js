@@ -937,11 +937,11 @@ const SalesHistory = () => {
                           <>
                             <div className="flex justify-between">
                               <span>Received:</span>
-                              <span>${reprintPreview.received_amount.toFixed(2)}</span>
+                              <span>{formatAmount(reprintPreview.received_amount)}</span>
                             </div>
                             <div className="flex justify-between">
                               <span>Change:</span>
-                              <span>${reprintPreview.change_amount?.toFixed(2) || '0.00'}</span>
+                              <span>{formatAmount(reprintPreview.change_amount || 0)}</span>
                             </div>
                           </>
                         )}
