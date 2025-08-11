@@ -111,13 +111,11 @@ async def get_invoices(
             end_of_day = datetime.combine(today, datetime.max.time())
             query["created_at"] = {"$gte": start_of_day, "$lte": end_of_day}
         elif date_preset == "yesterday":
-            from datetime import timedelta
             yesterday = datetime.now().date() - timedelta(days=1)
             start_of_day = datetime.combine(yesterday, datetime.min.time())
             end_of_day = datetime.combine(yesterday, datetime.max.time())
             query["created_at"] = {"$gte": start_of_day, "$lte": end_of_day}
         elif date_preset == "this_week":
-            from datetime import timedelta
             today = datetime.now().date()
             start_of_week = today - timedelta(days=today.weekday())
             start_of_day = datetime.combine(start_of_week, datetime.min.time())
