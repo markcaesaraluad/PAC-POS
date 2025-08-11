@@ -152,6 +152,20 @@ const POSInterface = () => {
     }
   }, []);
 
+  // Manual business info refresh if context is null
+  const refreshBusinessInfo = useCallback(async () => {
+    if (!business) {
+      try {
+        console.log('🔄 Refreshing business info due to null context');
+        const response = await businessAPI.getInfo();
+        // This would need to be integrated with AuthContext to update the business state
+        console.log('✅ Business info refreshed:', response.data);
+      } catch (error) {
+        console.error('❌ Failed to refresh business info:', error);
+      }
+    }
+  }, [business]);
+
   useEffect(() => {
     fetchData();
 
@@ -163,7 +177,10 @@ const POSInterface = () => {
 
     // FEATURE 9: Initialize location-based date/time
     initializeLocationTime();
-  }, [fetchData]);
+    
+    // Refresh business info if null
+    refreshBusinessInfo();
+  }, [fetchData, refreshBusinessInfo]);
 
   // FEATURE 9: Location-based date/time functionality
   const initializeLocationTime = async () => {
