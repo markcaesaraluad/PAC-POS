@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status, Depends, Query
 from typing import List, Optional
 from models import (InvoiceCreate, InvoiceResponse, InvoiceUpdate, InvoiceStatus, 
-                   SaleCreate, SaleResponse, ExportOptions, ExportResponse, SaleItem)
+                   SaleCreate, SaleResponse, ExportOptions, ExportResponse, SaleItem, InvoiceItemResponse)
 from auth_utils import get_business_admin_or_super, get_any_authenticated_user
 from database import get_collection
 from services.receipt_service import receipt_service
