@@ -382,17 +382,29 @@ const POSInterface = () => {
   const confirmPayment = () => {
     const totals = calculateModalTotals();
     
+    // Get the current value from the input field directly as a backup
+    const inputElement = document.querySelector('input[placeholder="0.00"]');
+    const inputValue = inputElement ? inputElement.value : '';
+    
+    console.log('Payment validation - detailed debug:', {
+      modalReceivedAmount: modalReceivedAmount,
+      inputElementValue: inputValue,
+      modalPaymentMethod: modalPaymentMethod,
+      totals: totals
+    });
+    
     // HOTFIX 1: Fixed payment validation logic with proper rounding and debugging
     if (modalPaymentMethod === 'cash') {
-      const received = parseFloat(modalReceivedAmount) || 0;
+      // Use input value if modal state is empty (React state issue workaround)
+      const receivedStr = modalReceivedAmount || inputValue || '0';
+      const received = parseFloat(receivedStr) || 0;
       const total = parseFloat(totals.total);
       
-      // Debug logging
-      console.log('Payment validation:', {
+      console.log('Payment validation final:', {
+        receivedStr: receivedStr,
         received: received,
         total: total,
-        modalReceivedAmount: modalReceivedAmount,
-        totals: totals
+        comparison: received >= total
       });
       
       // Use epsilon comparison for floating point precision
