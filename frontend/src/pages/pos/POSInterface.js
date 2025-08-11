@@ -1193,6 +1193,7 @@ const POSInterface = () => {
                       Amount Received
                     </label>
                     <input
+                      ref={receivedAmountInputRef}
                       type="number"
                       min="0"
                       step="0.01"
