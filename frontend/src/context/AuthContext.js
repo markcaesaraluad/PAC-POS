@@ -56,8 +56,16 @@ export const AuthProvider = ({ children }) => {
         try {
           const response = await authAPI.getCurrentUser();
           
-          // For Super Admin, no business context needed
-          const business = response.data.role === 'super_admin' ? null : state.business;
+          let business = null;
+          // For business users, fetch business information
+          if (response.data.role !== 'super_admin') {
+            try {
+              const businessResponse = await authAPI.getBusinessInfo();
+              business = businessResponse.data;
+            } catch (businessError) {
+              console.error('Failed to load business info:', businessError);
+            }
+          }
           
           dispatch({
             type: 'LOGIN_SUCCESS',
