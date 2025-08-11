@@ -33,6 +33,13 @@ const BusinessLayout = ({ children }) => {
     { name: 'Products', href: '/business/products', icon: CubeIcon },
     { name: 'Categories', href: '/business/categories', icon: TagIcon },
     { name: 'Customers', href: '/business/customers', icon: UserGroupIcon },
+    // FEATURE 10: Inventory Section (placeholder)
+    { 
+      name: 'Inventory', 
+      href: '/business/inventory', 
+      icon: ArchiveBoxIcon,
+      isPlaceholder: true
+    },
     { 
       name: 'Reports', 
       href: '/business/reports', 
