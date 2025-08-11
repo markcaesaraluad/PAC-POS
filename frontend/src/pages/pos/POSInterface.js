@@ -158,58 +158,45 @@ const POSInterface = () => {
     }
   }, [business]);
 
-  // Barcode scanner focus management and auto-scan functionality
+  // Simplified barcode scanner focus management and auto-scan functionality
   useEffect(() => {
-    const keepFocusOnBarcodeInput = () => {
-      if (barcodeInputRef.current && document.activeElement !== barcodeInputRef.current) {
-        // Only refocus if we're on the POS page and not in a modal
-        if (!showPaymentModal) {
-          barcodeInputRef.current.focus();
-        }
+    const maintainFocus = () => {
+      // Keep focus on barcode input when not in modal
+      if (barcodeInputRef.current && !showPaymentModal && 
+          document.activeElement !== barcodeInputRef.current &&
+          !document.activeElement?.tagName?.toLowerCase().includes('input') &&
+          !document.activeElement?.tagName?.toLowerCase().includes('select') &&
+          !document.activeElement?.tagName?.toLowerCase().includes('textarea') &&
+          !document.activeElement?.tagName?.toLowerCase().includes('button')) {
+        barcodeInputRef.current.focus();
       }
     };
 
-    const handleKeyDown = (e) => {
-      // If we're not in the barcode input and not in a modal, redirect focus
-      if (!showPaymentModal && document.activeElement !== barcodeInputRef.current && 
-          !document.activeElement?.classList.contains('input') &&
-          !document.activeElement?.tagName === 'SELECT' &&
-          !document.activeElement?.tagName === 'BUTTON') {
-        if (barcodeInputRef.current) {
-          barcodeInputRef.current.focus();
-          // Add the typed character to the input
-          if (e.key.length === 1) {
-            setSearchTerm(prev => prev + e.key);
-          }
-        }
-      }
-    };
+    // Focus maintenance interval
+    const focusInterval = setInterval(maintainFocus, 500);
 
-    const handleBarcodeSubmit = (e) => {
-      if (e.key === 'Enter' && barcodeInputRef.current === document.activeElement) {
-        e.preventDefault();
-        const barcode = searchTerm.trim();
-        if (barcode) {
-          handleBarcodeScanned(barcode);
-        } else {
-          handleProductSearch();
-        }
-      }
-    };
-
-    // Set up event listeners
-    document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('keypress', handleBarcodeSubmit);
-    
-    // Focus on mount and periodically maintain focus
-    const focusInterval = setInterval(keepFocusOnBarcodeInput, 1000);
-
+    // Cleanup
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('keypress', handleBarcodeSubmit);
       clearInterval(focusInterval);
     };
-  }, [searchTerm, showPaymentModal, handleBarcodeScanned]);
+  }, [showPaymentModal]);
+
+  // Handle Enter key for barcode scanning
+  useEffect(() => {
+    const handleEnterKey = (e) => {
+      if (e.key === 'Enter' && barcodeInputRef.current === document.activeElement && searchTerm.trim()) {
+        e.preventDefault();
+        const barcode = searchTerm.trim();
+        handleBarcodeScanned(barcode);
+      }
+    };
+
+    document.addEventListener('keydown', handleEnterKey);
+    
+    return () => {
+      document.removeEventListener('keydown', handleEnterKey);
+    };
+  }, [searchTerm, handleBarcodeScanned]);
 
   // Initial focus on barcode input
   useEffect(() => {
