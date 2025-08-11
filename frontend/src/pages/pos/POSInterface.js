@@ -20,7 +20,8 @@ import {
   CreditCardIcon,
   EyeIcon,
   EyeSlashIcon,
-  ClockIcon
+  ClockIcon,
+  ClipboardDocumentListIcon
 } from '@heroicons/react/24/outline';
 
 const POSInterface = () => {
