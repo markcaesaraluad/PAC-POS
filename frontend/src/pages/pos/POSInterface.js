@@ -386,21 +386,24 @@ const POSInterface = () => {
   const confirmPayment = () => {
     const totals = calculateModalTotals();
     
-    // Get the current value from the input field directly as a backup
-    const inputElement = document.querySelector('input[placeholder="0.00"]');
+    // Get the current value from multiple sources to ensure we have the right amount
+    const inputElement = receivedAmountInputRef.current;
     const inputValue = inputElement ? inputElement.value : '';
+    const fallbackInputElement = document.querySelector('input[placeholder="0.00"]');
+    const fallbackInputValue = fallbackInputElement ? fallbackInputElement.value : '';
     
-    console.log('Payment validation - detailed debug:', {
+    console.log('Payment validation - comprehensive debug:', {
       modalReceivedAmount: modalReceivedAmount,
-      inputElementValue: inputValue,
+      inputRefValue: inputValue,
+      fallbackInputValue: fallbackInputValue,
       modalPaymentMethod: modalPaymentMethod,
       totals: totals
     });
     
-    // HOTFIX 1: Fixed payment validation logic with proper rounding and debugging
+    // HOTFIX: Use multiple fallback sources for the received amount
     if (modalPaymentMethod === 'cash') {
-      // Use input value if modal state is empty (React state issue workaround)
-      const receivedStr = modalReceivedAmount || inputValue || '0';
+      // Priority order: modalReceivedAmount state -> ref value -> DOM query -> fallback to 0
+      const receivedStr = modalReceivedAmount || inputValue || fallbackInputValue || '0';
       const received = parseFloat(receivedStr) || 0;
       const total = parseFloat(totals.total);
       
@@ -408,7 +411,12 @@ const POSInterface = () => {
         receivedStr: receivedStr,
         received: received,
         total: total,
-        comparison: received >= total
+        comparison: received >= total,
+        sources: {
+          state: modalReceivedAmount,
+          ref: inputValue,
+          fallback: fallbackInputValue
+        }
       });
       
       // Use epsilon comparison for floating point precision
@@ -416,6 +424,7 @@ const POSInterface = () => {
       
       if (received < (total - epsilon)) {
         toast.error(`Insufficient payment. Required: ${formatAmount(total)}, Received: ${formatAmount(received)}`);
+        console.log('Payment failed - insufficient amount');
         return;
       }
       setReceivedAmount(received);
@@ -430,6 +439,7 @@ const POSInterface = () => {
     localStorage.setItem('pos-discount-type', modalDiscountType);
     
     setShowPaymentModal(false);
+    console.log('Payment confirmed successfully');
     
     // Proceed with the transaction
     handleTransaction();
