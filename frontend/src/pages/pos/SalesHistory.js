@@ -50,43 +50,15 @@ const SalesHistory = () => {
     },
   };
 
-  // Handle filter changes and refresh data - memoized to prevent infinite loops
-  const handleFilterChange = useCallback((newFilters) => {
-    // This will be properly defined when fetchDataWithFilters is available
-    if (typeof fetchDataWithFilters === 'function') {
-      fetchDataWithFilters(newFilters);
-    }
-  }, []);
-
-  // Global filter hook for managing filter state
-  const {
-    filters,
-    setFilters,
-    loading: filterLoading,
-    generateQueryParams,
-    clearFilters,
-    hasActiveFilters
-  } = useGlobalFilter({
-    defaultFilters: {
-      date_preset: 'today' // HOTFIX 2: Default to today instead of last7days
-    },
-    persistenceKey: 'sales-history-filter',
-    enablePersistence: true,
-    onFilterChange: handleFilterChange
-  });
-
-  const fetchDataWithFilters = useCallback(async (customFilters = null) => {
+  // Fetch data function - defined early to avoid hoisting issues
+  const fetchDataWithFilters = useCallback(async (customFilters = null, queryParams = null) => {
     try {
       setLoading(true);
       
-      // Get filter parameters
-      const queryParams = generateQueryParams(customFilters || filters);
-      
-      // HOTFIX 2: Ensure we're fetching with proper parameters
-      const params = {
-        ...queryParams,
-        // Don't force status to 'completed' as it might filter out valid transactions
-        // status: queryParams.status || 'completed' // Default to completed transactions
+      // Use provided queryParams or generate them
+      const params = queryParams || {
+        date_preset: 'today',
+        ...customFilters
       };
       
       console.log('Sales History fetchDataWithFilters with params:', params);
@@ -100,7 +72,7 @@ const SalesHistory = () => {
         setInvoices(invoicesResponse.data);
       }
       
-      // HOTFIX 2: Always fetch customers data for filter dropdowns if not already loaded
+      // Always fetch customers data for filter dropdowns if not already loaded
       if (customers.length === 0) {
         try {
           const customersResponse = await customersAPI.getCustomers();
@@ -118,28 +90,47 @@ const SalesHistory = () => {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, generateQueryParams, filters, customers.length]);
+  }, [activeTab, customers.length]);
 
-  // Update handleFilterChange to use the defined fetchDataWithFilters
-  const updateHandleFilterChange = useCallback((newFilters) => {
+  // Handle filter changes - defined after fetchDataWithFilters
+  const handleFilterChange = useCallback((newFilters) => {
     fetchDataWithFilters(newFilters);
   }, [fetchDataWithFilters]);
 
+  // Global filter hook for managing filter state
+  const {
+    filters,
+    setFilters,
+    loading: filterLoading,
+    generateQueryParams,
+    clearFilters,
+    hasActiveFilters
+  } = useGlobalFilter({
+    defaultFilters: {
+      date_preset: 'today'
+    },
+    persistenceKey: 'sales-history-filter',
+    enablePersistence: true,
+    onFilterChange: handleFilterChange
+  });
+
   // Initial fetch - separate from filter-based fetch to avoid dependency issues
   const initialFetch = useCallback(async () => {
-    await fetchDataWithFilters();
-  }, [fetchDataWithFilters]);
+    const queryParams = generateQueryParams();
+    await fetchDataWithFilters(null, queryParams);
+  }, [fetchDataWithFilters, generateQueryParams]);
 
   useEffect(() => {
     initialFetch();
-  }, []);
+  }, [initialFetch]);
 
   // Tab change effect - separate from filter effects
   useEffect(() => {
     if (!loading) {
-      fetchDataWithFilters();
+      const queryParams = generateQueryParams();
+      fetchDataWithFilters(null, queryParams);
     }
-  }, [activeTab, fetchDataWithFilters]);
+  }, [activeTab, fetchDataWithFilters, generateQueryParams]);
 
   const getCustomerName = (customerId) => {
     if (!customerId) return 'Walk-in Customer';
