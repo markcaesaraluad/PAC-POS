@@ -114,7 +114,7 @@ async def get_invoices(
             created_by=str(invoice["created_by"]),
             customer_id=str(invoice["customer_id"]) if invoice.get("customer_id") else None,
             invoice_number=invoice["invoice_number"],
-            items=[SaleItem(**item) for item in invoice["items"]],
+            items=[InvoiceItemResponse(id=str(ObjectId()), **item) for item in invoice["items"]],
             subtotal=invoice["subtotal"],
             tax_amount=invoice["tax_amount"],
             discount_amount=invoice["discount_amount"],
