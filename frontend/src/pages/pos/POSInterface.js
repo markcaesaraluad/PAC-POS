@@ -508,12 +508,27 @@ const POSInterface = () => {
         toast.success(`Sale completed! Sale #${response.data.sale_number}`);
         
         // Auto-print if enabled - no preview needed
+        console.log('Autoprint debug - Business settings structure:', {
+          business: business,
+          settings: business?.settings,
+          printer_settings: business?.settings?.printer_settings,
+          auto_print_path1: business?.settings?.printer_settings?.auto_print,
+          auto_print_path2: business?.settings?.auto_print,
+          condition1: business?.settings?.printer_settings?.auto_print,
+          condition2: business?.settings?.auto_print,
+          finalCondition: business?.settings?.printer_settings?.auto_print || business?.settings?.auto_print
+        });
+        
         if (business?.settings?.printer_settings?.auto_print || business?.settings?.auto_print) {
           console.log('Auto-print enabled, attempting to print...', business?.settings);
           const receiptData = generateReceiptData(response.data, 'sale');
           await handleAutoPrint(response.data, 'sale');
         } else {
-          console.log('Auto-print disabled or setting not found', business?.settings);
+          console.log('Auto-print disabled or setting not found', {
+            businessSettings: business?.settings,
+            printerSettings: business?.settings?.printer_settings,
+            reason: 'Condition evaluated to false'
+          });
         }
       } else {
         response = await invoicesAPI.createInvoice(transactionData);
