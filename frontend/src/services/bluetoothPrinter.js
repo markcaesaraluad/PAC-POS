@@ -197,6 +197,27 @@ class BluetoothPrinterService {
         cut_paper = true,
         open_drawer = false
       } = printerSettings;
+      
+      // Get currency formatting from business settings or default to USD
+      const currency = receiptData.business?.settings?.currency || 'USD';
+      const currencySymbols = {
+        'USD': '$', 'EUR': '€', 'GBP': '£', 'JPY': '¥', 'AUD': 'A$', 'CAD': 'C$',
+        'CHF': 'CHF ', 'CNY': '¥', 'SEK': 'kr', 'NZD': 'NZ$', 'MXN': '$',
+        'SGD': 'S$', 'HKD': 'HK$', 'NOK': 'kr', 'PHP': '₱', 'THB': '฿',
+        'TRY': '₺', 'RUB': '₽', 'INR': '₹', 'KRW': '₩', 'BRL': 'R$'
+      };
+      const currencySymbol = currencySymbols[currency] || currency + ' ';
+      
+      // Format currency amounts with proper symbol
+      const formatCurrencyAmount = (amount) => {
+        const numAmount = parseFloat(amount) || 0;
+        // For currencies with symbol at the end
+        if (['NOK', 'SEK', 'CHF'].includes(currency)) {
+          return `${numAmount.toFixed(2)} ${currencySymbol.trim()}`;
+        }
+        // For most currencies with symbol at the beginning
+        return `${currencySymbol}${numAmount.toFixed(2)}`;
+      };
 
       // Initialize
       await this.sendCommand(this.commands.INIT);
@@ -219,6 +240,17 @@ class BluetoothPrinterService {
           await this.printText(receiptData.business.phone, { align: 'center' });
         }
         
+        // Receipt header if configured
+        if (receiptData.business.settings?.receipt_header) {
+          await this.printText('');
+          const headerLines = receiptData.business.settings.receipt_header.split('\n');
+          for (const line of headerLines) {
+            if (line.trim()) {
+              await this.printText(line.trim(), { align: 'center' });
+            }
+          }
+        }
+        
         await this.printText('-'.repeat(characters_per_line), { align: 'center' });
       }
 
@@ -238,8 +270,8 @@ class BluetoothPrinterService {
         await this.printText(line1);
         
         const qty = `${item.quantity}x`;
-        const price = `$${item.unit_price.toFixed(2)}`;
-        const total = `$${item.total_price.toFixed(2)}`;
+        const price = formatCurrencyAmount(item.unit_price);
+        const total = formatCurrencyAmount(item.total_price);
         const line2 = `${qty} ${price}`.padEnd(characters_per_line - total.length) + total;
         await this.printText(line2);
       }
@@ -247,34 +279,45 @@ class BluetoothPrinterService {
       await this.printText('-'.repeat(characters_per_line));
 
       // Totals
-      const subtotal = `Subtotal:`.padEnd(characters_per_line - 10) + `$${receiptData.subtotal.toFixed(2)}`.padStart(10);
+      const subtotal = `Subtotal:`.padEnd(characters_per_line - 12) + formatCurrencyAmount(receiptData.subtotal).padStart(12);
       await this.printText(subtotal);
 
       if (receiptData.tax_amount > 0) {
-        const tax = `Tax:`.padEnd(characters_per_line - 10) + `$${receiptData.tax_amount.toFixed(2)}`.padStart(10);
+        const tax = `Tax:`.padEnd(characters_per_line - 12) + formatCurrencyAmount(receiptData.tax_amount).padStart(12);
         await this.printText(tax);
       }
 
       if (receiptData.discount_amount > 0) {
-        const discount = `Discount:`.padEnd(characters_per_line - 10) + `-$${receiptData.discount_amount.toFixed(2)}`.padStart(10);
+        const discount = `Discount:`.padEnd(characters_per_line - 12) + `-${formatCurrencyAmount(receiptData.discount_amount)}`.padStart(12);
         await this.printText(discount);
       }
 
       await this.printText('='.repeat(characters_per_line));
-      const total = `TOTAL:`.padEnd(characters_per_line - 10) + `$${receiptData.total_amount.toFixed(2)}`.padStart(10);
+      const total = `TOTAL:`.padEnd(characters_per_line - 12) + formatCurrencyAmount(receiptData.total_amount).padStart(12);
       await this.printText(total, { bold: true, fontSize: 'large' });
 
       if (receiptData.payment_method && receiptData.received_amount) {
         await this.printText(`Payment: ${receiptData.payment_method.toUpperCase()}`);
-        const paid = `Paid:`.padEnd(characters_per_line - 10) + `$${receiptData.received_amount.toFixed(2)}`.padStart(10);
+        const paid = `Paid:`.padEnd(characters_per_line - 12) + formatCurrencyAmount(receiptData.received_amount).padStart(12);
         await this.printText(paid);
-        const change = `Change:`.padEnd(characters_per_line - 10) + `$${receiptData.change_amount?.toFixed(2) || '0.00'}`.padStart(10);
+        const change = `Change:`.padEnd(characters_per_line - 12) + formatCurrencyAmount(receiptData.change_amount || 0).padStart(12);
         await this.printText(change);
       }
 
       // Footer
       await this.printText('');
       await this.printText('Thank you for your business!', { align: 'center' });
+      
+      // Receipt footer if configured
+      if (receiptData.business?.settings?.receipt_footer) {
+        await this.printText('');
+        const footerLines = receiptData.business.settings.receipt_footer.split('\n');
+        for (const line of footerLines) {
+          if (line.trim()) {
+            await this.printText(line.trim(), { align: 'center' });
+          }
+        }
+      }
       
       if (receiptData.notes) {
         await this.printText('');
