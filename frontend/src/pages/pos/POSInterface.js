@@ -160,7 +160,62 @@ const POSInterface = () => {
     if (saved) {
       setHeldOrders(JSON.parse(saved));
     }
+
+    // FEATURE 9: Initialize location-based date/time
+    initializeLocationTime();
   }, [fetchData]);
+
+  // FEATURE 9: Location-based date/time functionality
+  const initializeLocationTime = async () => {
+    try {
+      // Request location permission
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const { latitude, longitude } = position.coords;
+            
+            // Set location info
+            setLocationInfo({ latitude, longitude });
+            
+            // Try to get timezone from location (using a free API)
+            try {
+              const response = await fetch(
+                `https://api.timezonedb.com/v2.1/get-zone?key=demo&format=json&by=position&lat=${latitude}&lng=${longitude}`
+              );
+              
+              if (response.ok) {
+                const data = await response.json();
+                if (data.zoneName) {
+                  setTimeZone(data.zoneName);
+                  toast.success(`📍 Location detected: ${data.zoneName}`, { duration: 3000 });
+                }
+              }
+            } catch (error) {
+              // Fallback to browser timezone
+              console.log('Using browser timezone as fallback');
+              toast.info('📍 Using browser timezone', { duration: 2000 });
+            }
+          },
+          (error) => {
+            console.log('Location access denied or failed:', error);
+            toast.info('📍 Using system timezone (location access denied)', { duration: 3000 });
+          },
+          { timeout: 10000, enableHighAccuracy: true }
+        );
+      } else {
+        toast.info('📍 Using system timezone (location not supported)', { duration: 3000 });
+      }
+    } catch (error) {
+      console.error('Location initialization error:', error);
+    }
+
+    // Update time every second
+    const timeInterval = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timeInterval);
+  };
 
   useEffect(() => {
     if (business?.settings?.tax_rate) {
