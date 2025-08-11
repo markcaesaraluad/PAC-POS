@@ -120,6 +120,11 @@ const SalesHistory = () => {
     }
   }, [activeTab, generateQueryParams, filters, customers.length]);
 
+  // Update handleFilterChange to use the defined fetchDataWithFilters
+  const updateHandleFilterChange = useCallback((newFilters) => {
+    fetchDataWithFilters(newFilters);
+  }, [fetchDataWithFilters]);
+
   // Initial fetch - separate from filter-based fetch to avoid dependency issues
   const initialFetch = useCallback(async () => {
     await fetchDataWithFilters();
