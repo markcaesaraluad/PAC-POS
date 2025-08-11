@@ -21,13 +21,19 @@ import {
   EyeIcon,
   EyeSlashIcon,
   ClockIcon,
-  ClipboardDocumentListIcon
+  ClipboardDocumentListIcon,
+  MapPinIcon
 } from '@heroicons/react/24/outline';
 
 const POSInterface = () => {
   const { business, user } = useAuth();
   const { formatAmount } = useCurrency();
   const navigate = useNavigate();
+  
+  // Location and time state (FEATURE 9: Web App Date & Time)
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
+  const [locationInfo, setLocationInfo] = useState(null);
+  const [timeZone, setTimeZone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone);
   
   // Core state
   const [products, setProducts] = useState([]);
