@@ -4924,6 +4924,11 @@ class POSAPITester:
         self.test_invoice_workflow()
         self.test_sales_operations()
         
+        # URGENT: Test Sales History API Failures (date_preset parameter issue)
+        self.log("=== URGENT: TESTING SALES HISTORY API FAILURES ===", "INFO")
+        self.test_sales_history_api_failures()
+        self.log("=== SALES HISTORY API FAILURES TESTING COMPLETED ===", "INFO")
+        
         # NEW: Test Sales API with Cashier Fields (as requested)
         self.log("=== STARTING SALES API WITH CASHIER FIELDS TESTING ===", "INFO")
         self.test_sales_api_with_cashier_fields()
