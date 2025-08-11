@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { salesAPI, invoicesAPI, customersAPI } from '../../services/api';
+import { salesAPI, invoicesAPI, customersAPI, businessAPI } from '../../services/api';
 import { useCurrency } from '../../context/CurrencyContext';
+import { useAuth } from '../../context/AuthContext';
+import enhancedPrinterService from '../../services/printerService';
+import bluetoothPrinterService from '../../services/bluetoothPrinter';
 import toast from 'react-hot-toast';
 import { 
   ClipboardDocumentListIcon,
