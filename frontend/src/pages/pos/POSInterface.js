@@ -767,7 +767,9 @@ const POSInterface = () => {
     const businessAddress = business?.address || '';
     const businessEmail = business?.contact_email || '';
     const businessPhone = business?.phone || '';
-    const logoUrl = business?.logo_url || '';
+    const businessLogo = business?.logo_url || '';
+    const receiptHeader = business?.settings?.receipt_header || '';
+    const receiptFooter = business?.settings?.receipt_footer || '';
     
     return `
       <!DOCTYPE html>
@@ -781,43 +783,73 @@ const POSInterface = () => {
               body { margin: 0; }
             }
             body {
-              font-family: 'Courier New', monospace;
-              font-size: 12px;
-              line-height: 1.2;
+              font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+              font-size: 10px;
+              font-stretch: condensed;
+              line-height: 1.1;
               margin: 0;
-              padding: 20px;
-              width: 300px;
+              padding: 15px;
+              width: 280px;
+              color: #000;
             }
             .center { text-align: center; }
             .bold { font-weight: bold; }
-            .line { border-bottom: 1px dashed #000; margin: 5px 0; }
+            .line { border-bottom: 1px dashed #000; margin: 4px 0; }
             .flex { display: flex; justify-content: space-between; }
-            .logo { max-width: 100px; max-height: 60px; margin-bottom: 10px; }
-            .header { border-bottom: 1px solid #000; padding-bottom: 10px; margin-bottom: 10px; }
-            .total { border-top: 1px solid #000; padding-top: 5px; margin-top: 5px; }
+            .logo { 
+              max-width: 120px; 
+              max-height: 80px; 
+              margin: 0 auto 8px auto; 
+              display: block;
+            }
+            .header { 
+              border-bottom: 1px solid #000; 
+              padding-bottom: 8px; 
+              margin-bottom: 8px; 
+            }
+            .total { 
+              border-top: 1px solid #000; 
+              padding-top: 4px; 
+              margin-top: 4px; 
+            }
+            .receipt-header {
+              font-size: 9px;
+              margin: 6px 0;
+              white-space: pre-line;
+            }
+            .receipt-footer {
+              font-size: 9px;
+              margin: 6px 0;
+              white-space: pre-line;
+            }
+            .business-info {
+              font-size: 9px;
+              margin: 2px 0;
+            }
           </style>
         </head>
         <body>
           <div class="header center">
-            ${logoUrl ? `<img src="${logoUrl}" alt="Logo" class="logo" />` : ''}
-            <div class="bold" style="font-size: 16px;">${businessName}</div>
-            ${businessAddress ? `<div style="font-size: 12px;">${businessAddress}</div>` : ''}
-            ${businessPhone ? `<div style="font-size: 12px;">Tel: ${businessPhone}</div>` : ''}
-            ${businessEmail ? `<div style="font-size: 12px;">Email: ${businessEmail}</div>` : ''}
-            <div style="font-size: 10px; margin-top: 5px;">TIN: ${business?.tin || 'N/A'}</div>
+            ${businessLogo ? `<img src="${businessLogo}" alt="Logo" class="logo" />` : ''}
+            <div class="bold" style="font-size: 14px;">${businessName}</div>
+            ${businessAddress ? `<div class="business-info">${businessAddress}</div>` : ''}
+            ${businessPhone ? `<div class="business-info">Tel: ${businessPhone}</div>` : ''}
+            ${businessEmail ? `<div class="business-info">Email: ${businessEmail}</div>` : ''}
+            <div class="business-info">TIN: ${business?.tin || 'N/A'}</div>
+            ${receiptHeader ? `<div class="receipt-header">${receiptHeader}</div>` : ''}
           </div>
 
           <div>
             <div class="bold">${receiptData.transaction_type}: ${receiptData.transaction_number}</div>
-            <div>Date: ${new Date(receiptData.timestamp).toLocaleString()}</div>
-            <div>Cashier: ${receiptData.cashier_name || 'System'}</div>
-            ${receiptData.customer ? `<div>Customer: ${receiptData.customer.name}</div>` : '<div>Customer: Walk-in</div>'}
+            <div style="font-size: 9px;">Date: ${new Date(receiptData.timestamp).toLocaleString()}</div>
+            <div style="font-size: 9px;">Cashier: ${receiptData.cashier_name || 'System'}</div>
+            ${receiptData.customer ? `<div style="font-size: 9px;">Customer: ${receiptData.customer.name}</div>` : '<div style="font-size: 9px;">Customer: Walk-in</div>'}
           </div>
 
           <div class="line"></div>
 
           ${receiptData.items.map(item => `
-            <div>
+            <div style="font-size: 9px; margin: 2px 0;">
               <div class="bold">${item.product_name}</div>
               <div class="flex">
                 <span>${item.quantity} x ${formatAmount(item.unit_price)}</span>
@@ -828,39 +860,39 @@ const POSInterface = () => {
 
           <div class="line"></div>
 
-          <div class="flex">
+          <div class="flex" style="font-size: 9px;">
             <span>Subtotal:</span>
             <span>${formatAmount(receiptData.subtotal)}</span>
           </div>
           ${receiptData.tax_amount > 0 ? `
-            <div class="flex">
+            <div class="flex" style="font-size: 9px;">
               <span>Tax:</span>
               <span>${formatAmount(receiptData.tax_amount)}</span>
             </div>
           ` : ''}
           ${receiptData.discount_amount > 0 ? `
-            <div class="flex">
+            <div class="flex" style="font-size: 9px;">
               <span>Discount:</span>
               <span>-${formatAmount(receiptData.discount_amount)}</span>
             </div>
           ` : ''}
           
-          <div class="flex total bold">
+          <div class="flex total bold" style="font-size: 11px;">
             <span>TOTAL:</span>
             <span>${formatAmount(receiptData.total_amount)}</span>
           </div>
 
           ${receiptData.payment_method === 'cash' ? `
-            <div class="flex">
+            <div class="flex" style="font-size: 9px;">
               <span>Cash Received:</span>
               <span>${formatAmount(receiptData.received_amount)}</span>
             </div>
-            <div class="flex">
+            <div class="flex" style="font-size: 9px;">
               <span>Change:</span>
               <span>${formatAmount(receiptData.change_amount)}</span>
             </div>
           ` : `
-            <div class="flex">
+            <div class="flex" style="font-size: 9px;">
               <span>Payment Method:</span>
               <span>${receiptData.payment_method}</span>
             </div>
@@ -868,12 +900,12 @@ const POSInterface = () => {
 
           ${receiptData.notes ? `
             <div class="line"></div>
-            <div>Notes: ${receiptData.notes}</div>
+            <div style="font-size: 9px;">Notes: ${receiptData.notes}</div>
           ` : ''}
 
           <div class="line"></div>
-          <div class="center">Thank you for your business!</div>
-          <div class="center">${business?.settings?.receipt_footer || ''}</div>
+          <div class="center" style="font-size: 9px;">Thank you for your business!</div>
+          ${receiptFooter ? `<div class="center receipt-footer">${receiptFooter}</div>` : ''}
         </body>
       </html>
     `;
