@@ -317,9 +317,9 @@ frontend:
 
   - task: "Sales History & Management"
     implemented: true
-    working: true
+    working: false
     file: "frontend/src/pages/pos/SalesHistory.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "medium"
     needs_retesting: false
     status_history:
@@ -329,6 +329,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "✅ SALES HISTORY FULLY FUNCTIONAL: Transaction History page displays 6 sales records with complete details (Sale ID, Customer, Items, Amount, Payment Method). Both Sales and Invoices tabs working. Real transaction data showing various payment methods (cash, card) and amounts."
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL SALES HISTORY BUGS IDENTIFIED: 1) REACT INFINITE LOOP ERROR: 'Maximum update depth exceeded' error in SalesHistory component due to useEffect dependency issues causing continuous re-renders and performance problems, 2) BACKEND API FAILURES: Sales API (GET /api/sales?date_preset=today) and Invoices API (GET /api/invoices?date_preset=today) both returning 500 errors preventing data loading, 3) NAVIGATION ACCESSIBLE: Sales History button in POS header works correctly and navigates to /pos/sales-history, but page fails to load data due to above issues. URGENT FIXES NEEDED: Fix useEffect dependencies to prevent infinite loops and resolve backend API 500 errors for sales/invoices endpoints."
 
   - task: "Reports Functionality Frontend"
     implemented: true
