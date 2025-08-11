@@ -400,6 +400,8 @@ const POSInterface = () => {
       totals: totals
     });
     
+    let receivedAmountForTransaction = null;
+    
     // HOTFIX: Use multiple fallback sources for the received amount
     if (modalPaymentMethod === 'cash') {
       // Priority order: modalReceivedAmount state -> ref value -> DOM query -> fallback to 0
@@ -427,6 +429,8 @@ const POSInterface = () => {
         console.log('Payment failed - insufficient amount');
         return;
       }
+      
+      receivedAmountForTransaction = received;
       setReceivedAmount(received);
     }
     
@@ -441,8 +445,8 @@ const POSInterface = () => {
     setShowPaymentModal(false);
     console.log('Payment confirmed successfully');
     
-    // Proceed with the transaction
-    handleTransaction();
+    // Proceed with the transaction, passing the validated received amount
+    handleTransaction(receivedAmountForTransaction);
   };
 
 
