@@ -4915,6 +4915,11 @@ class POSAPITester:
         self.test_categories_crud()
         self.test_products_crud()
         
+        # NEW POS FEATURES TESTING (Main Focus)
+        self.log("=== STARTING NEW POS FEATURES TESTING (MAIN FOCUS) ===", "INFO")
+        self.test_new_pos_features()
+        self.log("=== NEW POS FEATURES TESTING COMPLETED ===", "INFO")
+        
         # NEW: Test Updated Products API Features
         self.log("=== STARTING UPDATED PRODUCTS API TESTING ===", "INFO")
         self.test_updated_products_api()
