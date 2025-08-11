@@ -553,6 +553,27 @@ class EnhancedPrinterService {
   generateReceiptHTML(receiptData, settings) {
     const charactersPerLine = settings.characters_per_line || 32;
     
+    // Get currency formatting from business settings or default to USD
+    const currency = receiptData.business?.settings?.currency || 'USD';
+    const currencySymbols = {
+      'USD': '$', 'EUR': '€', 'GBP': '£', 'JPY': '¥', 'AUD': 'A$', 'CAD': 'C$',
+      'CHF': 'CHF ', 'CNY': '¥', 'SEK': 'kr', 'NZD': 'NZ$', 'MXN': '$',
+      'SGD': 'S$', 'HKD': 'HK$', 'NOK': 'kr', 'PHP': '₱', 'THB': '฿',
+      'TRY': '₺', 'RUB': '₽', 'INR': '₹', 'KRW': '₩', 'BRL': 'R$'
+    };
+    const currencySymbol = currencySymbols[currency] || currency + ' ';
+    
+    // Format currency amounts with proper symbol
+    const formatCurrencyAmount = (amount) => {
+      const numAmount = parseFloat(amount) || 0;
+      // For currencies with symbol at the end
+      if (['NOK', 'SEK', 'CHF'].includes(currency)) {
+        return `${numAmount.toFixed(2)} ${currencySymbol.trim()}`;
+      }
+      // For most currencies with symbol at the beginning
+      return `${currencySymbol}${numAmount.toFixed(2)}`;
+    };
+    
     return `
       <!DOCTYPE html>
       <html>
@@ -585,6 +606,11 @@ class EnhancedPrinterService {
         <div class="center">
           ${receiptData.business?.contact_email || ''}
         </div>
+        ${receiptData.business?.settings?.receipt_header ? `
+          <div class="center" style="margin: 10px 0; white-space: pre-line;">
+            ${receiptData.business.settings.receipt_header}
+          </div>
+        ` : ''}
         <div class="separator"></div>
         <div><strong>${receiptData.transaction_type || 'SALE'}:</strong> ${receiptData.transaction_number}</div>
         <div><strong>Date:</strong> ${new Date(receiptData.timestamp).toLocaleString()}</div>
@@ -593,35 +619,55 @@ class EnhancedPrinterService {
         ${receiptData.items.map(item => `
           <div>${item.product_name}</div>
           <div class="item-line">
-            <span>${item.quantity}x $${item.unit_price.toFixed(2)}</span>
-            <span>$${item.total_price.toFixed(2)}</span>
+            <span>${item.quantity}x ${formatCurrencyAmount(item.unit_price)}</span>
+            <span>${formatCurrencyAmount(item.total_price)}</span>
           </div>
         `).join('')}
         <div class="separator"></div>
         <div class="item-line">
           <span>Subtotal:</span>
-          <span>$${receiptData.subtotal.toFixed(2)}</span>
+          <span>${formatCurrencyAmount(receiptData.subtotal)}</span>
         </div>
         ${receiptData.tax_amount > 0 ? `
           <div class="item-line">
             <span>Tax:</span>
-            <span>$${receiptData.tax_amount.toFixed(2)}</span>
+            <span>${formatCurrencyAmount(receiptData.tax_amount)}</span>
           </div>
         ` : ''}
         ${receiptData.discount_amount > 0 ? `
           <div class="item-line">
             <span>Discount:</span>
-            <span>-$${receiptData.discount_amount.toFixed(2)}</span>
+            <span>-${formatCurrencyAmount(receiptData.discount_amount)}</span>
           </div>
         ` : ''}
         <div class="separator"></div>
         <div class="item-line bold">
           <span>TOTAL:</span>
-          <span>$${receiptData.total_amount.toFixed(2)}</span>
+          <span>${formatCurrencyAmount(receiptData.total_amount)}</span>
         </div>
+        ${receiptData.payment_method === 'cash' ? `
+          <div class="item-line">
+            <span>Cash Received:</span>
+            <span>${formatCurrencyAmount(receiptData.received_amount)}</span>
+          </div>
+          <div class="item-line">
+            <span>Change:</span>
+            <span>${formatCurrencyAmount(receiptData.change_amount)}</span>
+          </div>
+        ` : `
+          <div class="item-line">
+            <span>Payment Method:</span>
+            <span>${receiptData.payment_method}</span>
+          </div>
+        `}
         <div class="center">
           Thank you for your business!
         </div>
+        ${receiptData.business?.settings?.receipt_footer ? `
+          <div class="center" style="margin: 10px 0; white-space: pre-line;">
+            ${receiptData.business.settings.receipt_footer}
+          </div>
+        ` : ''}
         <script>
           window.onload = function() {
             setTimeout(function() {
