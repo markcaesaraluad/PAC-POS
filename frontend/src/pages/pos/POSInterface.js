@@ -729,7 +729,7 @@ const POSInterface = () => {
         const receiptData = generateReceiptData(transactionData, transactionType);
         await handleBrowserPrintFallback(receiptData);
         console.log('Emergency fallback print completed');
-        toast.info('Receipt printed (emergency fallback)');
+        toast('Receipt printed (emergency fallback)');
       } catch (fallbackError) {
         console.error('All auto-print methods failed:', fallbackError);
         // Don't show error toast for auto-print to avoid disrupting the sale flow
