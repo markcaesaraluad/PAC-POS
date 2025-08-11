@@ -76,8 +76,8 @@ async def create_sale(
         "change_amount": sale.change_amount,
         "notes": sale.notes,
         "status": "completed",
-        "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow()
+        "created_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(timezone.utc)
     }
     
     # Insert sale
