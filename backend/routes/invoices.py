@@ -155,7 +155,15 @@ async def get_invoices(
             created_by=str(invoice["created_by"]),
             customer_id=str(invoice["customer_id"]) if invoice.get("customer_id") else None,
             invoice_number=invoice["invoice_number"],
-            items=[InvoiceItemResponse(id=str(ObjectId()), **item) for item in invoice["items"]],
+            items=[InvoiceItemResponse(
+                id=str(ObjectId()),
+                product_id=item["product_id"],
+                product_name=item["product_name"],
+                sku=item.get("sku", item.get("product_sku", "")),  # Handle both sku and product_sku
+                quantity=item["quantity"],
+                unit_price=item["unit_price"],
+                total_price=item["total_price"]
+            ) for item in invoice["items"]],
             subtotal=invoice["subtotal"],
             tax_amount=invoice["tax_amount"],
             discount_amount=invoice["discount_amount"],
