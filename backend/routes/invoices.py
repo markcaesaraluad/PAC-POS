@@ -171,8 +171,8 @@ async def get_invoices(
             notes=invoice.get("notes"),
             due_date=invoice.get("due_date"),
             status=invoice.get("status", InvoiceStatus.DRAFT),
-            created_at=invoice.get("created_at", datetime.utcnow()),
-            updated_at=invoice.get("updated_at", datetime.utcnow()),
+            created_at=invoice.get("created_at", datetime.now(timezone.utc)),
+            updated_at=invoice.get("updated_at", datetime.now(timezone.utc)),
             sent_at=invoice.get("sent_at"),
             converted_at=invoice.get("converted_at")
         )
