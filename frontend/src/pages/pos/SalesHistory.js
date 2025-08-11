@@ -156,15 +156,28 @@ const SalesHistory = () => {
         <p className="text-gray-600">View and manage your transaction history with advanced filtering</p>
       </div>
 
-      {/* Global Filter Component */}
-      <GlobalFilter
-        filters={filterConfig}
-        onFilterChange={setFilters}
-        loading={filterLoading}
-        initialFilters={filters}
-        className="mb-6"
-        searchPlaceholder="Search by sale #, customer name, product..."
-      />
+      {/* Simple Date Filter - Replaces complex GlobalFilter to prevent infinite loops */}
+      <div className="mb-6 flex items-center space-x-4">
+        <label className="block text-sm font-medium text-gray-700">
+          Filter by Date:
+        </label>
+        <select
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+          className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="today">Today</option>
+          <option value="yesterday">Yesterday</option>
+          <option value="this_week">This Week</option>
+          <option value="this_month">This Month</option>
+        </select>
+        <button
+          onClick={fetchData}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          Refresh
+        </button>
+      </div>
 
       {/* Tabs */}
       <div className="border-b border-gray-200">
