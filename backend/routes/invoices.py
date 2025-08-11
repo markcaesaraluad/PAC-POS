@@ -103,6 +103,44 @@ async def get_invoices(
     if customer_id:
         query["customer_id"] = ObjectId(customer_id)
     
+    # Handle date filtering
+    if date_preset or start_date or end_date:
+        from datetime import datetime, timedelta
+        
+        if date_preset == "today":
+            today = datetime.now().date()
+            start_of_day = datetime.combine(today, datetime.min.time())
+            end_of_day = datetime.combine(today, datetime.max.time())
+            query["created_at"] = {"$gte": start_of_day, "$lte": end_of_day}
+        elif date_preset == "yesterday":
+            yesterday = datetime.now().date() - timedelta(days=1)
+            start_of_day = datetime.combine(yesterday, datetime.min.time())
+            end_of_day = datetime.combine(yesterday, datetime.max.time())
+            query["created_at"] = {"$gte": start_of_day, "$lte": end_of_day}
+        elif date_preset == "this_week":
+            today = datetime.now().date()
+            start_of_week = today - timedelta(days=today.weekday())
+            start_of_day = datetime.combine(start_of_week, datetime.min.time())
+            end_of_day = datetime.combine(today, datetime.max.time())
+            query["created_at"] = {"$gte": start_of_day, "$lte": end_of_day}
+        elif date_preset == "this_month":
+            today = datetime.now().date()
+            start_of_month = today.replace(day=1)
+            start_of_day = datetime.combine(start_of_month, datetime.min.time())
+            end_of_day = datetime.combine(today, datetime.max.time())
+            query["created_at"] = {"$gte": start_of_day, "$lte": end_of_day}
+        elif start_date and end_date:
+            # Custom date range
+            start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+            query["created_at"] = {"$gte": start_dt, "$lte": end_dt}
+        elif start_date:
+            start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            query["created_at"] = {"$gte": start_dt}
+        elif end_date:
+            end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+            query["created_at"] = {"$lte": end_dt}
+    
     # For cashiers, only show their own invoices
     if current_user["role"] == "cashier":
         query["created_by"] = ObjectId(current_user["_id"])
