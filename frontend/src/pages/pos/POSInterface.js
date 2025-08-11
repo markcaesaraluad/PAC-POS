@@ -193,7 +193,7 @@ const POSInterface = () => {
             } catch (error) {
               // Fallback to browser timezone
               console.log('Using browser timezone as fallback');
-              toast.info('📍 Using browser timezone', { duration: 2000 });
+              toast('📍 Using browser timezone', { duration: 2000 });
             }
           },
           (error) => {
