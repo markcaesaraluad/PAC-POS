@@ -1173,11 +1173,30 @@ const POSInterface = () => {
                       min="0"
                       step="0.01"
                       value={modalReceivedAmount}
-                      onChange={(e) => setModalReceivedAmount(e.target.value)}
+                      onChange={(e) => {
+                        console.log('Amount input changed:', e.target.value);
+                        setModalReceivedAmount(e.target.value);
+                      }}
                       className="input w-full text-sm"
                       placeholder="0.00"
                       autoFocus
                     />
+                    {/* Quick amount buttons for easier input */}
+                    <div className="flex space-x-2 mt-2">
+                      {[10, 20, 50, 100].map(amount => (
+                        <button
+                          key={amount}
+                          type="button"
+                          onClick={() => {
+                            console.log('Quick amount clicked:', amount);
+                            setModalReceivedAmount(amount.toString());
+                          }}
+                          className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded"
+                        >
+                          ₱{amount}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
 
