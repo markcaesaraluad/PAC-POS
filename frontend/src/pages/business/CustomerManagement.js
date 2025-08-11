@@ -197,7 +197,7 @@ const CustomerManagement = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         <div>
-                          <div>${customer.total_spent?.toFixed(2) || '0.00'} total</div>
+                          <div>{formatAmount(customer.total_spent || 0)} total</div>
                           <div className="text-gray-500">{customer.visit_count || 0} visits</div>
                         </div>
                       </td>
