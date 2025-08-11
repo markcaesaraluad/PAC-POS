@@ -157,8 +157,6 @@ async def get_sales(
     
     # Handle date filtering
     if date_preset or start_date or end_date:
-        from datetime import datetime, timedelta
-        
         if date_preset == "today":
             today = datetime.now().date()
             start_of_day = datetime.combine(today, datetime.min.time())
