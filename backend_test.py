@@ -5037,7 +5037,7 @@ class POSAPITester:
         # Decode JWT token to check expiration (basic check)
         try:
             import base64
-            import json
+            import json as json_lib
             
             # Split JWT token
             parts = jwt_token.split('.')
@@ -5049,7 +5049,7 @@ class POSAPITester:
             payload = parts[1]
             payload += '=' * (4 - len(payload) % 4)  # Add padding
             decoded_payload = base64.b64decode(payload)
-            token_data = json.loads(decoded_payload)
+            token_data = json_lib.loads(decoded_payload)
             
             self.log(f"✅ Token payload decoded: {json.dumps(token_data, indent=2)}", "PASS")
             
