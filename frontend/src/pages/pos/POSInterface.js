@@ -633,45 +633,88 @@ const POSInterface = () => {
   };
 
   const handleBrowserPrintFallback = async (receiptData) => {
-    try {
-      const receiptHTML = generateReceiptHTML(receiptData);
-      
-      // Create a hidden iframe for printing
-      const printFrame = document.createElement('iframe');
-      printFrame.style.position = 'absolute';
-      printFrame.style.left = '-9999px';
-      printFrame.style.top = '-9999px';
-      printFrame.style.width = '1px';
-      printFrame.style.height = '1px';
-      document.body.appendChild(printFrame);
-      
-      const printDocument = printFrame.contentDocument || printFrame.contentWindow.document;
-      printDocument.open();
-      printDocument.write(receiptHTML);
-      printDocument.close();
-      
-      // Wait for content to load
-      await new Promise(resolve => {
-        printFrame.onload = resolve;
-        setTimeout(resolve, 1000); // Fallback timeout
-      });
-      
-      // Attempt to print
-      if (printFrame.contentWindow) {
-        printFrame.contentWindow.print();
+    return new Promise((resolve, reject) => {
+      try {
+        const receiptHTML = generateReceiptHTML(receiptData);
         
-        // Clean up after printing
-        setTimeout(() => {
-          document.body.removeChild(printFrame);
-        }, 2000);
+        // Clean up any existing print frames first
+        const existingFrames = document.querySelectorAll('iframe[data-print-frame="true"]');
+        existingFrames.forEach(frame => {
+          try {
+            document.body.removeChild(frame);
+          } catch (e) {
+            console.log('Frame already removed:', e);
+          }
+        });
         
-        toast.success('Receipt sent to printer (browser fallback)');
+        // Create a fresh iframe for printing
+        const printFrame = document.createElement('iframe');
+        printFrame.setAttribute('data-print-frame', 'true');
+        printFrame.style.position = 'absolute';
+        printFrame.style.left = '-9999px';
+        printFrame.style.top = '-9999px';
+        printFrame.style.width = '1px';
+        printFrame.style.height = '1px';
+        printFrame.style.border = 'none';
+        document.body.appendChild(printFrame);
+        
+        const printDocument = printFrame.contentDocument || printFrame.contentWindow.document;
+        printDocument.open();
+        printDocument.write(receiptHTML);
+        printDocument.close();
+        
+        // Wait for content to load then print
+        const handleLoad = () => {
+          setTimeout(() => {
+            try {
+              if (printFrame.contentWindow && typeof printFrame.contentWindow.print === 'function') {
+                printFrame.contentWindow.print();
+                console.log('Browser print initiated successfully');
+                
+                // Clean up after a delay to ensure printing completes
+                setTimeout(() => {
+                  try {
+                    if (printFrame && printFrame.parentNode) {
+                      document.body.removeChild(printFrame);
+                    }
+                  } catch (cleanupError) {
+                    console.log('Print frame cleanup error (non-critical):', cleanupError);
+                  }
+                }, 3000);
+                
+                resolve();
+              } else {
+                reject(new Error('Print function not available'));
+              }
+            } catch (printError) {
+              console.error('Print execution error:', printError);
+              // Clean up on error
+              try {
+                if (printFrame && printFrame.parentNode) {
+                  document.body.removeChild(printFrame);
+                }
+              } catch (cleanupError) {
+                console.log('Error cleanup failed:', cleanupError);
+              }
+              reject(printError);
+            }
+          }, 500); // Small delay to ensure content is ready
+        };
+        
+        // Set up load handler with timeout fallback
+        if (printFrame.contentDocument && printFrame.contentDocument.readyState === 'complete') {
+          handleLoad();
+        } else {
+          printFrame.onload = handleLoad;
+          // Fallback timeout
+          setTimeout(handleLoad, 2000);
+        }
+        
+      } catch (error) {
+        console.error('Browser print fallback setup failed:', error);
+        reject(error);
       }
-      
-    } catch (error) {
-      console.error('Browser print fallback failed:', error);
-      toast.info('Auto-print not available - transaction completed successfully');
-    }
+    });
   };
 
   const generateReceiptHTML = (receiptData) => {
