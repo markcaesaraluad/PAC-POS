@@ -679,7 +679,7 @@ const POSInterface = () => {
         const printerStatus = bluetoothPrinterService.getStatus();
         if (!printerStatus.isConnected) {
           console.log('Auto-print skipped - Bluetooth printer not connected');
-          toast.info('Auto-print skipped - Bluetooth printer not connected');
+          toast('Auto-print skipped - Bluetooth printer not connected');
           return;
         }
         await bluetoothPrinterService.printReceipt(receiptData, business?.settings?.printer_settings);
