@@ -198,7 +198,7 @@ const POSInterface = () => {
           },
           (error) => {
             console.log('Location access denied or failed:', error);
-            toast.info('📍 Using system timezone (location access denied)', { duration: 3000 });
+            toast('📍 Using system timezone (location access denied)', { duration: 3000 });
           },
           { timeout: 10000, enableHighAccuracy: true }
         );
