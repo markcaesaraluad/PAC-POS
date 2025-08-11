@@ -28,59 +28,33 @@ const SalesHistory = () => {
   const [reprintTransaction, setReprintTransaction] = useState(null);
   const [reprintPreview, setReprintPreview] = useState(null);
 
-  // Filter configuration for GlobalFilter component
-  const filterConfig = {
-    status: {
-      label: 'Status',
-      placeholder: 'All statuses',
-      options: [
-        { value: 'completed', label: 'Completed' },
-        { value: 'pending', label: 'Pending' },
-        { value: 'cancelled', label: 'Cancelled' },
-      ],
-    },
-    payment_method: {
-      label: 'Payment Method',
-      placeholder: 'All payment methods',
-      options: [
-        { value: 'cash', label: 'Cash' },
-        { value: 'card', label: 'Card' },
-        { value: 'bank_transfer', label: 'Bank Transfer' },
-      ],
-    },
-  };
+  // Simple date filter state (no complex global filter to avoid infinite loops)
+  const [dateFilter, setDateFilter] = useState('today');
 
-  // Fetch data function - defined early to avoid hoisting issues
-  const fetchDataWithFilters = useCallback(async (customFilters = null, queryParams = null) => {
+  // Simple data fetching without complex dependencies
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       
-      // Use provided queryParams or generate them
-      const params = queryParams || {
-        date_preset: 'today',
-        ...customFilters
-      };
+      const params = { date_preset: dateFilter };
+      console.log('Sales History simple fetch with params:', params);
       
-      console.log('Sales History fetchDataWithFilters with params:', params);
+      // Fetch data based on active tab and basic customers data
+      const promises = [customersAPI.getCustomers()];
       
-      // Fetch data based on active tab
       if (activeTab === 'sales') {
-        const salesResponse = await salesAPI.getSales(params);
-        setSales(salesResponse.data);
+        promises.push(salesAPI.getSales(params));
+        promises.push(Promise.resolve({ data: [] })); // Empty invoices
       } else {
-        const invoicesResponse = await invoicesAPI.getInvoices(params);
-        setInvoices(invoicesResponse.data);
+        promises.push(Promise.resolve({ data: [] })); // Empty sales
+        promises.push(invoicesAPI.getInvoices(params));
       }
       
-      // Always fetch customers data for filter dropdowns if not already loaded
-      if (customers.length === 0) {
-        try {
-          const customersResponse = await customersAPI.getCustomers();
-          setCustomers(customersResponse.data);
-        } catch (error) {
-          console.error('Failed to load customers for filters:', error);
-        }
-      }
+      const [customersResponse, salesResponse, invoicesResponse] = await Promise.all(promises);
+      
+      setCustomers(Array.isArray(customersResponse.data) ? customersResponse.data : []);
+      setSales(Array.isArray(salesResponse.data) ? salesResponse.data : []);
+      setInvoices(Array.isArray(invoicesResponse.data) ? invoicesResponse.data : []);
       
     } catch (error) {
       console.error('Failed to fetch sales history:', error);
@@ -90,47 +64,12 @@ const SalesHistory = () => {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, customers.length]);
+  }, [activeTab, dateFilter]);
 
-  // Handle filter changes - defined after fetchDataWithFilters
-  const handleFilterChange = useCallback((newFilters) => {
-    fetchDataWithFilters(newFilters);
-  }, [fetchDataWithFilters]);
-
-  // Global filter hook for managing filter state
-  const {
-    filters,
-    setFilters,
-    loading: filterLoading,
-    generateQueryParams,
-    clearFilters,
-    hasActiveFilters
-  } = useGlobalFilter({
-    defaultFilters: {
-      date_preset: 'today'
-    },
-    persistenceKey: 'sales-history-filter',
-    enablePersistence: true,
-    onFilterChange: handleFilterChange
-  });
-
-  // Initial fetch - separate from filter-based fetch to avoid dependency issues
-  const initialFetch = useCallback(async () => {
-    const queryParams = generateQueryParams();
-    await fetchDataWithFilters(null, queryParams);
-  }, [fetchDataWithFilters, generateQueryParams]);
-
+  // Initial load
   useEffect(() => {
-    initialFetch();
-  }, [initialFetch]);
-
-  // Tab change effect - separate from filter effects
-  useEffect(() => {
-    if (!loading) {
-      const queryParams = generateQueryParams();
-      fetchDataWithFilters(null, queryParams);
-    }
-  }, [activeTab, fetchDataWithFilters, generateQueryParams]);
+    fetchData();
+  }, [fetchData]);
 
   const getCustomerName = (customerId) => {
     if (!customerId) return 'Walk-in Customer';
