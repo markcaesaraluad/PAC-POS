@@ -17,6 +17,7 @@ import LoadingSpinner, { InlineSpinner } from '../../components/LoadingSpinner';
 
 const SalesHistory = () => {
   const { formatAmount } = useCurrency();
+  const { business, user } = useAuth();
   const [activeTab, setActiveTab] = useState('sales');
   const [sales, setSales] = useState([]);
   const [invoices, setInvoices] = useState([]);
