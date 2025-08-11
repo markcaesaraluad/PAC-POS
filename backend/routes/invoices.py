@@ -78,6 +78,9 @@ async def create_invoice(
 async def get_invoices(
     status_filter: Optional[str] = Query(None),
     customer_id: Optional[str] = Query(None),
+    date_preset: Optional[str] = Query(None),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
     limit: int = Query(50, le=100),
     skip: int = Query(0, ge=0),
     current_user=Depends(get_any_authenticated_user)
