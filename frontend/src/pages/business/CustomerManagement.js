@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { customersAPI } from '../../services/api';
+import { useCurrency } from '../../context/CurrencyContext';
 import toast from 'react-hot-toast';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
