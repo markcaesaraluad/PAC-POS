@@ -660,10 +660,11 @@ const POSInterface = () => {
         <body>
           <div class="header center">
             ${logoUrl ? `<img src="${logoUrl}" alt="Logo" class="logo" />` : ''}
-            <div class="bold" style="font-size: 14px;">${businessName}</div>
-            ${businessAddress ? `<div>${businessAddress}</div>` : ''}
-            ${businessPhone ? `<div>Phone: ${businessPhone}</div>` : ''}
-            ${businessEmail ? `<div>Email: ${businessEmail}</div>` : ''}
+            <div class="bold" style="font-size: 16px;">${businessName}</div>
+            ${businessAddress ? `<div style="font-size: 12px;">${businessAddress}</div>` : ''}
+            ${businessPhone ? `<div style="font-size: 12px;">Tel: ${businessPhone}</div>` : ''}
+            ${businessEmail ? `<div style="font-size: 12px;">Email: ${businessEmail}</div>` : ''}
+            <div style="font-size: 10px; margin-top: 5px;">TIN: ${business?.tin || 'N/A'}</div>
           </div>
 
           <div>
