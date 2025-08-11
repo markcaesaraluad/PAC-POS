@@ -130,7 +130,7 @@ const SalesHistory = () => {
         // Use Bluetooth printer service for direct ESC/POS printing
         const printerStatus = bluetoothPrinterService.getStatus();
         if (!printerStatus.isConnected) {
-          toast.info('Auto-print skipped - Bluetooth printer not connected');
+          toast('Auto-print skipped - Bluetooth printer not connected');
           return;
         }
         await bluetoothPrinterService.printReceipt(receiptData, business?.settings?.printer_settings);
