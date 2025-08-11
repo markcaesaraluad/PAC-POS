@@ -451,12 +451,13 @@ const POSInterface = () => {
 
 
 
-  const handleTransaction = async () => {
+  const handleTransaction = async (validatedReceivedAmount = null) => {
     console.log('handleTransaction called with:', {
       cartLength: cart.length,
       transactionMode: transactionMode,
       paymentMethod: paymentMethod,
       receivedAmount: receivedAmount,
+      validatedReceivedAmount: validatedReceivedAmount,
       modalReceivedAmount: modalReceivedAmount,
       modalPaymentMethod: modalPaymentMethod
     });
@@ -470,6 +471,9 @@ const POSInterface = () => {
     const totals = calculateTotals();
     console.log('Transaction totals calculated:', totals);
     
+    // Use the validated amount from payment confirmation if available
+    const finalReceivedAmount = validatedReceivedAmount || parseFloat(receivedAmount) || 0;
+    
     // HOTFIX 7: Fixed payment validation logic with proper rounding
     // For sales, payment validation is already done in confirmPayment()
     // But double-check here for safety
@@ -478,15 +482,20 @@ const POSInterface = () => {
       const discount = parseFloat(totals.discount) || 0;
       const taxAmount = parseFloat(totals.taxAmount);
       const requiredAmount = subtotal - discount + taxAmount;
-      const receivedAmountNum = parseFloat(receivedAmount) || 0;
       
       console.log('Secondary payment validation:', {
-        subtotal, discount, taxAmount, requiredAmount, receivedAmountNum
+        subtotal, 
+        discount, 
+        taxAmount, 
+        requiredAmount, 
+        finalReceivedAmount,
+        originalReceivedAmount: receivedAmount,
+        validatedReceivedAmount: validatedReceivedAmount
       });
       
       // Round to 2 decimal places for proper comparison
       const roundedRequired = Math.round(requiredAmount * 100) / 100;
-      const roundedReceived = Math.round(receivedAmountNum * 100) / 100;
+      const roundedReceived = Math.round(finalReceivedAmount * 100) / 100;
       
       if (roundedReceived < roundedRequired) {
         console.log('Transaction failed: Secondary payment validation failed');
