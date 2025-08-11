@@ -832,6 +832,15 @@ const POSInterface = () => {
     const receiptHeader = business?.settings?.receipt_header || '';
     const receiptFooter = business?.settings?.receipt_footer || '';
     
+    // Debug logging to check if business settings are available
+    console.log('🧾 Receipt Generation Debug:', {
+      businessExists: !!business,
+      settingsExists: !!business?.settings,
+      receiptHeader: receiptHeader,
+      receiptFooter: receiptFooter,
+      fullSettings: business?.settings
+    });
+    
     return `
       <!DOCTYPE html>
       <html>
