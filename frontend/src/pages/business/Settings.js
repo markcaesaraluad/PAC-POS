@@ -335,7 +335,7 @@ const BusinessSettings = () => {
       }
 
       if (!printerStatus?.isConnected) {
-        toast.info('Connecting to POS-9200-L printer...');
+        toast('Connecting to POS-9200-L printer...');
         const result = await bluetoothPrinterService.connect();
         toast.success(result.message);
         checkPrinterStatus();
