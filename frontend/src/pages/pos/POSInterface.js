@@ -667,10 +667,10 @@ const POSInterface = () => {
           </div>
 
           <div>
-            <div class="bold">${receiptData.transaction_type.toUpperCase()}: ${receiptData.transaction_number}</div>
+            <div class="bold">${receiptData.transaction_type}: ${receiptData.transaction_number}</div>
             <div>Date: ${new Date(receiptData.timestamp).toLocaleString()}</div>
-            <div>Cashier: ${receiptData.cashier_name}</div>
-            ${receiptData.customer ? `<div>Customer: ${receiptData.customer.name}</div>` : ''}
+            <div>Cashier: ${receiptData.cashier_name || 'System'}</div>
+            ${receiptData.customer ? `<div>Customer: ${receiptData.customer.name}</div>` : '<div>Customer: Walk-in</div>'}
           </div>
 
           <div class="line"></div>
