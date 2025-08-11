@@ -1036,14 +1036,33 @@ const POSInterface = () => {
         <div className="p-3 border-b bg-white flex-shrink-0">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold text-gray-900">Products</h2>
-            <button
-              onClick={() => navigate('/pos/sales-history')}
-              className="flex items-center space-x-1 px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm transition-colors"
-              title="View Sales History"
-            >
-              <ClipboardDocumentListIcon className="h-4 w-4" />
-              <span>Sales History</span>
-            </button>
+            <div className="flex items-center space-x-4">
+              {/* FEATURE 9: Location-based Date & Time Display */}
+              <div className="flex items-center space-x-2 text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded-lg">
+                <MapPinIcon className="h-4 w-4" />
+                <span>
+                  {currentDateTime.toLocaleDateString('en-US', { 
+                    timeZone: timeZone,
+                    weekday: 'short',
+                    month: 'short', 
+                    day: 'numeric'
+                  })} • {currentDateTime.toLocaleTimeString('en-US', { 
+                    timeZone: timeZone,
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    second: '2-digit'
+                  })}
+                </span>
+              </div>
+              <button
+                onClick={() => navigate('/pos/sales-history')}
+                className="flex items-center space-x-1 px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm transition-colors"
+                title="View Sales History"
+              >
+                <ClipboardDocumentListIcon className="h-4 w-4" />
+                <span>Sales History</span>
+              </button>
+            </div>
           </div>
           
           <div className="flex space-x-2">
