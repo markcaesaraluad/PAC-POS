@@ -525,8 +525,8 @@ const POSInterface = () => {
         discount_amount: parseFloat(totals.discount) || 0,
         total_amount: parseFloat(totals.total),
         payment_method: paymentMethod,
-        received_amount: paymentMethod === 'cash' ? parseFloat(receivedAmount) : parseFloat(totals.total),
-        change_amount: paymentMethod === 'cash' ? Math.max(0, parseFloat(receivedAmount) - parseFloat(totals.total)) : 0,
+        received_amount: paymentMethod === 'cash' ? finalReceivedAmount : parseFloat(totals.total),
+        change_amount: paymentMethod === 'cash' ? Math.max(0, finalReceivedAmount - parseFloat(totals.total)) : 0,
         notes: notes.trim() || null,
         created_at: new Date().toISOString(),
         status: 'completed' // Ensure status is set for Sales History
