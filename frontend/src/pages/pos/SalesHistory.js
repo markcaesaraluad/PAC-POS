@@ -897,10 +897,10 @@ const SalesHistory = () => {
                         <div>
                           <p className="truncate">{item.product_name}</p>
                           <p className="text-xs text-gray-600">
-                            {item.quantity} x ${item.unit_price.toFixed(2)}
+                            {item.quantity} x {formatAmount(item.unit_price)}
                           </p>
                         </div>
-                        <p>${item.total_price.toFixed(2)}</p>
+                        <p>{formatAmount(item.total_price)}</p>
                       </div>
                     ))}
                   </div>
