@@ -909,23 +909,23 @@ const SalesHistory = () => {
                   <div className="border-b pb-2 mb-2">
                     <div className="flex justify-between">
                       <span>Subtotal:</span>
-                      <span>${reprintPreview.subtotal.toFixed(2)}</span>
+                      <span>{formatAmount(reprintPreview.subtotal)}</span>
                     </div>
                     {reprintPreview.tax_amount > 0 && (
                       <div className="flex justify-between">
                         <span>Tax:</span>
-                        <span>${reprintPreview.tax_amount.toFixed(2)}</span>
+                        <span>{formatAmount(reprintPreview.tax_amount)}</span>
                       </div>
                     )}
                     {reprintPreview.discount_amount > 0 && (
                       <div className="flex justify-between">
                         <span>Discount:</span>
-                        <span>-${reprintPreview.discount_amount.toFixed(2)}</span>
+                        <span>-{formatAmount(reprintPreview.discount_amount)}</span>
                       </div>
                     )}
                     <div className="flex justify-between font-bold border-t pt-1">
                       <span>TOTAL:</span>
-                      <span>${reprintPreview.total_amount.toFixed(2)}</span>
+                      <span>{formatAmount(reprintPreview.total_amount)}</span>
                     </div>
                     {reprintPreview.payment_method && (
                       <>
