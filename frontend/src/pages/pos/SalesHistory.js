@@ -67,16 +67,12 @@ const SalesHistory = () => {
     onFilterChange: handleFilterChange
   });
 
-  // Handle filter changes and refresh data
-  function handleFilterChange(newFilters) {
-    fetchData(newFilters);
-  }
-
-  useEffect(() => {
-    fetchData();
+  // Handle filter changes and refresh data - memoized to prevent infinite loops
+  const handleFilterChange = useCallback((newFilters) => {
+    fetchDataWithFilters(newFilters);
   }, []);
 
-  const fetchData = async (customFilters = null) => {
+  const fetchDataWithFilters = useCallback(async (customFilters = null) => {
     try {
       setLoading(true);
       
@@ -89,27 +85,53 @@ const SalesHistory = () => {
         // Don't force status to 'completed' as it might filter out valid transactions
         // status: queryParams.status || 'completed' // Default to completed transactions
       };
-
-      const [salesResponse, invoicesResponse, customersResponse] = await Promise.all([
-        salesAPI.getSales(params),
-        invoicesAPI.getInvoices(params),
-        customersAPI.getCustomers()
-      ]);
       
-      setSales(Array.isArray(salesResponse.data) ? salesResponse.data : []);
-      setInvoices(Array.isArray(invoicesResponse.data) ? invoicesResponse.data : []);
-      setCustomers(Array.isArray(customersResponse.data) ? customersResponse.data : []);
+      console.log('Sales History fetchDataWithFilters with params:', params);
+      
+      // Fetch data based on active tab
+      if (activeTab === 'sales') {
+        const salesResponse = await salesAPI.getSales(params);
+        setSales(salesResponse.data);
+      } else {
+        const invoicesResponse = await invoicesAPI.getInvoices(params);
+        setInvoices(invoicesResponse.data);
+      }
+      
+      // HOTFIX 2: Always fetch customers data for filter dropdowns if not already loaded
+      if (customers.length === 0) {
+        try {
+          const customersResponse = await customersAPI.getCustomers();
+          setCustomers(customersResponse.data);
+        } catch (error) {
+          console.error('Failed to load customers for filters:', error);
+        }
+      }
+      
     } catch (error) {
-      console.error('Failed to fetch data:', error);
+      console.error('Failed to fetch sales history:', error);
       toast.error('Failed to load sales history');
-      // Set empty arrays on error
       setSales([]);
       setInvoices([]);
-      setCustomers([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab, generateQueryParams, filters, customers.length]);
+
+  // Initial fetch - separate from filter-based fetch to avoid dependency issues
+  const initialFetch = useCallback(async () => {
+    await fetchDataWithFilters();
+  }, [fetchDataWithFilters]);
+
+  useEffect(() => {
+    initialFetch();
+  }, []);
+
+  // Tab change effect - separate from filter effects
+  useEffect(() => {
+    if (!loading) {
+      fetchDataWithFilters();
+    }
+  }, [activeTab, fetchDataWithFilters]);
 
   const getCustomerName = (customerId) => {
     if (!customerId) return 'Walk-in Customer';
