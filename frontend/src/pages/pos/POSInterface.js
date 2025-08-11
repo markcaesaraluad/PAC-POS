@@ -1197,7 +1197,17 @@ const POSInterface = () => {
                       step="0.01"
                       value={modalReceivedAmount}
                       onChange={(e) => {
-                        console.log('Amount input changed:', e.target.value);
+                        const newValue = e.target.value;
+                        console.log('Amount input changed:', newValue, 'Previous:', modalReceivedAmount);
+                        setModalReceivedAmount(newValue);
+                        // Force immediate state update verification
+                        setTimeout(() => {
+                          console.log('State after onChange:', modalReceivedAmount, 'Input value:', e.target.value);
+                        }, 0);
+                      }}
+                      onInput={(e) => {
+                        // Additional handler to ensure state updates
+                        console.log('onInput triggered:', e.target.value);
                         setModalReceivedAmount(e.target.value);
                       }}
                       className="input w-full text-sm"
