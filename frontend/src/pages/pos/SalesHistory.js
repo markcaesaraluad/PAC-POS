@@ -976,6 +976,13 @@ const SalesHistory = () => {
                   {/* Footer */}
                   <div className="text-center text-xs">
                     <p>Thank you for your business!</p>
+                    {reprintPreview.business.settings?.receipt_footer && (
+                      <div className="mt-2 border-t pt-2 font-bold">
+                        {reprintPreview.business.settings.receipt_footer.split('\n').map((line, index) => (
+                          <div key={index}>{line}</div>
+                        ))}
+                      </div>
+                    )}
                     {reprintPreview.notes && (
                       <p className="mt-2 text-gray-600">Note: {reprintPreview.notes}</p>
                     )}
