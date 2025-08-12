@@ -152,18 +152,17 @@ const POSInterface = () => {
     }
   }, []);
 
-  // Manual business info refresh if context is null
-  const refreshBusinessInfo = useCallback(async () => {
-    if (!business) {
-      try {
-        console.log('🔄 Refreshing business info due to null context');
-        const response = await businessAPI.getInfo();
-        // This would need to be integrated with AuthContext to update the business state
-        console.log('✅ Business info refreshed:', response.data);
-      } catch (error) {
-        console.error('❌ Failed to refresh business info:', error);
-      }
-    }
+  // Debug business context on component mount
+  useEffect(() => {
+    console.log('🏢 POS Business Context Debug:', {
+      businessExists: !!business,
+      businessName: business?.name,
+      hasSettings: !!business?.settings,
+      settingsKeys: business?.settings ? Object.keys(business.settings) : [],
+      receiptHeader: business?.settings?.receipt_header,
+      receiptFooter: business?.settings?.receipt_footer,
+      fullBusiness: business
+    });
   }, [business]);
 
   useEffect(() => {
