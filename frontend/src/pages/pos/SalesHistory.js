@@ -888,6 +888,13 @@ const SalesHistory = () => {
                 <div className="bg-white p-4 rounded border font-mono text-xs max-h-96 overflow-y-auto">
                   {/* Receipt Header */}
                   <div className="text-center border-b pb-2 mb-3">
+                    {reprintPreview.business.settings?.receipt_header && (
+                      <div className="text-xs mb-2 font-bold border-b pb-1">
+                        {reprintPreview.business.settings.receipt_header.split('\n').map((line, index) => (
+                          <div key={index}>{line}</div>
+                        ))}
+                      </div>
+                    )}
                     <h2 className="font-bold text-sm">{reprintPreview.business.name}</h2>
                     <p className="text-xs">{reprintPreview.business.address}</p>
                     <p className="text-xs">{reprintPreview.business.contact_email}</p>
