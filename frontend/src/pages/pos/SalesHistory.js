@@ -174,7 +174,13 @@ const SalesHistory = () => {
         address: '123 Business St', 
         contact_email: 'contact@printsandcuts.com', 
         phone: '+1234567890',
-        logo_url: business?.logo_url
+        logo_url: business?.logo_url,
+        settings: {
+          receipt_header: 'Welcome to Prints & Cuts Tagum',
+          receipt_footer: 'Thank you for your business!',
+          currency: 'PHP',
+          printer_type: 'local'
+        }
       },
       transaction_number: reprintTransaction.type === 'sale' ? reprintTransaction.sale_number : reprintTransaction.invoice_number,
       transaction_type: reprintTransaction.type.toUpperCase(),
