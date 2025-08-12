@@ -999,32 +999,16 @@ const POSInterface = () => {
   };
 
   const generateReceiptData = (transactionData, transactionType = 'sale') => {
-    // Ensure business context is available, reload if needed
-    let businessData = business;
-    if (!businessData) {
-      console.warn('🚨 Business context is null, attempting to use basic business info');
-      businessData = {
-        name: 'Prints & Cuts Tagum',
-        address: 'Tagum City, Philippines',
-        contact_email: 'admin@printsandcuts.com',
-        settings: {
-          receipt_header: 'Welcome to Prints and Cuts Tagum',
-          receipt_footer: 'Thank you for your business!',
-          currency: 'PHP'
-        }
-      };
-    }
-    
+    // Use actual business context from database - no hardcoded fallbacks for header/footer
     console.log('🧾 Receipt Data Generation Debug:', {
       businessExists: !!business,
-      businessDataExists: !!businessData,
-      hasSettings: !!businessData?.settings,
-      receiptHeader: businessData?.settings?.receipt_header,
-      receiptFooter: businessData?.settings?.receipt_footer
+      hasSettings: !!business?.settings,
+      receiptHeader: business?.settings?.receipt_header,
+      receiptFooter: business?.settings?.receipt_footer
     });
     
     return {
-      business: businessData,
+      business: business, // Use actual business context - let header/footer be empty if not configured
       transaction_number: transactionData.sale_number || transactionData.invoice_number,
       transaction_type: transactionType.toUpperCase(),
       timestamp: new Date(transactionData.created_at || new Date()),
