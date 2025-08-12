@@ -176,10 +176,7 @@ const POSInterface = () => {
 
     // FEATURE 9: Initialize location-based date/time
     initializeLocationTime();
-    
-    // Refresh business info if null
-    refreshBusinessInfo();
-  }, [fetchData, refreshBusinessInfo]);
+  }, [fetchData]);
 
   // FEATURE 9: Location-based date/time functionality
   const initializeLocationTime = async () => {
