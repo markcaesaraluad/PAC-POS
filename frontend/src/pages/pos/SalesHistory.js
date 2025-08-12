@@ -169,19 +169,7 @@ const SalesHistory = () => {
   // Helper function to generate print-ready receipt data
   const generatePrintReceiptData = () => {
     return {
-      business: business || { 
-        name: 'Prints & Cuts Tagum', 
-        address: '123 Business St', 
-        contact_email: 'contact@printsandcuts.com', 
-        phone: '+1234567890',
-        logo_url: business?.logo_url,
-        settings: {
-          receipt_header: 'Welcome to Prints & Cuts Tagum',
-          receipt_footer: 'Thank you for your business!',
-          currency: 'PHP',
-          printer_type: 'local'
-        }
-      },
+      business: business, // Use actual business context from database - no hardcoded fallbacks
       transaction_number: reprintTransaction.type === 'sale' ? reprintTransaction.sale_number : reprintTransaction.invoice_number,
       transaction_type: reprintTransaction.type.toUpperCase(),
       timestamp: new Date(reprintTransaction.created_at),
