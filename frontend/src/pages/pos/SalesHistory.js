@@ -85,20 +85,9 @@ const SalesHistory = () => {
       ? customers.find(c => c.id === transaction.customer_id) 
       : null;
 
-    // Generate receipt preview data with proper business settings
+    // Generate receipt preview data - use ONLY actual business settings, no hardcoded values
     const receiptData = {
-      business: business || { 
-        name: 'Prints & Cuts Tagum', 
-        address: '123 Business St', 
-        contact_email: 'contact@printsandcuts.com', 
-        phone: '+1234567890',
-        logo_url: business?.logo_url,
-        settings: {
-          receipt_header: 'Welcome to Prints & Cuts Tagum',
-          receipt_footer: 'Thank you for your business!',
-          currency: 'PHP'
-        }
-      },
+      business: business, // Use actual business context from database
       transaction_number: transactionType === 'sale' ? transaction.sale_number : transaction.invoice_number,
       transaction_type: transactionType.toUpperCase(),
       timestamp: new Date(transaction.created_at),
