@@ -358,15 +358,13 @@ const POSInterface = () => {
           // Pre-fill cart with original sale items
           if (settleData.items && settleData.items.length > 0) {
             const cartItems = settleData.items.map(item => ({
-              id: item.product_id,
               product_id: item.product_id,
-              name: item.product_name,
-              price: item.unit_price,
-              unit_price: item.unit_price,
+              product_name: item.product_name,
+              product_sku: item.sku,
               quantity: item.quantity,
-              total: item.total_price,
-              sku: item.sku,
-              product_sku: item.sku
+              unit_price: item.unit_price,
+              total_price: item.total_price,
+              unit_cost_snapshot: item.unit_cost_snapshot || 0
             }));
             
             setCart(cartItems);
