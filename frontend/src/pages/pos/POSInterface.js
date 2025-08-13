@@ -1177,14 +1177,24 @@ const POSInterface = () => {
                   })}
                 </span>
               </div>
-              <button
-                onClick={() => navigate('/pos/sales-history')}
-                className="flex items-center space-x-1 px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm transition-colors"
-                title="View Sales History"
-              >
-                <ClipboardDocumentListIcon className="h-4 w-4" />
-                <span>Sales History</span>
-              </button>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => navigate('/pos/sales-history')}
+                  className="flex items-center space-x-1 px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm transition-colors"
+                  title="View Sales History"
+                >
+                  <ClipboardDocumentListIcon className="h-4 w-4" />
+                  <span>Sales History</span>
+                </button>
+                <button
+                  onClick={() => setShowPriceInquiry(true)}
+                  className="flex items-center space-x-1 px-3 py-1 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg text-sm transition-colors"
+                  title="Price Inquiry (F9)"
+                >
+                  <MagnifyingGlassIcon className="h-4 w-4" />
+                  <span>Price Inquiry</span>
+                </button>
+              </div>
             </div>
           </div>
           
