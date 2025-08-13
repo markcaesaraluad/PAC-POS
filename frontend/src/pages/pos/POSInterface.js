@@ -888,6 +888,79 @@ const POSInterface = () => {
     }
   };
 
+  const handleOrderSlipPrint = async (transactionData, isDownpaymentSale) => {
+    try {
+      console.log('Order slip print requested:', { transactionData, isDownpaymentSale });
+      
+      // Generate order slip data (similar to receipt but with different formatting)
+      const orderSlipData = {
+        ...generateReceiptData(transactionData, 'sale'),
+        isOrderSlip: true,
+        isDownpayment: isDownpaymentSale
+      };
+      
+      const printerType = business?.settings?.printer_type || 'local';
+      
+      if (printerType === 'bluetooth') {
+        const printerStatus = bluetoothPrinterService.getStatus();
+        if (!printerStatus.isConnected) {
+          console.log('Order slip print skipped - Bluetooth printer not connected');
+          toast('Order slip print skipped - Bluetooth printer not connected');
+          return;
+        }
+        await bluetoothPrinterService.printReceipt(orderSlipData, business?.settings?.printer_settings);
+        console.log('Order slip printed via Bluetooth');
+        toast.success('Order slip printed via Bluetooth');
+      } else if (printerType === 'local') {
+        try {
+          await enhancedPrinterService.configurePrinter({
+            id: 'system-default',
+            name: business?.settings?.selected_printer || 'Default System Printer',
+            type: 'local',
+            settings: business?.settings?.printer_settings
+          });
+          
+          await enhancedPrinterService.printReceipt(orderSlipData, business?.settings?.printer_settings);
+          console.log('Order slip printed via enhanced printer service');
+          toast.success('Order slip printed to system printer');
+        } catch (printerError) {
+          console.log('Direct order slip printing failed, using browser fallback:', printerError);
+          await handleBrowserPrintFallback(orderSlipData);
+          console.log('Order slip print fallback completed');
+          toast.success('Order slip printed (browser fallback)');
+        }
+      } else {
+        // Network printer
+        await enhancedPrinterService.configurePrinter({
+          id: 'network-printer',
+          name: business?.settings?.selected_printer || 'Network Printer',
+          type: printerType,
+          settings: business?.settings?.printer_settings
+        });
+        await enhancedPrinterService.printReceipt(orderSlipData, business?.settings?.printer_settings);
+        console.log('Order slip printed via network printer');
+        toast.success('Order slip printed to network printer');
+      }
+      
+    } catch (error) {
+      console.error('Order slip print failed:', error);
+      try {
+        console.log('Attempting emergency fallback for order slip...');
+        const orderSlipData = {
+          ...generateReceiptData(transactionData, 'sale'),
+          isOrderSlip: true,
+          isDownpayment: isDownpaymentSale
+        };
+        await handleBrowserPrintFallback(orderSlipData);
+        console.log('Emergency order slip fallback completed');
+        toast('Order slip printed (emergency fallback)');
+      } catch (fallbackError) {
+        console.error('All order slip print methods failed:', fallbackError);
+        toast.error('Failed to print order slip');
+      }
+    }
+  };
+
   const handleBrowserPrintFallback = async (receiptData) => {
     return new Promise((resolve, reject) => {
       try {
