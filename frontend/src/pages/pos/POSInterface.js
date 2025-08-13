@@ -798,7 +798,44 @@ const POSInterface = () => {
       };
 
       let response;
-      if (transactionMode === 'sale') {
+      
+      // Feature 5: Handle settle payment for ongoing sales
+      if (settleInfo.isSettling && settleInfo.originalSaleId) {
+        // This is a settlement payment for an ongoing sale
+        const updateData = {
+          status: 'completed',
+          finalized_at: new Date().toISOString(),
+          // Add final payment details
+          final_payment_method: paymentMethod,
+          final_payment_ref_code: paymentMethod === 'ewallet' && modalPaymentRef?.trim() ? modalPaymentRef.trim() : null,
+          final_received_amount: finalReceivedAmount,
+          final_change_amount: paymentMethod === 'cash' ? Math.max(0, finalReceivedAmount - settleInfo.remainingBalance) : 0,
+          final_payment_notes: notes.trim() || null,
+        };
+        
+        try {
+          // Update the original ongoing sale to completed
+          response = await salesAPI.updateSale(settleInfo.originalSaleId, updateData);
+          toast.success(`Payment completed! Sale #${response.data.sale_number} finalized`);
+          
+          // Reset settle info
+          setSettleInfo({
+            isSettling: false,
+            originalSaleId: null,
+            remainingBalance: 0,
+            originalSale: null
+          });
+          
+        } catch (updateError) {
+          console.error('Failed to update ongoing sale:', updateError);
+          // Fallback: create new sale record for the settlement
+          transactionData.notes = `Settlement payment for Sale #${settleInfo.originalSale?.sale_number || 'Unknown'}. ${notes.trim() || ''}`.trim();
+          response = await salesAPI.createSale(transactionData);
+          toast.success(`Settlement payment recorded! Sale #${response.data.sale_number}`);
+        }
+        
+      } else if (transactionMode === 'sale') {
+        // Normal sale creation
         response = await salesAPI.createSale(transactionData);
         
         // Feature 6: Different success messages for downpayment vs completed sales
