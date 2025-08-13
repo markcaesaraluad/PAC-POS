@@ -1478,6 +1478,13 @@ const POSInterface = () => {
                         console.log('onInput triggered:', e.target.value);
                         setModalReceivedAmount(e.target.value);
                       }}
+                      onKeyDown={(e) => {
+                        // Feature 1: Enter-to-Confirm Payment
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          confirmPayment();
+                        }
+                      }}
                       className="input w-full text-sm"
                       placeholder="0.00"
                       autoFocus
