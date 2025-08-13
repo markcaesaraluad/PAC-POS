@@ -1454,6 +1454,16 @@ const POSInterface = () => {
                 Clear
               </button>
             </div>
+            
+            {/* Feature 4: Shortcuts Legend */}
+            <div className="text-xs text-gray-500 mt-2 text-center">
+              <div className="grid grid-cols-2 gap-1">
+                <span>F6 Pay</span>
+                <span>F7 Hold</span>
+                <span>F8 Clear</span>
+                <span>F9 Price Inquiry</span>
+              </div>
+            </div>
           </div>
 
           {/* Held Orders */}
