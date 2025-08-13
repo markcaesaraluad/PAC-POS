@@ -19,6 +19,7 @@ import LoadingSpinner, { InlineSpinner } from '../../components/LoadingSpinner';
 const SalesHistory = () => {
   const { formatAmount } = useCurrency();
   const { business, user } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('sales');
   const [sales, setSales] = useState([]);
   const [ongoingSales, setOngoingSales] = useState([]); // Feature: On-Going tab
