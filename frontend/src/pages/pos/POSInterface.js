@@ -1659,6 +1659,34 @@ const POSInterface = () => {
                   </div>
                 </div>
 
+                {/* Feature 6: Downpayment */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Downpayment (Optional)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={modalDownpayment}
+                    onChange={(e) => setModalDownpayment(e.target.value)}
+                    className="input w-full text-sm"
+                    placeholder="0.00 - Leave empty for full payment"
+                    onKeyDown={(e) => {
+                      // Feature 1: Enter-to-Confirm Payment
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        confirmPayment();
+                      }
+                    }}
+                  />
+                  {modalDownpayment && parseFloat(modalDownpayment) > 0 && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      Balance Due: {formatAmount(calculateModalTotals().total - parseFloat(modalDownpayment))}
+                    </p>
+                  )}
+                </div>
+
                 {/* Cash Payment Fields */}
                 {modalPaymentMethod === 'cash' && (
                   <div>
