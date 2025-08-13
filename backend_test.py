@@ -6989,6 +6989,11 @@ class POSAPITester:
         """Test the enhanced POS system backend features as requested in review"""
         self.log("=== TESTING ENHANCED POS SYSTEM BACKEND FEATURES ===", "INFO")
         
+        # First authenticate to get tokens
+        self.log("Setting up authentication for enhanced POS testing...")
+        self.test_super_admin_setup()
+        self.test_business_admin_login()
+        
         # Switch to business admin token for testing
         if self.business_admin_token:
             self.token = self.business_admin_token
