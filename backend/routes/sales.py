@@ -72,10 +72,15 @@ async def create_sale(
         "discount_amount": sale.discount_amount,
         "total_amount": sale.total_amount,
         "payment_method": sale.payment_method,
+        "payment_ref_code": sale.payment_ref_code,  # Feature 7: Store reference code
         "received_amount": sale.received_amount,
         "change_amount": sale.change_amount,
         "notes": sale.notes,
-        "status": "completed",
+        "status": sale.status,  # Feature 6: Use status from request (ongoing/completed)
+        # Feature 6: Downpayment fields
+        "downpayment_amount": sale.downpayment_amount,
+        "balance_due": sale.balance_due,
+        "finalized_at": sale.finalized_at,
         "created_at": datetime.now(timezone.utc),
         "updated_at": datetime.now(timezone.utc)
     }
