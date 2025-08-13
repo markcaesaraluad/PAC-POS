@@ -746,6 +746,17 @@ const SalesHistory = () => {
                           {sale.payment_method}
                         </span>
                       </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          sale.status === 'completed' 
+                            ? 'bg-green-100 text-green-800'
+                            : sale.status === 'ongoing'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {sale.status === 'completed' ? 'Completed' : sale.status === 'ongoing' ? 'On-Going' : 'Cancelled'}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                         <button
                           onClick={() => handleReprintReceipt(sale, 'sale')}
