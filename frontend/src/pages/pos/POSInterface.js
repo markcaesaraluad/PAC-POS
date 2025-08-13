@@ -1198,7 +1198,12 @@ const POSInterface = () => {
           ` : ''}
 
           <div class="line"></div>
-          <div class="center" style="font-size: 9px;">Thank you for your business!</div>
+          <div class="center" style="font-size: 9px;">
+            ${receiptData.isOrderSlip ? 
+              (receiptData.isDownpayment ? 'Order Slip - Downpayment Received' : 'Order Slip - Kitchen Copy') : 
+              'Thank you for your business!'
+            }
+          </div>
           ${receiptFooter ? `<div class="center receipt-footer">${receiptFooter}</div>` : ''}
         </body>
       </html>
