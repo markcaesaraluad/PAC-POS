@@ -1048,6 +1048,7 @@ const POSInterface = () => {
     setModalDiscountAmount(discountAmount);
     setModalDiscountType(localStorage.getItem('pos-discount-type') || 'amount');
     setModalNotes(notes);
+    setModalPaymentRef(''); // Feature 7: Reset reference code
     
     setShowPaymentModal(true);
   };
