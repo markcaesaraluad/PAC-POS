@@ -725,7 +725,13 @@ const POSInterface = () => {
       let response;
       if (transactionMode === 'sale') {
         response = await salesAPI.createSale(transactionData);
-        toast.success(`Sale completed! Sale #${response.data.sale_number}`);
+        
+        // Feature 6: Different success messages for downpayment vs completed sales
+        if (isDownpaymentSale) {
+          toast.success(`Downpayment recorded! Sale #${response.data.sale_number} - Balance Due: ${formatAmount(transactionData.balance_due)}`);
+        } else {
+          toast.success(`Sale completed! Sale #${response.data.sale_number}`);
+        }
         
         // Auto-print if enabled - no preview needed
         console.log('Autoprint debug - Business settings structure:', {
