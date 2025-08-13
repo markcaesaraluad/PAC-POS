@@ -1400,10 +1400,10 @@ const POSInterface = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Payment Method
                   </label>
-                  <div className="flex space-x-2">
+                  <div className="grid grid-cols-3 gap-2">
                     <button
                       onClick={() => setModalPaymentMethod('cash')}
-                      className={`flex-1 p-2 text-sm border rounded-md ${
+                      className={`p-2 text-sm border rounded-md ${
                         modalPaymentMethod === 'cash'
                           ? 'border-blue-500 bg-blue-50 text-blue-700'
                           : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
@@ -1414,7 +1414,7 @@ const POSInterface = () => {
                     </button>
                     <button
                       onClick={() => setModalPaymentMethod('card')}
-                      className={`flex-1 p-2 text-sm border rounded-md ${
+                      className={`p-2 text-sm border rounded-md ${
                         modalPaymentMethod === 'card'
                           ? 'border-blue-500 bg-blue-50 text-blue-700'
                           : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
@@ -1422,6 +1422,17 @@ const POSInterface = () => {
                     >
                       <CreditCardIcon className="h-4 w-4 mx-auto mb-1" />
                       Card
+                    </button>
+                    <button
+                      onClick={() => setModalPaymentMethod('ewallet')}
+                      className={`p-2 text-sm border rounded-md ${
+                        modalPaymentMethod === 'ewallet'
+                          ? 'border-blue-500 bg-blue-50 text-blue-700'
+                          : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <CreditCardIcon className="h-4 w-4 mx-auto mb-1" />
+                      EWallet/Bank
                     </button>
                   </div>
                 </div>
