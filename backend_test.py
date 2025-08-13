@@ -1641,6 +1641,309 @@ class POSAPITester:
         self.log("=== PRINTER SETTINGS TESTING COMPLETED ===", "INFO")
         return True
 
+    def test_payment_reference_codes_and_downpayments(self):
+        """Quick verification test for enhanced POS system backend after fixing the sales API.
+        Focus on testing the two critical issues identified:
+        1. Payment Reference Codes: Test EWallet/Bank payments with reference codes
+        2. Downpayment & On-Going Sales: Test creating sales with downpayment amounts
+        """
+        self.log("=== STARTING PAYMENT REFERENCE CODES & DOWNPAYMENTS TESTING ===", "INFO")
+        
+        # Switch to business admin token for testing
+        if self.business_admin_token:
+            self.token = self.business_admin_token
+            self.log("Using business admin token for payment reference codes testing")
+        
+        # Ensure we have required test data
+        if not self.product_id or not self.customer_id:
+            self.log("❌ Cannot test - missing product or customer data", "ERROR")
+            return False
+        
+        # TEST 1: EWallet Sale with Payment Reference Code
+        self.log("🔍 TEST 1: EWallet Sale with Payment Reference Code", "INFO")
+        
+        ewallet_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "EWallet Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": f"TEST-EWALLET-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                    "quantity": 1,
+                    "unit_price": 25.99,
+                    "unit_price_snapshot": 25.99,
+                    "unit_cost_snapshot": 12.50,
+                    "total_price": 25.99
+                }
+            ],
+            "subtotal": 25.99,
+            "tax_amount": 2.34,
+            "discount_amount": 0.00,
+            "total_amount": 28.33,
+            "payment_method": "ewallet",
+            "payment_ref_code": "EWALLET-REF-123456789",  # Critical field to test
+            "received_amount": 28.33,
+            "change_amount": 0.00,
+            "notes": "EWallet payment with reference code test"
+        }
+
+        success, response = self.run_test(
+            "Create EWallet Sale with Payment Reference Code",
+            "POST",
+            "/api/sales",
+            200,
+            data=ewallet_sale_data
+        )
+
+        if success:
+            self.log("✅ EWallet sale created successfully")
+            
+            # Verify payment_ref_code is stored and returned
+            returned_ref_code = response.get('payment_ref_code')
+            if returned_ref_code == "EWALLET-REF-123456789":
+                self.log("✅ Payment reference code correctly stored and returned")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Payment reference code issue. Expected: EWALLET-REF-123456789, Got: {returned_ref_code}")
+            self.tests_run += 1
+            
+            # Store sale ID for verification
+            ewallet_sale_id = response.get('id')
+            if ewallet_sale_id:
+                self.log(f"EWallet sale created with ID: {ewallet_sale_id}")
+        else:
+            self.log("❌ Failed to create EWallet sale with payment reference code")
+            return False
+
+        # TEST 2: Bank Transfer Sale with Payment Reference Code
+        self.log("🔍 TEST 2: Bank Transfer Sale with Payment Reference Code", "INFO")
+        
+        bank_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Bank Transfer Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": f"TEST-BANK-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                    "quantity": 2,
+                    "unit_price": 15.50,
+                    "unit_price_snapshot": 15.50,
+                    "unit_cost_snapshot": 8.25,
+                    "total_price": 31.00
+                }
+            ],
+            "subtotal": 31.00,
+            "tax_amount": 2.79,
+            "discount_amount": 0.00,
+            "total_amount": 33.79,
+            "payment_method": "bank_transfer",
+            "payment_ref_code": "BANK-TXN-987654321",  # Critical field to test
+            "received_amount": 33.79,
+            "change_amount": 0.00,
+            "notes": "Bank transfer payment with reference code test"
+        }
+
+        success, response = self.run_test(
+            "Create Bank Transfer Sale with Payment Reference Code",
+            "POST",
+            "/api/sales",
+            200,
+            data=bank_sale_data
+        )
+
+        if success:
+            self.log("✅ Bank transfer sale created successfully")
+            
+            # Verify payment_ref_code is stored and returned
+            returned_ref_code = response.get('payment_ref_code')
+            if returned_ref_code == "BANK-TXN-987654321":
+                self.log("✅ Bank transfer payment reference code correctly stored and returned")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Bank transfer payment reference code issue. Expected: BANK-TXN-987654321, Got: {returned_ref_code}")
+            self.tests_run += 1
+            
+            # Store sale ID for verification
+            bank_sale_id = response.get('id')
+            if bank_sale_id:
+                self.log(f"Bank transfer sale created with ID: {bank_sale_id}")
+        else:
+            self.log("❌ Failed to create bank transfer sale with payment reference code")
+            return False
+
+        # TEST 3: Ongoing Sale with Downpayment Amount and Balance Due
+        self.log("🔍 TEST 3: Ongoing Sale with Downpayment Amount and Balance Due", "INFO")
+        
+        ongoing_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Downpayment Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": f"TEST-DOWNPAY-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                    "quantity": 3,
+                    "unit_price": 45.00,
+                    "unit_price_snapshot": 45.00,
+                    "unit_cost_snapshot": 22.50,
+                    "total_price": 135.00
+                }
+            ],
+            "subtotal": 135.00,
+            "tax_amount": 12.15,
+            "discount_amount": 5.00,
+            "total_amount": 142.15,
+            "payment_method": "cash",
+            "received_amount": 50.00,  # Partial payment
+            "change_amount": 0.00,
+            "status": "ongoing",  # Critical field for ongoing sales
+            "downpayment_amount": 50.00,  # Critical field to test
+            "balance_due": 92.15,  # Critical field to test
+            "finalized_at": None,  # Critical field - should be None for ongoing sales
+            "notes": "Ongoing sale with downpayment - balance due later"
+        }
+
+        success, response = self.run_test(
+            "Create Ongoing Sale with Downpayment",
+            "POST",
+            "/api/sales",
+            200,
+            data=ongoing_sale_data
+        )
+
+        if success:
+            self.log("✅ Ongoing sale with downpayment created successfully")
+            
+            # Verify downpayment fields are stored and returned
+            returned_downpayment = response.get('downpayment_amount')
+            returned_balance_due = response.get('balance_due')
+            returned_status = response.get('status')
+            returned_finalized_at = response.get('finalized_at')
+            
+            # Check downpayment_amount
+            if returned_downpayment == 50.00:
+                self.log("✅ Downpayment amount correctly stored and returned")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Downpayment amount issue. Expected: 50.00, Got: {returned_downpayment}")
+            self.tests_run += 1
+            
+            # Check balance_due
+            if returned_balance_due == 92.15:
+                self.log("✅ Balance due correctly stored and returned")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Balance due issue. Expected: 92.15, Got: {returned_balance_due}")
+            self.tests_run += 1
+            
+            # Check status
+            if returned_status == "ongoing":
+                self.log("✅ Sale status correctly set to ongoing")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Sale status issue. Expected: ongoing, Got: {returned_status}")
+            self.tests_run += 1
+            
+            # Check finalized_at (should be None for ongoing sales)
+            if returned_finalized_at is None:
+                self.log("✅ Finalized_at correctly set to None for ongoing sale")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Finalized_at issue. Expected: None, Got: {returned_finalized_at}")
+            self.tests_run += 1
+            
+            # Store sale ID for verification
+            ongoing_sale_id = response.get('id')
+            if ongoing_sale_id:
+                self.log(f"Ongoing sale created with ID: {ongoing_sale_id}")
+        else:
+            self.log("❌ Failed to create ongoing sale with downpayment")
+            return False
+
+        # TEST 4: Completed Sale for Comparison (should have finalized_at set)
+        self.log("🔍 TEST 4: Completed Sale for Comparison", "INFO")
+        
+        completed_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Completed Sale Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": f"TEST-COMPLETED-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                    "quantity": 1,
+                    "unit_price": 19.99,
+                    "unit_price_snapshot": 19.99,
+                    "unit_cost_snapshot": 10.00,
+                    "total_price": 19.99
+                }
+            ],
+            "subtotal": 19.99,
+            "tax_amount": 1.80,
+            "discount_amount": 0.00,
+            "total_amount": 21.79,
+            "payment_method": "card",
+            "received_amount": 21.79,
+            "change_amount": 0.00,
+            "status": "completed",  # Completed status
+            "downpayment_amount": None,  # No downpayment for completed sale
+            "balance_due": None,  # No balance due for completed sale
+            "finalized_at": datetime.now().isoformat(),  # Should be set for completed sales
+            "notes": "Completed sale for comparison testing"
+        }
+
+        success, response = self.run_test(
+            "Create Completed Sale for Comparison",
+            "POST",
+            "/api/sales",
+            200,
+            data=completed_sale_data
+        )
+
+        if success:
+            self.log("✅ Completed sale created successfully")
+            
+            # Verify completed sale fields
+            returned_status = response.get('status')
+            returned_finalized_at = response.get('finalized_at')
+            
+            # Check status
+            if returned_status == "completed":
+                self.log("✅ Completed sale status correctly set")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Completed sale status issue. Expected: completed, Got: {returned_status}")
+            self.tests_run += 1
+            
+            # Check finalized_at (should be set for completed sales)
+            if returned_finalized_at is not None:
+                self.log("✅ Finalized_at correctly set for completed sale")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Finalized_at should be set for completed sale")
+            self.tests_run += 1
+            
+            # Store sale ID for verification
+            completed_sale_id = response.get('id')
+            if completed_sale_id:
+                self.log(f"Completed sale created with ID: {completed_sale_id}")
+        else:
+            self.log("❌ Failed to create completed sale")
+            return False
+
+        self.log("=== PAYMENT REFERENCE CODES & DOWNPAYMENTS TESTING COMPLETED ===", "INFO")
+        return True
+
     def test_enhanced_pos_features(self):
         """Test the 7 enhanced POS system features as requested in review"""
         self.log("=== STARTING ENHANCED POS FEATURES TESTING ===", "INFO")
