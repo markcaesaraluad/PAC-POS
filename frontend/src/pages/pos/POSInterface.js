@@ -600,6 +600,7 @@ const POSInterface = () => {
         discount_amount: parseFloat(totals.discount) || 0,
         total_amount: parseFloat(totals.total),
         payment_method: paymentMethod,
+        payment_ref_code: paymentMethod === 'ewallet' && modalPaymentRef?.trim() ? modalPaymentRef.trim() : null, // Feature 7
         received_amount: paymentMethod === 'cash' ? finalReceivedAmount : parseFloat(totals.total),
         change_amount: paymentMethod === 'cash' ? Math.max(0, finalReceivedAmount - parseFloat(totals.total)) : 0,
         notes: notes.trim() || null,
