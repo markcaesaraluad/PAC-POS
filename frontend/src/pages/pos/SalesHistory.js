@@ -74,6 +74,7 @@ const SalesHistory = () => {
       toast.error('Failed to load sales history');
       setSales([]);
       setInvoices([]);
+      setOngoingSales([]);
     } finally {
       setLoading(false);
     }
