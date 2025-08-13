@@ -208,6 +208,7 @@ class SaleBase(BaseModel):
     discount_amount: float = 0
     total_amount: float
     payment_method: str
+    payment_ref_code: Optional[str] = None  # Feature 7: Reference code for EWallet/Bank
     received_amount: Optional[float] = None
     change_amount: Optional[float] = None
     notes: Optional[str] = None
