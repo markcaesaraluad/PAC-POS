@@ -340,6 +340,71 @@ const POSInterface = () => {
     }
   }, [loading]);
 
+  // Feature 5: Handle settle mode from Sales History
+  useEffect(() => {
+    const handleSettleMode = () => {
+      const settleDataStr = localStorage.getItem('pos-settle-data');
+      if (settleDataStr) {
+        try {
+          const settleData = JSON.parse(settleDataStr);
+          console.log('Settle mode detected:', settleData);
+          
+          // Clear the settle data from localStorage
+          localStorage.removeItem('pos-settle-data');
+          
+          // Pre-fill cart with original sale items
+          if (settleData.items && settleData.items.length > 0) {
+            const cartItems = settleData.items.map(item => ({
+              id: item.product_id,
+              product_id: item.product_id,
+              name: item.product_name,
+              price: item.unit_price,
+              unit_price: item.unit_price,
+              quantity: item.quantity,
+              total: item.total_price,
+              sku: item.sku,
+              product_sku: item.sku
+            }));
+            
+            setCart(cartItems);
+          }
+          
+          // Set customer if available
+          if (settleData.customer) {
+            setSelectedCustomer({
+              id: settleData.customer.id,
+              name: settleData.customer.name
+            });
+          }
+          
+          // Store settle info for payment modal
+          setSettleInfo({
+            isSettling: true,
+            originalSaleId: settleData.saleId,
+            remainingBalance: settleData.remainingBalance,
+            originalSale: settleData.originalSale
+          });
+          
+          // Open payment modal automatically with remaining balance
+          setTimeout(() => {
+            setModalReceivedAmount(settleData.remainingBalance.toString());
+            setShowPaymentModal(true);
+            toast.success(`Settlement mode: Balance due ${formatAmount(settleData.remainingBalance)}`);
+          }, 1000);
+          
+        } catch (error) {
+          console.error('Error handling settle mode:', error);
+          toast.error('Error loading settlement data');
+        }
+      }
+    };
+    
+    // Check for settle mode when component mounts
+    if (!loading) {
+      handleSettleMode();
+    }
+  }, [loading, formatAmount]);
+
   const handleProductSearch = async () => {
     if (!searchTerm && !selectedCategory) {
       fetchData();
