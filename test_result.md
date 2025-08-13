@@ -491,7 +491,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "7 ENHANCED POS FEATURES COMPREHENSIVE TESTING"
+    - "6 NEW POS ENHANCEMENT FEATURES COMPREHENSIVE TESTING"
   stuck_tasks: 
     - "BUSINESS CONTEXT LOADING ISSUE IN POS INTERFACE"
   test_all: false
