@@ -213,6 +213,10 @@ class SaleBase(BaseModel):
     change_amount: Optional[float] = None
     notes: Optional[str] = None
     status: str = "completed"
+    # Feature 6: Downpayment & On-Going Sales fields
+    downpayment_amount: Optional[float] = None
+    balance_due: Optional[float] = None
+    finalized_at: Optional[datetime] = None
 
 class SaleCreate(SaleBase):
     items: List[SaleItemCreate]
