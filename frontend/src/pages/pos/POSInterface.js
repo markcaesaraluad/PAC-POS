@@ -60,6 +60,14 @@ const POSInterface = () => {
   const [priceInquiryTerm, setPriceInquiryTerm] = useState('');
   const [priceInquiryResults, setPriceInquiryResults] = useState([]);
   
+  // Feature 5: Settle payment state for ongoing sales
+  const [settleInfo, setSettleInfo] = useState({
+    isSettling: false,
+    originalSaleId: null,
+    remainingBalance: 0,
+    originalSale: null
+  });
+  
   // Payment modal state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [modalPaymentMethod, setModalPaymentMethod] = useState('cash');
