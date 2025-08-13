@@ -423,6 +423,44 @@ const POSInterface = () => {
     toast.success('Cart cleared');
   };
 
+  // Feature 3: Price Inquiry functionality
+  const searchPriceInquiry = async (term) => {
+    if (!term || term.length < 2) {
+      setPriceInquiryResults([]);
+      return;
+    }
+
+    try {
+      // Search by name, SKU, or barcode
+      const response = await productsAPI.getProducts({
+        search: term,
+        status: 'active'
+      });
+      
+      const results = response.data.map(product => ({
+        id: product.id,
+        name: product.name,
+        sku: product.sku,
+        barcode: product.barcode,
+        price: product.price,
+        cost: product.cost,
+        quantity: product.quantity,
+        status: product.status
+      }));
+      
+      setPriceInquiryResults(results);
+    } catch (error) {
+      console.error('Price inquiry search failed:', error);
+      setPriceInquiryResults([]);
+    }
+  };
+
+  const closePriceInquiry = () => {
+    setShowPriceInquiry(false);
+    setPriceInquiryTerm('');
+    setPriceInquiryResults([]);
+  };
+
   const holdOrder = () => {
     if (cart.length === 0) {
       toast.error('Cart is empty');
