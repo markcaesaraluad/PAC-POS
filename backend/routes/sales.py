@@ -363,3 +363,107 @@ async def get_daily_sales_stats(
         "total_items_sold": total_items_sold,
         "average_sale": total_revenue / total_sales if total_sales > 0 else 0
     }
+
+# Feature 5: Update sale endpoint for settlement payments
+@router.put("/{sale_id}", response_model=SaleResponse)
+@limiter.limit("50/minute")
+async def update_sale(
+    sale_id: str,
+    sale_update: dict,
+    request: Request,
+    current_user=Depends(get_any_authenticated_user)
+):
+    sales_collection = await get_collection("sales")
+    
+    business_id = current_user["business_id"]
+    if current_user["role"] == "super_admin":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Super admin must specify business context",
+        )
+    
+    # Find the sale to update
+    sale = await sales_collection.find_one({
+        "_id": ObjectId(sale_id),
+        "business_id": ObjectId(business_id)
+    })
+    
+    if not sale:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Sale not found"
+        )
+    
+    # Only allow updates on ongoing sales for settlement
+    if sale.get("status") != "ongoing":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only ongoing sales can be updated"
+        )
+    
+    # Prepare update data
+    update_data = {
+        "updated_at": datetime.now(timezone.utc)
+    }
+    
+    # Allow specific fields to be updated for settlement
+    allowed_fields = [
+        "status", "finalized_at", "final_payment_method", 
+        "final_payment_ref_code", "final_received_amount", 
+        "final_change_amount", "final_payment_notes"
+    ]
+    
+    for field in allowed_fields:
+        if field in sale_update:
+            update_data[field] = sale_update[field]
+    
+    # Update the sale
+    result = await sales_collection.update_one(
+        {"_id": ObjectId(sale_id)},
+        {"$set": update_data}
+    )
+    
+    if result.modified_count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to update sale"
+        )
+    
+    # Fetch updated sale
+    updated_sale = await sales_collection.find_one({"_id": ObjectId(sale_id)})
+    
+    return SaleResponse(
+        id=str(updated_sale["_id"]),
+        business_id=str(updated_sale["business_id"]),
+        cashier_id=str(updated_sale["cashier_id"]),
+        cashier_name=updated_sale["cashier_name"],
+        customer_id=str(updated_sale["customer_id"]) if updated_sale.get("customer_id") else None,
+        customer_name=updated_sale.get("customer_name"),
+        sale_number=updated_sale["sale_number"],
+        items=[SaleItem(
+            id=item.get("id", str(ObjectId())),
+            product_id=item["product_id"],
+            product_name=item["product_name"],
+            sku=item.get("sku", item.get("product_sku", "")),
+            quantity=item["quantity"],
+            unit_price=item["unit_price"],
+            unit_price_snapshot=item.get("unit_price_snapshot", item["unit_price"]),
+            unit_cost_snapshot=item.get("unit_cost_snapshot", 0.0),
+            total_price=item["total_price"]
+        ) for item in updated_sale["items"]],
+        subtotal=updated_sale["subtotal"],
+        tax_amount=updated_sale["tax_amount"],
+        discount_amount=updated_sale["discount_amount"],
+        total_amount=updated_sale["total_amount"],
+        payment_method=updated_sale["payment_method"],
+        payment_ref_code=updated_sale.get("payment_ref_code"),
+        received_amount=updated_sale.get("received_amount"),
+        change_amount=updated_sale.get("change_amount"),
+        notes=updated_sale.get("notes"),
+        status=updated_sale.get("status", "completed"),
+        downpayment_amount=updated_sale.get("downpayment_amount"),
+        balance_due=updated_sale.get("balance_due"),
+        finalized_at=updated_sale.get("finalized_at"),
+        created_at=updated_sale.get("created_at", datetime.now(timezone.utc)),
+        updated_at=updated_sale.get("updated_at", datetime.now(timezone.utc))
+    )
