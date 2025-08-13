@@ -296,8 +296,9 @@ const POSInterface = () => {
       if (showPaymentModal && !activeElement?.closest('.payment-modal')) return;
       if (showPriceInquiry) return;
       
-      // Skip if typing in non-payment input fields
-      if (isInputField && !showPaymentModal) return;
+      // Allow hotkeys when barcode input is focused OR when not in input fields
+      const isBarcodeInput = activeElement === barcodeInputRef.current;
+      if (isInputField && !showPaymentModal && !isBarcodeInput) return;
 
       switch (e.key) {
         case 'F6':
