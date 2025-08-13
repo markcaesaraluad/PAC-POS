@@ -281,7 +281,7 @@ class POSAPITester:
             "description": "Test product for API testing",
             "sku": f"TEST-{datetime.now().strftime('%Y%m%d%H%M%S')}",
             "price": 29.99,
-            "cost": 15.00,
+            "product_cost": 15.00,  # Required field
             "quantity": 100,
             "category_id": self.category_id,
             "barcode": f"123456789{datetime.now().strftime('%H%M%S')}"
