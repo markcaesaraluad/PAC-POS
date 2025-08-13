@@ -46,18 +46,28 @@ const SalesHistory = () => {
       const promises = [customersAPI.getCustomers()];
       
       if (activeTab === 'sales') {
-        promises.push(salesAPI.getSales(params));
+        // Fetch completed sales only
+        promises.push(salesAPI.getSales({ ...params, status: 'completed' }));
         promises.push(Promise.resolve({ data: [] })); // Empty invoices
+        promises.push(Promise.resolve({ data: [] })); // Empty ongoing
+      } else if (activeTab === 'ongoing') {
+        // Fetch ongoing sales only
+        promises.push(Promise.resolve({ data: [] })); // Empty sales
+        promises.push(Promise.resolve({ data: [] })); // Empty invoices
+        promises.push(salesAPI.getSales({ ...params, status: 'ongoing' }));
       } else {
+        // Invoices tab
         promises.push(Promise.resolve({ data: [] })); // Empty sales
         promises.push(invoicesAPI.getInvoices(params));
+        promises.push(Promise.resolve({ data: [] })); // Empty ongoing
       }
       
-      const [customersResponse, salesResponse, invoicesResponse] = await Promise.all(promises);
+      const [customersResponse, salesResponse, invoicesResponse, ongoingResponse] = await Promise.all(promises);
       
       setCustomers(Array.isArray(customersResponse.data) ? customersResponse.data : []);
       setSales(Array.isArray(salesResponse.data) ? salesResponse.data : []);
       setInvoices(Array.isArray(invoicesResponse.data) ? invoicesResponse.data : []);
+      setOngoingSales(Array.isArray(ongoingResponse.data) ? ongoingResponse.data : []);
       
     } catch (error) {
       console.error('Failed to fetch sales history:', error);
