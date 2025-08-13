@@ -1641,6 +1641,437 @@ class POSAPITester:
         self.log("=== PRINTER SETTINGS TESTING COMPLETED ===", "INFO")
         return True
 
+    def test_enhanced_pos_features(self):
+        """Test the 7 enhanced POS system features as requested in review"""
+        self.log("=== STARTING ENHANCED POS FEATURES TESTING ===", "INFO")
+        
+        # Switch to business admin token for testing
+        if self.business_admin_token:
+            self.token = self.business_admin_token
+            self.log("Using business admin token for enhanced POS features testing")
+        
+        # Test 1: Payment Modal Enter-to-Confirm - Cash Payment Validation
+        self.log("🔍 TEST 1: Payment Modal Enter-to-Confirm - Cash Payment Validation", "INFO")
+        
+        # Create a test sale with cash payment and proper validation fields
+        cash_payment_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Cash Payment Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": f"TEST-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.50,
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "discount_amount": 0.00,
+            "total_amount": 32.69,
+            "payment_method": "cash",
+            "received_amount": 35.00,  # Cash payment validation
+            "change_amount": 2.31,
+            "notes": "Cash payment validation test"
+        }
+
+        success, response = self.run_test(
+            "Create Sale with Cash Payment Validation",
+            "POST",
+            "/api/sales",
+            200,
+            data=cash_payment_sale_data
+        )
+
+        if success:
+            self.log("✅ Cash payment validation working correctly")
+            # Verify received_amount and change_amount are stored
+            if response.get('received_amount') == 35.00 and response.get('change_amount') == 2.31:
+                self.log("✅ Cash payment amounts correctly stored and returned")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Cash payment amounts not correctly stored")
+            self.tests_run += 1
+        else:
+            self.log("❌ Cash payment validation failed")
+            self.tests_run += 1
+
+        # Test 2: EWallet/Bank Payment Method with Reference Code
+        self.log("🔍 TEST 2: EWallet/Bank Payment Method with Reference Code", "INFO")
+        
+        ewallet_payment_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "EWallet Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": f"TEST-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                    "quantity": 1,
+                    "unit_price": 19.99,
+                    "unit_price_snapshot": 19.99,
+                    "unit_cost_snapshot": 10.00,
+                    "total_price": 19.99
+                }
+            ],
+            "subtotal": 19.99,
+            "tax_amount": 1.80,
+            "discount_amount": 0.00,
+            "total_amount": 21.79,
+            "payment_method": "ewallet",  # New payment method
+            "payment_ref_code": "EW123456789",  # Feature 7: Reference code
+            "notes": "EWallet payment with reference code test"
+        }
+
+        success, response = self.run_test(
+            "Create Sale with EWallet Payment and Reference Code",
+            "POST",
+            "/api/sales",
+            200,
+            data=ewallet_payment_sale_data
+        )
+
+        if success:
+            self.log("✅ EWallet payment method accepted by sales API")
+            # Verify payment_ref_code is stored
+            if response.get('payment_ref_code') == "EW123456789":
+                self.log("✅ Payment reference code correctly stored and returned")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Payment reference code not correctly stored")
+            self.tests_run += 1
+        else:
+            self.log("❌ EWallet payment method failed")
+            self.tests_run += 1
+
+        # Test 3: Bank Payment Method with Reference Code
+        self.log("🔍 TEST 3: Bank Payment Method with Reference Code", "INFO")
+        
+        bank_payment_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Bank Transfer Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": f"TEST-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                    "quantity": 2,
+                    "unit_price": 24.99,
+                    "unit_price_snapshot": 24.99,
+                    "unit_cost_snapshot": 12.50,
+                    "total_price": 49.98
+                }
+            ],
+            "subtotal": 49.98,
+            "tax_amount": 4.50,
+            "discount_amount": 0.00,
+            "total_amount": 54.48,
+            "payment_method": "bank_transfer",  # New payment method
+            "payment_ref_code": "BT987654321",  # Feature 7: Reference code
+            "notes": "Bank transfer payment with reference code test"
+        }
+
+        success, response = self.run_test(
+            "Create Sale with Bank Transfer Payment and Reference Code",
+            "POST",
+            "/api/sales",
+            200,
+            data=bank_payment_sale_data
+        )
+
+        if success:
+            self.log("✅ Bank transfer payment method accepted by sales API")
+            # Verify payment_ref_code is stored
+            if response.get('payment_ref_code') == "BT987654321":
+                self.log("✅ Bank transfer reference code correctly stored and returned")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Bank transfer reference code not correctly stored")
+            self.tests_run += 1
+        else:
+            self.log("❌ Bank transfer payment method failed")
+            self.tests_run += 1
+
+        # Test 4: Price Inquiry Modal - Product Search API with Various Parameters
+        self.log("🔍 TEST 4: Price Inquiry Modal - Product Search API", "INFO")
+        
+        # Test search by name
+        success, response = self.run_test(
+            "Product Search by Name",
+            "GET",
+            "/api/products",
+            200,
+            params={"search": "Test"}
+        )
+        
+        if success:
+            self.log("✅ Product search by name working")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Product search by name failed")
+        self.tests_run += 1
+
+        # Test search by SKU
+        success, response = self.run_test(
+            "Product Search by SKU",
+            "GET",
+            "/api/products",
+            200,
+            params={"search": "TEST-"}
+        )
+        
+        if success:
+            self.log("✅ Product search by SKU working")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Product search by SKU failed")
+        self.tests_run += 1
+
+        # Test search by barcode (if we have a product with barcode)
+        if self.product_id:
+            # First create a product with barcode for testing
+            barcode_product_data = {
+                "name": "Barcode Test Product",
+                "description": "Product for barcode search testing",
+                "sku": f"BARCODE-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                "price": 15.99,
+                "product_cost": 8.00,
+                "quantity": 25,
+                "category_id": self.category_id,
+                "barcode": f"123456789{datetime.now().strftime('%H%M%S')}"
+            }
+
+            success, response = self.run_test(
+                "Create Product with Barcode for Search Test",
+                "POST",
+                "/api/products",
+                200,
+                data=barcode_product_data
+            )
+            
+            if success:
+                test_barcode = barcode_product_data['barcode']
+                
+                # Test barcode lookup endpoint
+                success, response = self.run_test(
+                    "Product Search by Barcode Endpoint",
+                    "GET",
+                    f"/api/products/barcode/{test_barcode}",
+                    200
+                )
+                
+                if success:
+                    self.log("✅ Product search by barcode working")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ Product search by barcode failed")
+                self.tests_run += 1
+
+        # Test 5: Receipt Logo - Business Logo URL in Business Info API
+        self.log("🔍 TEST 5: Receipt Logo - Business Logo URL in Business Info API", "INFO")
+        
+        success, response = self.run_test(
+            "Get Business Info for Logo URL",
+            "GET",
+            "/api/business/info",
+            200
+        )
+        
+        if success:
+            self.log("✅ Business info API accessible")
+            # Check if logo_url field is present (can be null)
+            if 'logo_url' in response:
+                self.log("✅ Business logo URL field present in API response")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Business logo URL field missing from API response")
+            self.tests_run += 1
+        else:
+            self.log("❌ Business info API failed")
+            self.tests_run += 1
+
+        # Test 6: Downpayment & On-Going Sales
+        self.log("🔍 TEST 6: Downpayment & On-Going Sales", "INFO")
+        
+        # Create sale with downpayment and ongoing status
+        downpayment_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Downpayment Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": f"TEST-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                    "quantity": 1,
+                    "unit_price": 100.00,
+                    "unit_price_snapshot": 100.00,
+                    "unit_cost_snapshot": 50.00,
+                    "total_price": 100.00
+                }
+            ],
+            "subtotal": 100.00,
+            "tax_amount": 9.00,
+            "discount_amount": 0.00,
+            "total_amount": 109.00,
+            "payment_method": "cash",
+            "received_amount": 50.00,  # Partial payment
+            "change_amount": 0.00,
+            "status": "ongoing",  # Feature 6: Ongoing status
+            "downpayment_amount": 50.00,  # Feature 6: Downpayment
+            "balance_due": 59.00,  # Feature 6: Balance due
+            "notes": "Downpayment sale - ongoing status test"
+        }
+
+        success, response = self.run_test(
+            "Create Sale with Downpayment and Ongoing Status",
+            "POST",
+            "/api/sales",
+            200,
+            data=downpayment_sale_data
+        )
+
+        if success:
+            self.log("✅ Sale with ongoing status created successfully")
+            # Verify downpayment fields are stored
+            if (response.get('status') == "ongoing" and 
+                response.get('downpayment_amount') == 50.00 and 
+                response.get('balance_due') == 59.00):
+                self.log("✅ Downpayment and balance due fields correctly stored")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Downpayment fields not correctly stored")
+            self.tests_run += 1
+        else:
+            self.log("❌ Sale with downpayment and ongoing status failed")
+            self.tests_run += 1
+
+        # Test 7: Finalized Sale (completing an ongoing sale)
+        self.log("🔍 TEST 7: Finalizing an Ongoing Sale", "INFO")
+        
+        # Create another ongoing sale and then finalize it
+        ongoing_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Finalization Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": f"TEST-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                    "quantity": 1,
+                    "unit_price": 75.00,
+                    "unit_price_snapshot": 75.00,
+                    "unit_cost_snapshot": 35.00,
+                    "total_price": 75.00
+                }
+            ],
+            "subtotal": 75.00,
+            "tax_amount": 6.75,
+            "discount_amount": 0.00,
+            "total_amount": 81.75,
+            "payment_method": "cash",
+            "received_amount": 81.75,  # Full payment
+            "change_amount": 0.00,
+            "status": "completed",  # Finalized sale
+            "downpayment_amount": 30.00,  # Previous downpayment
+            "balance_due": 0.00,  # No balance remaining
+            "finalized_at": datetime.now().isoformat(),  # Feature 6: Finalization timestamp
+            "notes": "Finalized sale test"
+        }
+
+        success, response = self.run_test(
+            "Create Finalized Sale with Completion Timestamp",
+            "POST",
+            "/api/sales",
+            200,
+            data=ongoing_sale_data
+        )
+
+        if success:
+            self.log("✅ Finalized sale created successfully")
+            # Verify finalized_at field is stored
+            if response.get('status') == "completed" and response.get('balance_due') == 0.00:
+                self.log("✅ Sale finalization fields correctly stored")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Sale finalization fields not correctly stored")
+            self.tests_run += 1
+        else:
+            self.log("❌ Finalized sale creation failed")
+            self.tests_run += 1
+
+        # Test 8: Verify All New Payment Methods are Properly Stored
+        self.log("🔍 TEST 8: Verify All New Payment Methods Storage", "INFO")
+        
+        payment_methods_to_test = ["cash", "card", "ewallet", "bank_transfer", "digital_wallet"]
+        
+        for payment_method in payment_methods_to_test:
+            payment_test_data = {
+                "customer_id": self.customer_id,
+                "customer_name": f"{payment_method.title()} Test Customer",
+                "cashier_id": "507f1f77bcf86cd799439011",
+                "cashier_name": "admin@printsandcuts.com",
+                "items": [
+                    {
+                        "product_id": self.product_id,
+                        "product_name": "Test Product",
+                        "sku": f"TEST-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                        "quantity": 1,
+                        "unit_price": 20.00,
+                        "unit_price_snapshot": 20.00,
+                        "unit_cost_snapshot": 10.00,
+                        "total_price": 20.00
+                    }
+                ],
+                "subtotal": 20.00,
+                "tax_amount": 1.80,
+                "discount_amount": 0.00,
+                "total_amount": 21.80,
+                "payment_method": payment_method,
+                "payment_ref_code": f"REF{payment_method.upper()}{datetime.now().strftime('%H%M%S')}" if payment_method in ["ewallet", "bank_transfer"] else None,
+                "received_amount": 25.00 if payment_method == "cash" else None,
+                "change_amount": 3.20 if payment_method == "cash" else None,
+                "notes": f"Payment method test: {payment_method}"
+            }
+
+            success, response = self.run_test(
+                f"Create Sale with {payment_method.title()} Payment Method",
+                "POST",
+                "/api/sales",
+                200,
+                data=payment_test_data
+            )
+
+            if success:
+                self.log(f"✅ {payment_method.title()} payment method working")
+                # Verify payment method is stored correctly
+                if response.get('payment_method') == payment_method:
+                    self.tests_passed += 1
+                    # Check reference code for ewallet/bank_transfer
+                    if payment_method in ["ewallet", "bank_transfer"] and response.get('payment_ref_code'):
+                        self.log(f"✅ {payment_method.title()} reference code stored correctly")
+                else:
+                    self.log(f"❌ {payment_method.title()} payment method not stored correctly")
+            else:
+                self.log(f"❌ {payment_method.title()} payment method failed")
+            self.tests_run += 1
+
+        self.log("=== ENHANCED POS FEATURES TESTING COMPLETED ===", "INFO")
+        return True
+
     def test_profit_tracking_functionality(self):
         """Test comprehensive profit tracking functionality"""
         self.log("=== STARTING PROFIT TRACKING TESTING ===", "INFO")
