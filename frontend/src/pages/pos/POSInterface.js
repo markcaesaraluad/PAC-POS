@@ -62,6 +62,7 @@ const POSInterface = () => {
   const [modalDiscountAmount, setModalDiscountAmount] = useState('');
   const [modalDiscountType, setModalDiscountType] = useState('amount');
   const [modalNotes, setModalNotes] = useState('');
+  const [modalPaymentRef, setModalPaymentRef] = useState(''); // Feature 7: Reference code for EWallet/Bank
   const [receivedAmount, setReceivedAmount] = useState('');
   
   // Barcode state
