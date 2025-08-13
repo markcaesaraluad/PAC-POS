@@ -1492,6 +1492,88 @@ const POSInterface = () => {
         </div>
       </div>
 
+      {/* Feature 3: Price Inquiry Modal */}
+      {showPriceInquiry && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] flex flex-col">
+            <div className="p-6 border-b">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Price Inquiry</h3>
+                <button
+                  onClick={closePriceInquiry}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <XMarkIcon className="h-6 w-6" />
+                </button>
+              </div>
+              
+              <div className="mt-4">
+                <div className="relative">
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search by product name, SKU, or barcode..."
+                    value={priceInquiryTerm}
+                    onChange={(e) => {
+                      setPriceInquiryTerm(e.target.value);
+                      searchPriceInquiry(e.target.value);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        closePriceInquiry();
+                      }
+                    }}
+                    className="input pl-10 w-full"
+                    autoFocus
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6">
+              {priceInquiryResults.length === 0 ? (
+                <div className="text-center text-gray-500 py-8">
+                  {priceInquiryTerm.length < 2 ? (
+                    <p>Type at least 2 characters to search...</p>
+                  ) : (
+                    <p>No products found matching "{priceInquiryTerm}"</p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {priceInquiryResults.map(product => (
+                    <div key={product.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900">{product.name}</h4>
+                          <div className="text-sm text-gray-500 mt-1">
+                            <p>SKU: {product.sku}</p>
+                            {product.barcode && <p>Barcode: {product.barcode}</p>}
+                          </div>
+                        </div>
+                        <div className="text-right ml-4">
+                          <div className="text-lg font-semibold text-blue-600">
+                            {formatAmount(product.price)}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            Stock: {product.quantity || 0}
+                          </div>
+                          {product.cost && (
+                            <div className="text-xs text-gray-400">
+                              Cost: {formatAmount(product.cost)}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Payment Modal - HOTFIX 6: Fixed overflow issue */}
       {showPaymentModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
