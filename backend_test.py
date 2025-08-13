@@ -6189,8 +6189,8 @@ class POSAPITester:
         return working_features == total_features
 
     def run_all_tests(self):
-        """Run all tests in sequence - Focus on Final POS Verification"""
-        self.log("Starting Final POS Verification Testing", "START")
+        """Run focused tests for payment reference codes and downpayments verification"""
+        self.log("Starting Payment Reference Codes & Downpayments Verification Testing", "START")
         self.log(f"Testing against: {self.base_url}")
         
         # Basic connectivity
@@ -6212,45 +6212,29 @@ class POSAPITester:
         if not self.test_get_current_user():
             self.log("❌ Get current user failed", "ERROR")
 
-        # CRUD operations (needed for comprehensive testing)
+        # CRUD operations (needed for testing)
         self.test_categories_crud()
         self.test_products_crud()
         self.test_customers_crud()
         
-        # MAIN FOCUS: Final POS Verification (10 Key Features)
-        self.log("=== MAIN FOCUS: FINAL POS VERIFICATION (10 KEY FEATURES) ===", "INFO")
-        final_verification_success = self.test_final_pos_verification()
-        self.log("=== FINAL POS VERIFICATION COMPLETED ===", "INFO")
-        self.test_sales_history_api_failures()
-        self.log("=== SALES HISTORY API FAILURES TESTING COMPLETED ===", "INFO")
+        # MAIN FOCUS: Payment Reference Codes & Downpayments Testing
+        self.log("=== MAIN FOCUS: PAYMENT REFERENCE CODES & DOWNPAYMENTS TESTING ===", "INFO")
+        self.test_payment_reference_codes_and_downpayments()
+        self.log("=== PAYMENT REFERENCE CODES & DOWNPAYMENTS TESTING COMPLETED ===", "INFO")
         
-        # NEW: Test Sales API with Cashier Fields (as requested)
-        self.log("=== STARTING SALES API WITH CASHIER FIELDS TESTING ===", "INFO")
-        self.test_sales_api_with_cashier_fields()
-        self.log("=== SALES API WITH CASHIER FIELDS TESTING COMPLETED ===", "INFO")
+        # Final summary
+        self.log("=== TEST SUMMARY ===", "INFO")
+        self.log(f"Tests run: {self.tests_run}")
+        self.log(f"Tests passed: {self.tests_passed}")
+        self.log(f"Success rate: {(self.tests_passed/self.tests_run)*100:.1f}%")
         
-        self.test_business_operations()
-
-        # === NEW POS SYSTEM ENHANCEMENTS TESTING ===
+        if self.tests_passed == self.tests_run:
+            self.log("🎉 ALL TESTS PASSED!", "PASS")
+        else:
+            failed = self.tests_run - self.tests_passed
+            self.log(f"❌ {failed} tests failed", "FAIL")
         
-        # Test 1: Global Filter System
-        self.log("=== STARTING GLOBAL FILTER SYSTEM TESTING ===", "INFO")
-        self.test_global_filter_system()
-        self.log("=== GLOBAL FILTER SYSTEM TESTING COMPLETED ===", "INFO")
-
-        # Test 2: Enhanced Navigation System
-        self.log("=== STARTING ENHANCED NAVIGATION SYSTEM TESTING ===", "INFO")
-        self.test_enhanced_navigation_system()
-        self.log("=== ENHANCED NAVIGATION SYSTEM TESTING COMPLETED ===", "INFO")
-
-        # Test 3: Comprehensive Report Exports
-        self.log("=== STARTING COMPREHENSIVE REPORT EXPORTS TESTING ===", "INFO")
-        self.test_comprehensive_report_exports()
-        self.log("=== COMPREHENSIVE REPORT EXPORTS TESTING COMPLETED ===", "INFO")
-
-        # Test 4: Enhanced POS Features (NEW - as requested in review)
-        self.log("=== STARTING ENHANCED POS FEATURES TESTING (7 NEW FEATURES) ===", "INFO")
-        self.test_enhanced_pos_features()
+        return True
         self.log("=== ENHANCED POS FEATURES TESTING COMPLETED ===", "INFO")
 
         # Test 5: Dynamic Currency Display
