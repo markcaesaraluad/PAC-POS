@@ -282,6 +282,54 @@ const POSInterface = () => {
     };
   }, [searchTerm, handleBarcodeScanned]);
 
+  // Feature 4: Global Hotkeys F6-F9
+  useEffect(() => {
+    const handleGlobalHotkeys = (e) => {
+      // Skip if user is typing in input fields, textareas, or if modals are open
+      const activeElement = document.activeElement;
+      const isInputField = activeElement?.tagName?.toLowerCase() === 'input' || 
+                          activeElement?.tagName?.toLowerCase() === 'textarea' ||
+                          activeElement?.tagName?.toLowerCase() === 'select';
+      
+      // Skip if payment modal is open (except for input fields within the modal)
+      if (showPaymentModal && !activeElement?.closest('.payment-modal')) return;
+      if (showPriceInquiry) return;
+      
+      // Skip if typing in non-payment input fields
+      if (isInputField && !showPaymentModal) return;
+
+      switch (e.key) {
+        case 'F6':
+          e.preventDefault();
+          if (cart.length === 0 || isProcessing) return;
+          openPaymentModal();
+          break;
+        case 'F7':
+          e.preventDefault();
+          if (cart.length === 0) return;
+          holdOrder();
+          break;
+        case 'F8':
+          e.preventDefault();
+          if (cart.length === 0) return;
+          clearCart();
+          break;
+        case 'F9':
+          e.preventDefault();
+          setShowPriceInquiry(true);
+          break;
+        default:
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleGlobalHotkeys);
+    
+    return () => {
+      document.removeEventListener('keydown', handleGlobalHotkeys);
+    };
+  }, [cart.length, isProcessing, showPaymentModal, showPriceInquiry]);
+
   // Initial focus on barcode input
   useEffect(() => {
     if (barcodeInputRef.current && !loading) {
