@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Depends, Query
+from fastapi import APIRouter, HTTPException, status, Depends, Query, Request
 from typing import List, Optional
 from models import SaleCreate, SaleResponse, SaleItem
 from auth_utils import get_any_authenticated_user
