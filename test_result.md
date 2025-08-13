@@ -587,6 +587,66 @@ test_plan:
         agent: "testing"
         comment: "🎉 COMPREHENSIVE 7 ENHANCED POS FEATURES TESTING COMPLETED - EXCELLENT RESULTS: Conducted thorough end-to-end testing of all 7 enhanced POS features with 71.4% success rate (5/7 features fully working). ✅ FULLY WORKING FEATURES: 1) Payment Modal Enter-to-Confirm - Enter key triggers payment confirmation perfectly, console logs show proper validation flow with 'Payment confirmed successfully', 2) EWallet/Bank Payment Method - 3rd payment option available, reference code field functional, transactions complete successfully with proper payment_ref_code handling, 3) Price Inquiry Modal - Opens via F9 hotkey and button, search by name/SKU/barcode working (36 results for 'test'), minimum 2 characters validation working, ESC key closes modal correctly, 4) Receipt Logo on All Flows - Business name and custom header/footer appear in receipts ('Welcome to Prints & Cuts Tagum'), receipt generation working correctly with proper business context, 5) Scrollable Cart & Sticky Actions - Cart area scrollable with overflow-y-auto class, Pay/Hold/Clear buttons remain visible and accessible at bottom. ⚠️ PARTIAL FUNCTIONALITY: 6) Global Hotkeys F6-F9 - Shortcuts legend visible but hotkeys not triggering properly in testing environment (may be browser/focus related), 7) Downpayment & On-Going Sales - Downpayment field exists and Balance Due calculation shows correctly, but validation logic has issues with partial payments (console shows 'Transaction failed: Secondary payment validation failed' for ₱20 downpayment on ₱127.92 total). TECHNICAL VERIFICATION: Business context properly loaded (businessExists: true, hasSettings: true), auto-print functionality working (Auto-print success via enhanced printer service), payment validation working for normal payments, receipt generation includes proper business info and custom header/footer. PRODUCTION READINESS: Core POS functionality is stable and ready for production use. The 2 partial features need minor adjustments but don't block core operations. Authentication working perfectly, 50 products loading correctly, cart functionality operational, payment processing successful for standard transactions."
 
+  - task: "Sales with Status Support ('completed', 'ongoing')"
+    implemented: true
+    working: true
+    file: "backend/routes/sales.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Sales with Status Support working perfectly: Both 'completed' and 'ongoing' status values are correctly stored and returned in sales API responses. Status field is consistently present in all sales records (47 completed, 3 ongoing sales found). Sales creation with different status values working correctly."
+
+  - task: "Sales History with Status Filtering"
+    implemented: true
+    working: true
+    file: "backend/routes/sales.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Sales History with Status Filtering confirmed: Sales API returns proper status fields enabling frontend filtering. All 50 sales have status field - status filtering support confirmed. Frontend can filter completed vs ongoing sales from API response."
+
+  - task: "Payment Reference Codes for EWallet/Bank"
+    implemented: true
+    working: true
+    file: "backend/routes/sales.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Payment Reference Codes working correctly: EWallet payments with payment_ref_code 'EWALLET-REF-123456789' and Bank transfer payments with payment_ref_code 'BANK-TXN-987654321' are correctly stored and returned in sales list. Reference codes properly persisted and retrievable."
+
+  - task: "Downpayment Fields for Ongoing Sales"
+    implemented: true
+    working: true
+    file: "backend/routes/sales.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Downpayment Fields working correctly: Ongoing sales with downpayment_amount (50.00), balance_due (62.69), status ('ongoing'), and finalized_at (None) are correctly stored and returned. Completed sales properly set finalized_at timestamp. All downpayment fields properly handled."
+
+  - task: "Product Search for Price Inquiry Modal"
+    implemented: true
+    working: true
+    file: "backend/routes/products.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Product Search for Price Inquiry working perfectly: Product search by name returned 20 results, by SKU returned 9 results, barcode lookup working correctly, and all products have required fields (id, name, sku, price) for Price Inquiry modal. Search functionality fully supports the Price Inquiry feature."
+
 agent_communication:
   - agent: "testing"
     message: "🎉 NEW POS FEATURES TESTING COMPLETED - MOSTLY SUCCESSFUL: Comprehensive testing of new POS features shows excellent results with one critical issue. ✅ WORKING PERFECTLY: Business Settings API (receipt header/footer), Business Logo Upload/Retrieval, Authentication & Business Context, Products API for Barcode Scanning, Database Connectivity (80% success). ❌ CRITICAL ISSUE: Sales API returning 500 Internal Server Error blocking enhanced transaction data testing and POS transaction processing. All other new POS features are production-ready."
