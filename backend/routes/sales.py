@@ -236,10 +236,15 @@ async def get_sales(
             discount_amount=sale["discount_amount"],
             total_amount=sale["total_amount"],
             payment_method=sale["payment_method"],
+            payment_ref_code=sale.get("payment_ref_code"),  # Feature 7
             received_amount=sale.get("received_amount"),
             change_amount=sale.get("change_amount"),
             notes=sale.get("notes"),
             status=sale.get("status", "completed"),
+            # Feature 6: Downpayment fields
+            downpayment_amount=sale.get("downpayment_amount"),
+            balance_due=sale.get("balance_due"),
+            finalized_at=sale.get("finalized_at"),
             created_at=sale.get("created_at", current_time),
             updated_at=sale.get("updated_at", current_time)
         )
