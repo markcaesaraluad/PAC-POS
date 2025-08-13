@@ -662,8 +662,8 @@ const POSInterface = () => {
     
     // HOTFIX 7: Fixed payment validation logic with proper rounding
     // For sales, payment validation is already done in confirmPayment()
-    // But double-check here for safety
-    if (transactionMode === 'sale' && paymentMethod === 'cash') {
+    // But double-check here for safety - EXCEPT for downpayment sales
+    if (transactionMode === 'sale' && paymentMethod === 'cash' && !isDownpaymentSale) {
       const subtotal = parseFloat(totals.subtotal);
       const discount = parseFloat(totals.discount) || 0;
       const taxAmount = parseFloat(totals.taxAmount);
@@ -676,7 +676,8 @@ const POSInterface = () => {
         requiredAmount, 
         finalReceivedAmount,
         originalReceivedAmount: receivedAmount,
-        validatedReceivedAmount: validatedReceivedAmount
+        validatedReceivedAmount: validatedReceivedAmount,
+        isDownpaymentSale: isDownpaymentSale
       });
       
       // Round to 2 decimal places for proper comparison
@@ -688,6 +689,12 @@ const POSInterface = () => {
         toast.error(`Insufficient payment. Required: ${formatAmount(roundedRequired)}, Received: ${formatAmount(roundedReceived)}`);
         return;
       }
+    } else if (isDownpaymentSale) {
+      console.log('Skipping secondary payment validation for downpayment sale', {
+        isDownpaymentSale,
+        finalReceivedAmount,
+        downpaymentAmount
+      });
     }
 
     console.log('Starting transaction processing...');
