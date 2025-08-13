@@ -10,7 +10,7 @@ import json
 from datetime import datetime
 
 class QuickHealthCheck:
-    def __init__(self, base_url="https://d519676e-f0c2-4fde-9a8e-a1574c01622c.preview.emergentagent.com"):
+    def __init__(self, base_url="https://pos-enhance.preview.emergentagent.com"):
         self.base_url = base_url
         self.super_admin_token = None
         self.business_admin_token = None

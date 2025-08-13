@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 
 class Phase1Tester:
-    def __init__(self, base_url="https://d519676e-f0c2-4fde-9a8e-a1574c01622c.preview.emergentagent.com"):
+    def __init__(self, base_url="https://pos-enhance.preview.emergentagent.com"):
         self.base_url = base_url
         self.token = None
         self.tests_run = 0
