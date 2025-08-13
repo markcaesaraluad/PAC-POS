@@ -55,6 +55,11 @@ const POSInterface = () => {
   const [taxRate, setTaxRate] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   
+  // Feature 3: Price Inquiry Modal state
+  const [showPriceInquiry, setShowPriceInquiry] = useState(false);
+  const [priceInquiryTerm, setPriceInquiryTerm] = useState('');
+  const [priceInquiryResults, setPriceInquiryResults] = useState([]);
+  
   // Payment modal state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [modalPaymentMethod, setModalPaymentMethod] = useState('cash');
