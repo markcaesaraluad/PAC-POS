@@ -1827,6 +1827,20 @@ const POSInterface = () => {
                   />
                 </div>
 
+                {/* Feature 6: Print Order Slip Option */}
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="printOrderSlip"
+                    checked={printOrderSlip}
+                    onChange={(e) => setPrintOrderSlip(e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="printOrderSlip" className="ml-2 block text-sm text-gray-700">
+                    Print Order Slip
+                  </label>
+                </div>
+
                 {/* Payment Summary */}
                 <div className="bg-gray-50 p-3 rounded-md">
                   <div className="space-y-1 text-sm">
