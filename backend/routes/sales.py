@@ -127,10 +127,15 @@ async def create_sale(
         discount_amount=sale_doc["discount_amount"],
         total_amount=sale_doc["total_amount"],
         payment_method=sale_doc["payment_method"],
+        payment_ref_code=sale_doc.get("payment_ref_code"),  # Feature 7
         received_amount=sale_doc.get("received_amount"),
         change_amount=sale_doc.get("change_amount"),
         notes=sale_doc.get("notes"),
         status=sale_doc["status"],
+        # Feature 6: Downpayment fields
+        downpayment_amount=sale_doc.get("downpayment_amount"),
+        balance_due=sale_doc.get("balance_due"),
+        finalized_at=sale_doc.get("finalized_at"),
         created_at=sale_doc["created_at"],
         updated_at=sale_doc["updated_at"]
     )
