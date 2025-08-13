@@ -5945,7 +5945,12 @@ class POSAPITester:
         self.test_comprehensive_report_exports()
         self.log("=== COMPREHENSIVE REPORT EXPORTS TESTING COMPLETED ===", "INFO")
 
-        # Test 4: Dynamic Currency Display
+        # Test 4: Enhanced POS Features (NEW - as requested in review)
+        self.log("=== STARTING ENHANCED POS FEATURES TESTING (7 NEW FEATURES) ===", "INFO")
+        self.test_enhanced_pos_features()
+        self.log("=== ENHANCED POS FEATURES TESTING COMPLETED ===", "INFO")
+
+        # Test 5: Dynamic Currency Display
         self.log("=== STARTING DYNAMIC CURRENCY DISPLAY TESTING ===", "INFO")
         self.test_dynamic_currency_display()
         self.log("=== DYNAMIC CURRENCY DISPLAY TESTING COMPLETED ===", "INFO")
