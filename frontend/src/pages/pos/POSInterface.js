@@ -693,7 +693,7 @@ const POSInterface = () => {
     setIsProcessing(true);
 
     try {
-      // HOTFIX 6: Enhanced transaction data to ensure proper saving
+      // HOTFIX 6: Enhanced transaction data to ensure proper saving + Feature 6: Downpayment support
       const transactionData = {
         customer_id: selectedCustomer?.id || null,
         cashier_id: user?.id || null,
@@ -711,11 +711,15 @@ const POSInterface = () => {
         total_amount: parseFloat(totals.total),
         payment_method: paymentMethod,
         payment_ref_code: paymentMethod === 'ewallet' && modalPaymentRef?.trim() ? modalPaymentRef.trim() : null, // Feature 7
-        received_amount: paymentMethod === 'cash' ? finalReceivedAmount : parseFloat(totals.total),
-        change_amount: paymentMethod === 'cash' ? Math.max(0, finalReceivedAmount - parseFloat(totals.total)) : 0,
+        received_amount: finalReceivedAmount,
+        change_amount: !isDownpaymentSale && paymentMethod === 'cash' ? Math.max(0, finalReceivedAmount - parseFloat(totals.total)) : 0,
         notes: notes.trim() || null,
         created_at: new Date().toISOString(),
-        status: 'completed' // Ensure status is set for Sales History
+        // Feature 6: Downpayment fields
+        status: isDownpaymentSale ? 'ongoing' : 'completed',
+        downpayment_amount: isDownpaymentSale ? downpaymentAmount : null,
+        balance_due: isDownpaymentSale ? parseFloat(totals.total) - downpaymentAmount : null,
+        finalized_at: isDownpaymentSale ? null : new Date().toISOString()
       };
 
       let response;
