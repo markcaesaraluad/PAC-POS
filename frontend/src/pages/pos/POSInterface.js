@@ -1179,6 +1179,7 @@ const POSInterface = () => {
     setModalNotes(notes);
     setModalPaymentRef(''); // Feature 7: Reset reference code
     setModalDownpayment(''); // Feature 6: Reset downpayment
+    setPrintOrderSlip(false); // Feature 6: Reset order slip checkbox
     
     setShowPaymentModal(true);
   };
