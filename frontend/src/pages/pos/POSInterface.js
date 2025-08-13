@@ -765,6 +765,12 @@ const POSInterface = () => {
             reason: 'Condition evaluated to false'
           });
         }
+
+        // Feature 6: Print Order Slip if requested
+        if (printOrderSlip) {
+          console.log('Printing order slip for transaction:', response.data);
+          await handleOrderSlipPrint(response.data, isDownpaymentSale);
+        }
       } else {
         response = await invoicesAPI.createInvoice(transactionData);
         toast.success(`Invoice created! Invoice #${response.data.invoice_number}`);
