@@ -551,6 +551,8 @@ const POSInterface = () => {
 
   const confirmPayment = () => {
     const totals = calculateModalTotals();
+    const downpaymentAmount = parseFloat(modalDownpayment) || 0;
+    const totalAmount = parseFloat(totals.total);
     
     // Get the current value from multiple sources to ensure we have the right amount
     const inputElement = receivedAmountInputRef.current;
@@ -563,23 +565,35 @@ const POSInterface = () => {
       inputRefValue: inputValue,
       fallbackInputValue: fallbackInputValue,
       modalPaymentMethod: modalPaymentMethod,
+      modalDownpayment: modalDownpayment,
+      downpaymentAmount: downpaymentAmount,
       totals: totals
     });
     
     let receivedAmountForTransaction = null;
+    let isDownpaymentSale = false;
     
-    // HOTFIX: Use multiple fallback sources for the received amount
-    if (modalPaymentMethod === 'cash') {
-      // Priority order: modalReceivedAmount state -> ref value -> DOM query -> fallback to 0
+    // Feature 6: Handle downpayment logic
+    if (downpaymentAmount > 0) {
+      if (downpaymentAmount >= totalAmount) {
+        // If downpayment is >= total, treat as full payment
+        receivedAmountForTransaction = downpaymentAmount;
+        isDownpaymentSale = false;
+      } else {
+        // Partial payment (downpayment) - create ongoing sale
+        receivedAmountForTransaction = downpaymentAmount;
+        isDownpaymentSale = true;
+      }
+    } else if (modalPaymentMethod === 'cash') {
+      // Normal cash payment validation
       const receivedStr = modalReceivedAmount || inputValue || fallbackInputValue || '0';
       const received = parseFloat(receivedStr) || 0;
-      const total = parseFloat(totals.total);
       
       console.log('Payment validation final:', {
         receivedStr: receivedStr,
         received: received,
-        total: total,
-        comparison: received >= total,
+        total: totalAmount,
+        comparison: received >= totalAmount,
         sources: {
           state: modalReceivedAmount,
           ref: inputValue,
@@ -590,14 +604,17 @@ const POSInterface = () => {
       // Use epsilon comparison for floating point precision
       const epsilon = 0.01; // 1 cent tolerance
       
-      if (received < (total - epsilon)) {
-        toast.error(`Insufficient payment. Required: ${formatAmount(total)}, Received: ${formatAmount(received)}`);
+      if (received < (totalAmount - epsilon)) {
+        toast.error(`Insufficient payment. Required: ${formatAmount(totalAmount)}, Received: ${formatAmount(received)}`);
         console.log('Payment failed - insufficient amount');
         return;
       }
       
       receivedAmountForTransaction = received;
       setReceivedAmount(received);
+    } else {
+      // Non-cash payment (card, ewallet) - assume full payment
+      receivedAmountForTransaction = totalAmount;
     }
     
     // Apply modal values to main transaction
@@ -609,10 +626,10 @@ const POSInterface = () => {
     localStorage.setItem('pos-discount-type', modalDiscountType);
     
     setShowPaymentModal(false);
-    console.log('Payment confirmed successfully');
+    console.log('Payment confirmed successfully', { isDownpaymentSale, receivedAmountForTransaction });
     
-    // Proceed with the transaction, passing the validated received amount
-    handleTransaction(receivedAmountForTransaction);
+    // Proceed with the transaction, passing the validated received amount and downpayment info
+    handleTransaction(receivedAmountForTransaction, isDownpaymentSale, downpaymentAmount);
   };
 
 
