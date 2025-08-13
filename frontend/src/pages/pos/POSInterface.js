@@ -1527,6 +1527,29 @@ const POSInterface = () => {
                   </div>
                 )}
 
+                {/* EWallet/Bank Payment Fields */}
+                {modalPaymentMethod === 'ewallet' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Reference Code (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={modalPaymentRef}
+                      onChange={(e) => setModalPaymentRef(e.target.value)}
+                      className="input w-full text-sm"
+                      placeholder="Enter reference code..."
+                      onKeyDown={(e) => {
+                        // Feature 1: Enter-to-Confirm Payment (also apply to ref code field)
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          confirmPayment();
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+
                 {/* Notes */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
