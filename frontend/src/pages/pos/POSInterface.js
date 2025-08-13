@@ -1133,7 +1133,8 @@ const POSInterface = () => {
           </div>
 
           <div>
-            <div class="bold">${receiptData.transaction_type}: ${receiptData.transaction_number}</div>
+            <div class="bold">${receiptData.isOrderSlip ? 'ORDER SLIP' : receiptData.transaction_type}: ${receiptData.transaction_number}</div>
+            ${receiptData.isOrderSlip && receiptData.isDownpayment ? '<div class="bold" style="font-size: 10px; color: #d97706;">DOWNPAYMENT ORDER</div>' : ''}
             <div style="font-size: 9px;">Date: ${new Date(receiptData.timestamp).toLocaleString()}</div>
             <div style="font-size: 9px;">Cashier: ${receiptData.cashier_name || 'System'}</div>
             ${receiptData.customer ? `<div style="font-size: 9px;">Customer: ${receiptData.customer.name}</div>` : '<div style="font-size: 9px;">Customer: Walk-in</div>'}
