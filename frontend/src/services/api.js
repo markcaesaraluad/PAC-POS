@@ -134,6 +134,7 @@ export const salesAPI = {
   getSales: (params = {}) => apiClient.get('/api/sales', { params }),
   getSale: (id) => apiClient.get(`/api/sales/${id}`),
   createSale: (saleData) => apiClient.post('/api/sales', saleData),
+  updateSale: (id, updateData) => apiClient.put(`/api/sales/${id}`, updateData), // Feature 5: Update sale for settlements
   getDailySummary: (date) => apiClient.get('/api/sales/daily-summary/stats', { params: { date } }),
 };
 
