@@ -621,8 +621,31 @@ const SalesHistory = () => {
 
   // Feature 5: Handle settle payment for ongoing sales
   const handleSettlePayment = (ongoingSale) => {
-    // TODO: Open pre-filled payment modal for settling
-    toast('Settle payment functionality will be implemented next');
+    // Navigate to POS interface with pre-filled data for settling
+    const settleData = {
+      mode: 'settle',
+      saleId: ongoingSale.id,
+      originalSale: ongoingSale,
+      remainingBalance: ongoingSale.balance_due || 0,
+      items: ongoingSale.items || [],
+      customer: ongoingSale.customer_id ? { 
+        id: ongoingSale.customer_id, 
+        name: ongoingSale.customer_name 
+      } : null
+    };
+    
+    // Store settle data in localStorage for POS interface to pick up
+    localStorage.setItem('pos-settle-data', JSON.stringify(settleData));
+    
+    // Navigate to POS interface
+    navigate('/pos', { 
+      state: { 
+        settleMode: true, 
+        settleData: settleData 
+      } 
+    });
+    
+    toast.success('Redirecting to POS to complete payment...');
   };
 
   return (
