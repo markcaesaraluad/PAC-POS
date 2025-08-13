@@ -634,7 +634,7 @@ const POSInterface = () => {
 
 
 
-  const handleTransaction = async (validatedReceivedAmount = null) => {
+  const handleTransaction = async (validatedReceivedAmount = null, isDownpaymentSale = false, downpaymentAmount = 0) => {
     console.log('handleTransaction called with:', {
       cartLength: cart.length,
       transactionMode: transactionMode,
@@ -642,7 +642,9 @@ const POSInterface = () => {
       receivedAmount: receivedAmount,
       validatedReceivedAmount: validatedReceivedAmount,
       modalReceivedAmount: modalReceivedAmount,
-      modalPaymentMethod: modalPaymentMethod
+      modalPaymentMethod: modalPaymentMethod,
+      isDownpaymentSale: isDownpaymentSale,
+      downpaymentAmount: downpaymentAmount
     });
 
     if (cart.length === 0) {
