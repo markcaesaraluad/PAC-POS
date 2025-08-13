@@ -619,6 +619,12 @@ const SalesHistory = () => {
     return <LoadingSpinner message="Loading transaction history..." />;
   }
 
+  // Feature 5: Handle settle payment for ongoing sales
+  const handleSettlePayment = (ongoingSale) => {
+    // TODO: Open pre-filled payment modal for settling
+    toast('Settle payment functionality will be implemented next');
+  };
+
   return (
     <div className="space-y-6">
       <div>
