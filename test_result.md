@@ -491,9 +491,11 @@ metadata:
 
 test_plan:
   current_focus:
-    - "FINAL TRANSACTION PROCESSING & AUTOPRINT RELIABILITY VERIFICATION"
+    - "7 ENHANCED POS FEATURES COMPREHENSIVE TESTING"
   stuck_tasks: 
     - "BUSINESS CONTEXT LOADING ISSUE IN POS INTERFACE"
+    - "Global Hotkeys F6-F9 - Focus/Event Handling Issues"
+    - "Downpayment Validation Logic - Partial Payment Issues"
   test_all: false
   test_priority: "high_first"
 
