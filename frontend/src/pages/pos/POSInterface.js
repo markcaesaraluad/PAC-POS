@@ -72,6 +72,9 @@ const POSInterface = () => {
   const [printOrderSlip, setPrintOrderSlip] = useState(false); // Feature 6: Print Order Slip checkbox
   const [receivedAmount, setReceivedAmount] = useState('');
   
+  // Feature 5: Settlement state
+  const [settleInfo, setSettleInfo] = useState(null);
+  
   // Barcode state
   const [heldOrders, setHeldOrders] = useState([]);
   
