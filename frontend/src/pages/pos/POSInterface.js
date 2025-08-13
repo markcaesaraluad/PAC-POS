@@ -420,8 +420,7 @@ const POSInterface = () => {
     setSelectedCustomer(null);
     setDiscountAmount('');
     setNotes('');
-    setReceivedAmount('');
-    setPaymentMethod('cash');
+    toast.success('Cart cleared');
   };
 
   const holdOrder = () => {
