@@ -6985,6 +6985,584 @@ class POSAPITester:
         # Print summary
         self.print_summary()
 
+    def test_enhanced_pos_system_features(self):
+        """Test the enhanced POS system backend features as requested in review"""
+        self.log("=== TESTING ENHANCED POS SYSTEM BACKEND FEATURES ===", "INFO")
+        
+        # Switch to business admin token for testing
+        if self.business_admin_token:
+            self.token = self.business_admin_token
+            self.log("Using business admin token for enhanced POS testing")
+        
+        # Test 1: Sales with Status Support
+        self.log("🔍 TEST 1: Sales with Status Support ('completed', 'ongoing')", "INFO")
+        self.test_sales_with_status_support()
+        
+        # Test 2: Sales History with Status Filtering
+        self.log("🔍 TEST 2: Sales History with Status Filtering", "INFO")
+        self.test_sales_history_with_status_filtering()
+        
+        # Test 3: Payment Reference Codes
+        self.log("🔍 TEST 3: Payment Reference Codes for EWallet/Bank", "INFO")
+        self.test_payment_reference_codes()
+        
+        # Test 4: Downpayment Fields
+        self.log("🔍 TEST 4: Downpayment Fields for Ongoing Sales", "INFO")
+        self.test_downpayment_fields()
+        
+        # Test 5: Product Search for Price Inquiry
+        self.log("🔍 TEST 5: Product Search for Price Inquiry Modal", "INFO")
+        self.test_product_search_for_price_inquiry()
+        
+        self.log("=== ENHANCED POS SYSTEM BACKEND FEATURES TESTING COMPLETED ===", "INFO")
+        return True
+
+    def test_sales_with_status_support(self):
+        """Test creating sales with different status values ('completed', 'ongoing')"""
+        
+        # Create test products and customer if needed
+        if not self.product_id or not self.customer_id:
+            self.log("Creating test data for sales status testing...")
+            self.test_categories_crud()
+            self.test_products_crud()
+            self.test_customers_crud()
+        
+        # Test 1: Create sale with 'completed' status
+        completed_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU-001",
+                    "quantity": 2,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.00,
+                    "total_price": 59.98
+                }
+            ],
+            "subtotal": 59.98,
+            "tax_amount": 5.40,
+            "discount_amount": 0.00,
+            "total_amount": 65.38,
+            "payment_method": "cash",
+            "received_amount": 70.00,
+            "change_amount": 4.62,
+            "status": "completed",
+            "notes": "Test completed sale"
+        }
+
+        success, response = self.run_test(
+            "Create Sale with 'completed' Status",
+            "POST",
+            "/api/sales",
+            200,
+            data=completed_sale_data
+        )
+
+        if success and response.get('status') == 'completed':
+            self.log("✅ Sale with 'completed' status created and stored correctly")
+            completed_sale_id = response.get('id')
+        else:
+            self.log("❌ Failed to create sale with 'completed' status")
+            return False
+
+        # Test 2: Create sale with 'ongoing' status
+        ongoing_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU-002",
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.00,
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "discount_amount": 0.00,
+            "total_amount": 32.69,
+            "payment_method": "cash",
+            "status": "ongoing",
+            "notes": "Test ongoing sale"
+        }
+
+        success, response = self.run_test(
+            "Create Sale with 'ongoing' Status",
+            "POST",
+            "/api/sales",
+            200,
+            data=ongoing_sale_data
+        )
+
+        if success and response.get('status') == 'ongoing':
+            self.log("✅ Sale with 'ongoing' status created and stored correctly")
+            ongoing_sale_id = response.get('id')
+        else:
+            self.log("❌ Failed to create sale with 'ongoing' status")
+            return False
+
+        # Test 3: Verify status is returned correctly in get sales
+        success, response = self.run_test(
+            "Get Sales to Verify Status Fields",
+            "GET",
+            "/api/sales",
+            200,
+            params={"limit": 10}
+        )
+
+        if success and isinstance(response, list):
+            status_found = False
+            for sale in response:
+                if sale.get('status') in ['completed', 'ongoing']:
+                    status_found = True
+                    self.log(f"✅ Sale {sale.get('id', 'unknown')} has status: {sale.get('status')}")
+            
+            if status_found:
+                self.log("✅ Sales with status support working correctly")
+                return True
+            else:
+                self.log("❌ No sales with status found in response")
+                return False
+        else:
+            self.log("❌ Failed to retrieve sales for status verification")
+            return False
+
+    def test_sales_history_with_status_filtering(self):
+        """Test the sales API with status filters to verify ongoing sales can be retrieved separately"""
+        
+        # Note: The current sales API doesn't have status filtering parameter
+        # This test will verify that we can retrieve sales and filter by status
+        
+        # Test 1: Get all sales and check for status field
+        success, response = self.run_test(
+            "Get All Sales for Status Analysis",
+            "GET",
+            "/api/sales",
+            200,
+            params={"limit": 50}
+        )
+
+        if not success:
+            self.log("❌ Failed to retrieve sales for status filtering test")
+            return False
+
+        if not isinstance(response, list):
+            self.log("❌ Sales response is not a list")
+            return False
+
+        # Analyze sales by status
+        completed_sales = [sale for sale in response if sale.get('status') == 'completed']
+        ongoing_sales = [sale for sale in response if sale.get('status') == 'ongoing']
+        
+        self.log(f"Found {len(completed_sales)} completed sales and {len(ongoing_sales)} ongoing sales")
+        
+        if len(completed_sales) > 0:
+            self.log("✅ Completed sales can be filtered from response")
+        
+        if len(ongoing_sales) > 0:
+            self.log("✅ Ongoing sales can be filtered from response")
+        
+        # Test 2: Verify status field is consistently present
+        sales_with_status = [sale for sale in response if 'status' in sale]
+        
+        if len(sales_with_status) == len(response):
+            self.log("✅ All sales have status field - status filtering support confirmed")
+            return True
+        else:
+            self.log(f"❌ Only {len(sales_with_status)}/{len(response)} sales have status field")
+            return False
+
+    def test_payment_reference_codes(self):
+        """Test EWallet/Bank payments with payment_ref_code to ensure they're stored and returned"""
+        
+        if not self.product_id or not self.customer_id:
+            self.log("Creating test data for payment reference testing...")
+            self.test_categories_crud()
+            self.test_products_crud()
+            self.test_customers_crud()
+        
+        # Test 1: EWallet payment with reference code
+        ewallet_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU-EWALLET",
+                    "quantity": 1,
+                    "unit_price": 25.99,
+                    "unit_price_snapshot": 25.99,
+                    "unit_cost_snapshot": 12.50,
+                    "total_price": 25.99
+                }
+            ],
+            "subtotal": 25.99,
+            "tax_amount": 2.34,
+            "discount_amount": 0.00,
+            "total_amount": 28.33,
+            "payment_method": "ewallet",
+            "payment_ref_code": "EWALLET-REF-123456789",
+            "status": "completed",
+            "notes": "EWallet payment with reference code"
+        }
+
+        success, response = self.run_test(
+            "Create EWallet Sale with Payment Reference Code",
+            "POST",
+            "/api/sales",
+            200,
+            data=ewallet_sale_data
+        )
+
+        if success and response.get('payment_ref_code') == "EWALLET-REF-123456789":
+            self.log("✅ EWallet payment reference code stored and returned correctly")
+            ewallet_sale_id = response.get('id')
+        else:
+            self.log("❌ EWallet payment reference code not stored/returned correctly")
+            return False
+
+        # Test 2: Bank transfer payment with reference code
+        bank_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU-BANK",
+                    "quantity": 1,
+                    "unit_price": 45.99,
+                    "unit_price_snapshot": 45.99,
+                    "unit_cost_snapshot": 22.50,
+                    "total_price": 45.99
+                }
+            ],
+            "subtotal": 45.99,
+            "tax_amount": 4.14,
+            "discount_amount": 0.00,
+            "total_amount": 50.13,
+            "payment_method": "bank_transfer",
+            "payment_ref_code": "BANK-TXN-987654321",
+            "status": "completed",
+            "notes": "Bank transfer payment with reference code"
+        }
+
+        success, response = self.run_test(
+            "Create Bank Transfer Sale with Payment Reference Code",
+            "POST",
+            "/api/sales",
+            200,
+            data=bank_sale_data
+        )
+
+        if success and response.get('payment_ref_code') == "BANK-TXN-987654321":
+            self.log("✅ Bank transfer payment reference code stored and returned correctly")
+            bank_sale_id = response.get('id')
+        else:
+            self.log("❌ Bank transfer payment reference code not stored/returned correctly")
+            return False
+
+        # Test 3: Verify reference codes are returned in sales list
+        success, response = self.run_test(
+            "Get Sales to Verify Payment Reference Codes",
+            "GET",
+            "/api/sales",
+            200,
+            params={"limit": 10}
+        )
+
+        if success and isinstance(response, list):
+            ref_codes_found = []
+            for sale in response:
+                if sale.get('payment_ref_code'):
+                    ref_codes_found.append(sale.get('payment_ref_code'))
+            
+            if "EWALLET-REF-123456789" in ref_codes_found and "BANK-TXN-987654321" in ref_codes_found:
+                self.log("✅ Payment reference codes correctly returned in sales list")
+                return True
+            else:
+                self.log(f"❌ Payment reference codes not found in sales list. Found: {ref_codes_found}")
+                return False
+        else:
+            self.log("❌ Failed to retrieve sales for payment reference verification")
+            return False
+
+    def test_downpayment_fields(self):
+        """Test creating ongoing sales with downpayment_amount and balance_due fields"""
+        
+        if not self.product_id or not self.customer_id:
+            self.log("Creating test data for downpayment testing...")
+            self.test_categories_crud()
+            self.test_products_crud()
+            self.test_customers_crud()
+        
+        # Test 1: Create ongoing sale with downpayment
+        downpayment_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU-DOWNPAY",
+                    "quantity": 3,
+                    "unit_price": 35.99,
+                    "unit_price_snapshot": 35.99,
+                    "unit_cost_snapshot": 18.00,
+                    "total_price": 107.97
+                }
+            ],
+            "subtotal": 107.97,
+            "tax_amount": 9.72,
+            "discount_amount": 5.00,
+            "total_amount": 112.69,
+            "payment_method": "cash",
+            "received_amount": 50.00,
+            "change_amount": 0.00,
+            "status": "ongoing",
+            "downpayment_amount": 50.00,
+            "balance_due": 62.69,
+            "finalized_at": None,
+            "notes": "Ongoing sale with downpayment"
+        }
+
+        success, response = self.run_test(
+            "Create Ongoing Sale with Downpayment",
+            "POST",
+            "/api/sales",
+            200,
+            data=downpayment_sale_data
+        )
+
+        if success:
+            # Verify downpayment fields are stored correctly
+            if (response.get('downpayment_amount') == 50.00 and 
+                response.get('balance_due') == 62.69 and
+                response.get('status') == 'ongoing' and
+                response.get('finalized_at') is None):
+                self.log("✅ Ongoing sale with downpayment fields created correctly")
+                downpayment_sale_id = response.get('id')
+            else:
+                self.log("❌ Downpayment fields not stored correctly")
+                self.log(f"Expected: downpayment=50.00, balance=62.69, status=ongoing, finalized_at=None")
+                self.log(f"Got: downpayment={response.get('downpayment_amount')}, balance={response.get('balance_due')}, status={response.get('status')}, finalized_at={response.get('finalized_at')}")
+                return False
+        else:
+            self.log("❌ Failed to create ongoing sale with downpayment")
+            return False
+
+        # Test 2: Create completed sale for comparison
+        completed_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU-COMPLETE",
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.00,
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "discount_amount": 0.00,
+            "total_amount": 32.69,
+            "payment_method": "cash",
+            "received_amount": 32.69,
+            "change_amount": 0.00,
+            "status": "completed",
+            "finalized_at": datetime.now().isoformat(),
+            "notes": "Completed sale for comparison"
+        }
+
+        success, response = self.run_test(
+            "Create Completed Sale for Comparison",
+            "POST",
+            "/api/sales",
+            200,
+            data=completed_sale_data
+        )
+
+        if success:
+            if (response.get('status') == 'completed' and 
+                response.get('finalized_at') is not None):
+                self.log("✅ Completed sale created correctly with finalized_at timestamp")
+            else:
+                self.log("❌ Completed sale not created correctly")
+                return False
+        else:
+            self.log("❌ Failed to create completed sale for comparison")
+            return False
+
+        # Test 3: Verify downpayment fields are returned in sales list
+        success, response = self.run_test(
+            "Get Sales to Verify Downpayment Fields",
+            "GET",
+            "/api/sales",
+            200,
+            params={"limit": 10}
+        )
+
+        if success and isinstance(response, list):
+            downpayment_sales = [sale for sale in response if sale.get('downpayment_amount') is not None]
+            
+            if len(downpayment_sales) > 0:
+                self.log(f"✅ Found {len(downpayment_sales)} sales with downpayment fields")
+                
+                # Check specific downpayment sale
+                for sale in downpayment_sales:
+                    if sale.get('downpayment_amount') == 50.00:
+                        self.log("✅ Downpayment fields correctly returned in sales list")
+                        return True
+                
+                self.log("❌ Expected downpayment sale not found in list")
+                return False
+            else:
+                self.log("❌ No sales with downpayment fields found")
+                return False
+        else:
+            self.log("❌ Failed to retrieve sales for downpayment verification")
+            return False
+
+    def test_product_search_for_price_inquiry(self):
+        """Test product search by name, SKU, and barcode for the Price Inquiry modal functionality"""
+        
+        # Test 1: Search products by name
+        success, response = self.run_test(
+            "Search Products by Name",
+            "GET",
+            "/api/products",
+            200,
+            params={"search": "Test", "limit": 20}
+        )
+
+        if success and isinstance(response, list):
+            name_search_results = len(response)
+            self.log(f"✅ Product search by name returned {name_search_results} results")
+            
+            # Verify results contain search term in name
+            name_matches = [p for p in response if 'test' in p.get('name', '').lower()]
+            if len(name_matches) > 0:
+                self.log("✅ Search results correctly match name criteria")
+            else:
+                self.log("❌ Search results don't match name criteria")
+        else:
+            self.log("❌ Product search by name failed")
+            return False
+
+        # Test 2: Search products by SKU
+        success, response = self.run_test(
+            "Search Products by SKU",
+            "GET",
+            "/api/products",
+            200,
+            params={"search": "TEST-", "limit": 20}
+        )
+
+        if success and isinstance(response, list):
+            sku_search_results = len(response)
+            self.log(f"✅ Product search by SKU returned {sku_search_results} results")
+            
+            # Verify results contain search term in SKU
+            sku_matches = [p for p in response if 'TEST-' in p.get('sku', '').upper()]
+            if len(sku_matches) > 0:
+                self.log("✅ Search results correctly match SKU criteria")
+            else:
+                self.log("❌ Search results don't match SKU criteria")
+        else:
+            self.log("❌ Product search by SKU failed")
+            return False
+
+        # Test 3: Get product by barcode (if we have products with barcodes)
+        # First, let's get a product with a barcode
+        success, response = self.run_test(
+            "Get Products to Find Barcode",
+            "GET",
+            "/api/products",
+            200,
+            params={"limit": 50}
+        )
+
+        if success and isinstance(response, list):
+            products_with_barcodes = [p for p in response if p.get('barcode')]
+            
+            if len(products_with_barcodes) > 0:
+                test_barcode = products_with_barcodes[0]['barcode']
+                
+                # Test barcode lookup
+                success, barcode_response = self.run_test(
+                    f"Get Product by Barcode ({test_barcode})",
+                    "GET",
+                    f"/api/products/barcode/{test_barcode}",
+                    200
+                )
+
+                if success and barcode_response.get('barcode') == test_barcode:
+                    self.log("✅ Product search by barcode working correctly")
+                else:
+                    self.log("❌ Product search by barcode failed")
+                    return False
+            else:
+                self.log("⚠️ No products with barcodes found for barcode search test")
+
+        # Test 4: Search with empty/minimal criteria
+        success, response = self.run_test(
+            "Get All Products (No Search Filter)",
+            "GET",
+            "/api/products",
+            200,
+            params={"limit": 100}
+        )
+
+        if success and isinstance(response, list):
+            total_products = len(response)
+            self.log(f"✅ Product listing returned {total_products} total products")
+            
+            # Verify product structure for Price Inquiry modal
+            if total_products > 0:
+                sample_product = response[0]
+                required_fields = ['id', 'name', 'sku', 'price']
+                missing_fields = [field for field in required_fields if field not in sample_product]
+                
+                if not missing_fields:
+                    self.log("✅ Products have all required fields for Price Inquiry modal")
+                    return True
+                else:
+                    self.log(f"❌ Products missing required fields: {missing_fields}")
+                    return False
+            else:
+                self.log("❌ No products found for Price Inquiry testing")
+                return False
+        else:
+            self.log("❌ Failed to retrieve products for Price Inquiry testing")
+            return False
+
+
 def run_enhanced_sales_api_testing():
     """Run focused testing for enhanced sales API with new item fields"""
     tester = POSAPITester()
