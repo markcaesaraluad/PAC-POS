@@ -69,6 +69,7 @@ const POSInterface = () => {
   const [modalNotes, setModalNotes] = useState('');
   const [modalPaymentRef, setModalPaymentRef] = useState(''); // Feature 7: Reference code for EWallet/Bank
   const [modalDownpayment, setModalDownpayment] = useState(''); // Feature 6: Downpayment amount
+  const [printOrderSlip, setPrintOrderSlip] = useState(false); // Feature 6: Print Order Slip checkbox
   const [receivedAmount, setReceivedAmount] = useState('');
   
   // Barcode state
