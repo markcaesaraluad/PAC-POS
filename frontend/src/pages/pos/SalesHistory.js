@@ -20,6 +20,7 @@ const SalesHistory = () => {
   const { business, user } = useAuth();
   const [activeTab, setActiveTab] = useState('sales');
   const [sales, setSales] = useState([]);
+  const [ongoingSales, setOngoingSales] = useState([]); // Feature: On-Going tab
   const [invoices, setInvoices] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
