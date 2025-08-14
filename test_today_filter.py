@@ -24,29 +24,17 @@ class TodayFilterTester:
         if response.status_code == 200:
             super_token = response.json()["access_token"]
             
-            # Get business list
-            response = requests.get(f"{self.base_url}/super-admin/businesses", 
-                                  headers={"Authorization": f"Bearer {super_token}"})
+            # Business admin login
+            response = requests.post(f"{self.base_url}/auth/login", 
+                                   json={
+                                       "email": "admin@printsandcuts.com",
+                                       "password": "admin123456",
+                                       "business_subdomain": "prints-cuts-tagum"
+                                   })
             
             if response.status_code == 200:
-                businesses = response.json()
-                if businesses:
-                    business = businesses[0]
-                    subdomain = business["subdomain"]
-                    
-                    # Business admin login
-                    response = requests.post(f"{self.base_url}/auth/login", 
-                                           json={
-                                               "email": "admin@business.com",
-                                               "password": "admin123",
-                                               "subdomain": subdomain
-                                           },
-                                           headers={"Authorization": f"Bearer {super_token}"})
-                    
-                    if response.status_code == 200:
-                        self.token = response.json()["access_token"]
-                        self.business_id = business["id"]
-                        return True
+                self.token = response.json()["access_token"]
+                return True
         return False
     
     def test_date_filtering_issue(self):
