@@ -413,7 +413,7 @@ frontend:
 
   - task: "Reports Functionality Frontend"
     implemented: true
-    working: true
+    working: false
     file: "frontend/src/pages/business/Reports.js"
     stuck_count: 0
     priority: "high"
@@ -428,6 +428,9 @@ frontend:
       - working: true
         agent: "testing"
         comment: "✅ REPORTS FUNCTIONALITY FULLY IMPLEMENTED AND FUNCTIONAL: Complete Reports & Analytics page with daily summary statistics (Today's Sales, Revenue, Items Sold, Customers Served), comprehensive report sections (Sales, Inventory, Customer Reports), Excel download functionality working (sales_report.xlsx downloaded successfully), custom date range selection, and full reportsAPI integration. Navigation link visible in business menu."
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL REPORTS ISSUES IDENTIFIED: Comprehensive testing reveals multiple critical issues with the Reports functionality that match user complaints. MAJOR PROBLEMS FOUND: 1) DATA INCONSISTENCY: Dashboard shows 'Today's Sales: ₱3398.97' but Reports page shows 'Today's Sales: 56' - completely different values indicating data source mismatch, 2) INFINITE LOOP ERROR: GlobalFilter component has 'Maximum update depth exceeded' errors causing continuous re-renders and performance issues, 3) FILTER NOT WORKING: TODAY filter selection doesn't trigger any API requests - no network calls detected when changing date presets, 4) MISSING API INTEGRATION: Daily summary API calls made on page load but filter changes don't trigger new API requests with date parameters. TECHNICAL FINDINGS: Sales report downloads work correctly with proper date parameters (date_preset: 'today', start_date: '2025-08-14', end_date: '2025-08-14'), Profit report downloads work correctly, but the core filtering functionality is broken. ROOT CAUSE: The GlobalFilter component has useEffect dependency issues preventing proper API calls when filters change, causing users to see stale data regardless of filter selection. This explains why users report 'no results' for TODAY filter - the filter isn't actually being applied to API requests."
 
   - task: "CRITICAL PAYMENT VALIDATION & RECEIPT CONTENT FIXES"
     implemented: true
