@@ -52,7 +52,9 @@ const BusinessLayout = ({ children }) => {
   ];
 
   // Add admin-only navigation items (no longer needed as Profit Report is in Reports submenu)
-  const adminOnlyNavigation = [];
+  const adminOnlyNavigation = [
+    { name: 'Diagnostics', href: '/business/diagnostics', icon: ChartBarIcon }
+  ];
 
   const generalNavigation = [
     { name: 'Staff', href: '/business/users', icon: UsersIcon },
