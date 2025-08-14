@@ -13,7 +13,13 @@ import asyncio
 from routes import auth, super_admin, business, products, categories, customers, sales, invoices, reports, profit_reports
 from database import connect_to_mongo, close_mongo_connection
 
+# Import error handling middleware
+from middleware.error_handler import setup_error_handling
+
 app = FastAPI(title="Modern POS System", version="1.0.0")
+
+# Setup global error handling (must be before other middleware)
+setup_error_handling(app)
 
 # CORS middleware
 app.add_middleware(
