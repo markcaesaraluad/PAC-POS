@@ -1397,7 +1397,7 @@ const POSInterface = () => {
           <div class="line"></div>
           <div class="center" style="font-size: 9px;">
             ${receiptData.isOrderSlip ? 
-              (receiptData.isDownpayment ? 'Downpayment Received' : 'Prepared for Kitchen') : 
+              (receiptData.isDownpayment ? 'Downpayment Received' : '') : 
               'Thank you for your business!'
             }
           </div>
