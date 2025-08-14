@@ -66,12 +66,17 @@ const Reports = () => {
   useEffect(() => {
     loadCategories();
     loadDailySummary();
-  }, []);
+  }, [loadCategories, loadDailySummary]);
 
-  // Reload daily summary when filters change
+  // Only reload daily summary when filters change, but prevent infinite loops
   useEffect(() => {
-    loadDailySummary();
-  }, [filters]);
+    // Use a timeout to prevent infinite loops and rate limit the API calls
+    const timeoutId = setTimeout(() => {
+      loadDailySummary();
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [filters]); // Only depend on filters, not on loadDailySummary
 
   const loadCategories = useCallback(async () => {
     try {
