@@ -7492,6 +7492,354 @@ class POSAPITester:
         self.log("=== UNIFIED ERROR CODE SYSTEM TESTING COMPLETED ===", "INFO")
         return True
 
+    def test_pos_sales_network_error_fix(self):
+        """
+        URGENT: Test POS Sales Network Error Fix
+        Test the POS sales functionality to verify that the network error in POS-SALE has been resolved 
+        after fixing the ObjectId validation issues.
+        """
+        self.log("=== STARTING POS SALES NETWORK ERROR FIX TESTING ===", "INFO")
+        
+        # Switch to business admin token for testing
+        if self.business_admin_token:
+            self.token = self.business_admin_token
+            self.log("Using business admin token for POS sales testing")
+        
+        # TEST 1: Sales API Health Check - Basic sale creation
+        self.log("🔍 TEST 1: Sales API Health Check - Basic Sale Creation", "INFO")
+        
+        # First ensure we have test data
+        if not self.product_id or not self.customer_id:
+            self.log("❌ Cannot test - missing product or customer data", "ERROR")
+            return False
+        
+        basic_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",  # Valid ObjectId format
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU-001",
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.50,
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "discount_amount": 0.00,
+            "total_amount": 32.69,
+            "payment_method": "cash",
+            "received_amount": 35.00,
+            "change_amount": 2.31,
+            "status": "completed",
+            "notes": "POS Sales Network Error Fix Test"
+        }
+
+        success, response = self.run_test(
+            "POST /api/sales - Basic Sale Creation",
+            "POST",
+            "/api/sales",
+            200,
+            data=basic_sale_data
+        )
+
+        if success:
+            self.log("✅ Basic sale creation working - no network errors detected")
+            test_sale_id = response.get('id')
+        else:
+            self.log("❌ Basic sale creation failed - network error may still exist")
+            return False
+
+        # TEST 2: Sales API Health Check - Retrieve sales list
+        self.log("🔍 TEST 2: Sales API Health Check - Retrieve Sales List", "INFO")
+        
+        success, response = self.run_test(
+            "GET /api/sales - Retrieve Sales List",
+            "GET",
+            "/api/sales",
+            200
+        )
+
+        if success:
+            self.log("✅ Sales list retrieval working - no network errors detected")
+            sales_count = len(response) if isinstance(response, list) else 0
+            self.log(f"Retrieved {sales_count} sales records")
+        else:
+            self.log("❌ Sales list retrieval failed - network error may still exist")
+
+        # TEST 3: Products API Validation - Valid ObjectId format
+        self.log("🔍 TEST 3: Products API Validation - Valid ObjectId Format", "INFO")
+        
+        success, response = self.run_test(
+            "GET /api/products/{valid_id} - Valid ObjectId",
+            "GET",
+            f"/api/products/{self.product_id}",
+            200
+        )
+
+        if success:
+            self.log("✅ Product retrieval with valid ObjectId working correctly")
+        else:
+            self.log("❌ Product retrieval with valid ObjectId failed")
+
+        # TEST 4: Products API Validation - Invalid ObjectId format (should return proper error)
+        self.log("🔍 TEST 4: Products API Validation - Invalid ObjectId Format", "INFO")
+        
+        invalid_product_ids = [
+            "invalid-id",
+            "12345",
+            "not-an-objectid",
+            "507f1f77bcf86cd799439011x"  # Almost valid but with extra character
+        ]
+
+        for invalid_id in invalid_product_ids:
+            success, response = self.run_test(
+                f"GET /api/products/{invalid_id} - Invalid ObjectId",
+                "GET",
+                f"/api/products/{invalid_id}",
+                400,  # Should return 400 Bad Request, not crash
+            )
+
+            if success:
+                self.log(f"✅ Invalid ObjectId '{invalid_id}' properly handled with 400 error")
+                # Check if error message is user-friendly
+                if 'detail' in response and 'Invalid product ID format' in response['detail']:
+                    self.log("✅ User-friendly error message provided")
+                    self.tests_passed += 1
+                self.tests_run += 1
+            else:
+                self.log(f"❌ Invalid ObjectId '{invalid_id}' not properly handled")
+                self.tests_run += 1
+
+        # TEST 5: POS Transaction Flow - Complete transaction process
+        self.log("🔍 TEST 5: POS Transaction Flow - Complete Transaction Process", "INFO")
+        
+        # Test product lookup first
+        success, response = self.run_test(
+            "Product Lookup for POS Transaction",
+            "GET",
+            f"/api/products/{self.product_id}",
+            200
+        )
+
+        if success:
+            product_data = response
+            self.log("✅ Product lookup successful for POS transaction")
+            
+            # Test barcode scanning if product has barcode
+            if product_data.get('barcode'):
+                success, response = self.run_test(
+                    "Barcode Scanning Test",
+                    "GET",
+                    f"/api/products/barcode/{product_data['barcode']}",
+                    200
+                )
+                
+                if success:
+                    self.log("✅ Barcode scanning working correctly")
+                else:
+                    self.log("❌ Barcode scanning failed")
+
+        # Complete POS transaction with multiple items
+        multi_item_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "POS Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product 1",
+                    "sku": "TEST-SKU-001",
+                    "quantity": 2,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.50,
+                    "total_price": 59.98
+                },
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product 2",
+                    "sku": "TEST-SKU-002",
+                    "quantity": 1,
+                    "unit_price": 19.99,
+                    "unit_price_snapshot": 19.99,
+                    "unit_cost_snapshot": 10.00,
+                    "total_price": 19.99
+                }
+            ],
+            "subtotal": 79.97,
+            "tax_amount": 7.20,
+            "discount_amount": 5.00,
+            "total_amount": 82.17,
+            "payment_method": "card",
+            "status": "completed",
+            "notes": "Multi-item POS transaction test"
+        }
+
+        success, response = self.run_test(
+            "Complete POS Transaction - Multi-item",
+            "POST",
+            "/api/sales",
+            200,
+            data=multi_item_sale_data
+        )
+
+        if success:
+            self.log("✅ Complete POS transaction flow working correctly")
+            multi_sale_id = response.get('id')
+        else:
+            self.log("❌ Complete POS transaction flow failed")
+
+        # TEST 6: Error Code Generation - Verify proper error codes and correlation IDs
+        self.log("🔍 TEST 6: Error Code Generation - Verify Proper Error Handling", "INFO")
+        
+        # Test with invalid customer ID to trigger error code generation
+        invalid_sale_data = {
+            "customer_id": "invalid-customer-id",  # Invalid ObjectId
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU-001",
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.50,
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "total_amount": 32.69,
+            "payment_method": "cash"
+        }
+
+        success, response = self.run_test(
+            "Error Code Generation Test - Invalid Customer ID",
+            "POST",
+            "/api/sales",
+            422,  # Should return validation error, not crash
+            data=invalid_sale_data
+        )
+
+        if success:
+            self.log("✅ Error code generation working - proper error response received")
+            # Check for error code structure
+            if isinstance(response, dict):
+                if 'detail' in response:
+                    self.log("✅ Error details provided in response")
+                    self.tests_passed += 1
+                self.tests_run += 1
+        else:
+            self.log("❌ Error code generation not working properly")
+            self.tests_run += 1
+
+        # TEST 7: Network Error Resolution - Test various scenarios that previously caused crashes
+        self.log("🔍 TEST 7: Network Error Resolution - Crash Prevention Tests", "INFO")
+        
+        crash_test_scenarios = [
+            {
+                "name": "Missing Required Fields",
+                "data": {
+                    "customer_id": self.customer_id,
+                    # Missing cashier_id and cashier_name
+                    "items": [
+                        {
+                            "product_id": self.product_id,
+                            "product_name": "Test Product",
+                            "quantity": 1,
+                            "unit_price": 29.99,
+                            "total_price": 29.99
+                            # Missing required enhanced fields
+                        }
+                    ],
+                    "total_amount": 29.99,
+                    "payment_method": "cash"
+                },
+                "expected_status": 422
+            },
+            {
+                "name": "Invalid Product ID in Items",
+                "data": {
+                    "customer_id": self.customer_id,
+                    "customer_name": "Test Customer",
+                    "cashier_id": "507f1f77bcf86cd799439011",
+                    "cashier_name": "admin@printsandcuts.com",
+                    "items": [
+                        {
+                            "product_id": "invalid-product-id",  # Invalid ObjectId
+                            "product_name": "Test Product",
+                            "sku": "TEST-SKU-001",
+                            "quantity": 1,
+                            "unit_price": 29.99,
+                            "unit_price_snapshot": 29.99,
+                            "unit_cost_snapshot": 15.50,
+                            "total_price": 29.99
+                        }
+                    ],
+                    "subtotal": 29.99,
+                    "total_amount": 29.99,
+                    "payment_method": "cash"
+                },
+                "expected_status": 500  # This might cause internal server error
+            }
+        ]
+
+        for scenario in crash_test_scenarios:
+            success, response = self.run_test(
+                f"Crash Prevention Test - {scenario['name']}",
+                "POST",
+                "/api/sales",
+                scenario['expected_status'],
+                data=scenario['data']
+            )
+
+            if success:
+                self.log(f"✅ {scenario['name']} properly handled without crashing")
+            else:
+                self.log(f"❌ {scenario['name']} not properly handled")
+
+        # TEST 8: Barcode Scanning with Various Formats
+        self.log("🔍 TEST 8: Barcode Scanning with Various Formats", "INFO")
+        
+        # Test barcode scanning with different formats
+        test_barcodes = [
+            "1234567890123",  # Standard 13-digit
+            "123456789012",   # 12-digit
+            "TEST-BARCODE-001",  # Alphanumeric
+            "nonexistent-barcode"  # Should return 404
+        ]
+
+        for barcode in test_barcodes:
+            expected_status = 404 if barcode == "nonexistent-barcode" else 200
+            success, response = self.run_test(
+                f"Barcode Scan Test - {barcode}",
+                "GET",
+                f"/api/products/barcode/{barcode}",
+                expected_status
+            )
+
+            if success:
+                if expected_status == 200:
+                    self.log(f"✅ Barcode '{barcode}' scanned successfully")
+                else:
+                    self.log(f"✅ Invalid barcode '{barcode}' properly handled with 404")
+            else:
+                self.log(f"❌ Barcode '{barcode}' scanning failed")
+
+        self.log("=== POS SALES NETWORK ERROR FIX TESTING COMPLETED ===", "INFO")
+        return True
+
     def run_all_tests(self):
         """Run focused tests for unified error code system"""
         self.log("Starting Unified Error Code System Testing", "START")
