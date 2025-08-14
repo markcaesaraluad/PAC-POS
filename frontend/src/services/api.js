@@ -239,6 +239,13 @@ export const reportsAPI = {
     return apiClient.get('/api/reports/customers', config);
   },
   getDailySummary: (params = {}) => apiClient.get('/api/reports/daily-summary', { params }),
+  getProfitReport: (params = {}) => {
+    const config = { 
+      params,
+      responseType: 'blob'
+    };
+    return apiClient.get('/api/reports/profit', config);
+  },
 };
 
 export const profitReportsAPI = {
