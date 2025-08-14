@@ -774,7 +774,20 @@ const POSInterface = () => {
       
       if (roundedReceived < roundedRequired) {
         console.log('Transaction failed: Secondary payment validation failed');
-        toast.error(`Insufficient payment. Required: ${formatAmount(roundedRequired)}, Received: ${formatAmount(roundedReceived)}`);
+        
+        // Trigger POS-PAY-001 error code for secondary validation
+        const errorDetails = {
+          errorCode: 'POS-PAY-001',
+          correlationId: 'pay-sec-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+          message: `Payment is less than amount due. Required: ${formatAmount(roundedRequired)}, Received: ${formatAmount(roundedReceived)}`,
+          route: window.location.pathname,
+          timestamp: new Date().toISOString(),
+          context: { required: roundedRequired, received: roundedReceived, stage: 'secondary_validation' }
+        };
+        
+        window.dispatchEvent(new CustomEvent('pos-error', { 
+          detail: errorDetails 
+        }));
         return;
       }
     } else if (isDownpaymentSale) {
