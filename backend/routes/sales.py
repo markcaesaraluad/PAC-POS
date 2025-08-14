@@ -192,11 +192,27 @@ async def get_sales(
             detail="Super admin must specify business context",
         )
     
+    # Validate ObjectId formats to prevent crashes
+    try:
+        business_object_id = ObjectId(business_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid business ID format: {business_id}",
+        )
+    
     # Build query
-    query = {"business_id": ObjectId(business_id)}
+    query = {"business_id": business_object_id}
     
     if customer_id:
-        query["customer_id"] = ObjectId(customer_id)
+        try:
+            customer_object_id = ObjectId(customer_id)
+            query["customer_id"] = customer_object_id
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid customer ID format: {customer_id}",
+            )
     
     # Handle date filtering
     if date_preset or start_date or end_date:
