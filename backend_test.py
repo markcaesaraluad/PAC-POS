@@ -11712,12 +11712,33 @@ def main():
             success = tester.run_reports_today_filter_tests()
         elif test_mode == "pdf_generation":
             success = tester.run_pdf_generation_tests()
+        elif test_mode == "today_date_filtering":
+            # Setup authentication first
+            if not tester.test_health_check():
+                print("❌ Health check failed - cannot proceed")
+                return 1
+            if not tester.test_super_admin_setup():
+                print("❌ Super admin setup failed - cannot proceed")
+                return 1
+            if not tester.test_business_admin_login():
+                print("❌ Business admin login failed - cannot proceed")
+                return 1
+            if not tester.test_get_current_user():
+                print("❌ Get current user failed - cannot proceed")
+                return 1
+            # Setup test data
+            tester.test_categories_crud()
+            tester.test_products_crud()
+            tester.test_customers_crud()
+            # Run the specific test
+            success = tester.test_today_date_filtering_issue()
         else:
             print("Unknown test mode. Available modes:")
             print("  product_listing - Test product creation and listing fix")
             print("  category_creation - Test category creation fix")
             print("  reports - Test reports TODAY filter issues")
             print("  pdf_generation - Test PDF generation WeasyPrint fix")
+            print("  today_date_filtering - Test specific TODAY date filtering issue")
             return 1
     else:
         # Default to PDF generation tests for this specific review
