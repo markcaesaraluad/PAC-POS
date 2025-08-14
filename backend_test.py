@@ -581,6 +581,38 @@ class POSAPITester:
         self.log("=== SALES HISTORY API FAILURES TESTING COMPLETED ===", "INFO")
         return True
 
+    def run_reports_today_filter_tests(self):
+        """Run focused reports TODAY filter tests as requested"""
+        self.log("=== STARTING REPORTS TODAY FILTER TESTING ===", "INFO")
+        
+        # Setup authentication first
+        if not self.test_health_check():
+            self.log("❌ Health check failed - cannot proceed", "ERROR")
+            return False
+            
+        if not self.test_super_admin_setup():
+            self.log("❌ Super admin setup failed - cannot proceed", "ERROR")
+            return False
+            
+        if not self.test_business_admin_login():
+            self.log("❌ Business admin login failed - cannot proceed", "ERROR")
+            return False
+            
+        if not self.test_get_current_user():
+            self.log("❌ Get current user failed - cannot proceed", "ERROR")
+            return False
+        
+        # Setup test data
+        self.test_categories_crud()
+        self.test_products_crud()
+        self.test_customers_crud()
+        
+        # Run the specific reports TODAY filter tests
+        self.test_reports_today_filter_issues()
+        
+        self.log("=== REPORTS TODAY FILTER TESTING COMPLETED ===", "INFO")
+        return True
+
     def run_category_creation_tests(self):
         """Run focused category creation tests as requested"""
         self.log("=== STARTING CATEGORY CREATION FIX VERIFICATION TESTS ===", "INFO")
