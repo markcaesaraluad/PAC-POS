@@ -68,6 +68,11 @@ const Reports = () => {
     loadDailySummary();
   }, []);
 
+  // Reload daily summary when filters change
+  useEffect(() => {
+    loadDailySummary();
+  }, [filters]);
+
   const loadCategories = async () => {
     try {
       const response = await categoriesAPI.getCategories();
@@ -79,7 +84,22 @@ const Reports = () => {
 
   const loadDailySummary = async () => {
     try {
-      const response = await reportsAPI.getDailySummary();
+      // Get current filter parameters for the daily summary
+      const params = generateQueryParams();
+      
+      // For daily summary, we need to handle date filtering differently
+      let summaryParams = {};
+      
+      // If we have date filters, use them
+      if (params.start_date && params.end_date && params.start_date === params.end_date) {
+        // If start and end date are the same, use the date parameter
+        summaryParams.date = params.start_date;
+      } else if (params.date_preset === 'today') {
+        // For today preset, don't pass any date parameter (defaults to today)
+        summaryParams = {};
+      }
+      
+      const response = await reportsAPI.getDailySummary(summaryParams);
       setDailySummary(response.data);
     } catch (error) {
       console.error('Failed to load daily summary:', error);
