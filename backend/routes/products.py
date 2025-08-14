@@ -480,10 +480,20 @@ async def get_product_cost_history(
             detail="Super admin must specify business context",
         )
     
+    # Validate ObjectId format to prevent crashes
+    try:
+        product_object_id = ObjectId(product_id)
+        business_object_id = ObjectId(business_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid ID format: {str(e)}",
+        )
+    
     # Verify product exists and belongs to business
     product = await products_collection.find_one({
-        "_id": ObjectId(product_id),
-        "business_id": ObjectId(business_id)
+        "_id": product_object_id,
+        "business_id": business_object_id
     })
     
     if not product:
@@ -494,8 +504,8 @@ async def get_product_cost_history(
     
     # Get cost history sorted by effective_from descending (newest first)
     history_cursor = cost_history_collection.find({
-        "product_id": ObjectId(product_id),
-        "business_id": ObjectId(business_id)
+        "product_id": product_object_id,
+        "business_id": business_object_id
     }).sort("effective_from", -1)
     
     history_records = await history_cursor.to_list(length=None)
