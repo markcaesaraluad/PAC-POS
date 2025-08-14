@@ -34,8 +34,17 @@ async def create_sale(
     # Verify products exist and have sufficient stock, also prepare cost snapshots
     items_with_cost_snapshots = []
     for item in sale.items:
+        # Validate ObjectId format to prevent crashes
+        try:
+            product_object_id = ObjectId(item.product_id)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid product ID format for {item.product_name}: {item.product_id}",
+            )
+        
         product = await products_collection.find_one({
-            "_id": ObjectId(item.product_id),
+            "_id": product_object_id,
             "business_id": ObjectId(business_id),
             "is_active": True
         })
