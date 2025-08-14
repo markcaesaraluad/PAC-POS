@@ -1212,7 +1212,19 @@ agent_communication:
 - These are minor and don't affect core POS functionality
 
   - agent: "testing"
-    message: "🔍 SPECIFIC USER REPORTED ISSUES TESTING COMPLETED - CRITICAL FINDINGS: 1) Category Creation Error: POST /api/categories fails with 500 Internal Server Error (UNKNOWN-003) when creating new categories. This is a server-side issue requiring immediate investigation. 2) Product Listing Issue: New products are created successfully but don't appear in default GET /api/products due to pagination limits (50 max). Products are accessible via direct ID and search. 3) CSV Bulk Import: Template downloads work, but actual file upload testing requires multipart form data implementation. RECOMMENDATION: Fix category creation 500 error as highest priority. Product listing behavior is expected with pagination but could be improved with better sorting (newest first)."
+    message: "🚨 CRITICAL REPORTS FILTERING ISSUES CONFIRMED - INFINITE LOOP CATASTROPHE: Comprehensive testing reveals the Reports filtering functionality is completely broken and represents a production-blocking issue. KEY FINDINGS: 1) INFINITE LOOP DISASTER: 16+ 'Maximum update depth exceeded' errors in Reports component causing continuous re-renders, 2) RESOURCE EXHAUSTION: Over 200 continuous API calls to /api/reports/daily-summary causing browser resource exhaustion (net::ERR_INSUFFICIENT_RESOURCES), 3) FILTER SYSTEM BROKEN: Date range selectors present but completely non-functional - cannot select TODAY, Yesterday, or any date presets, 4) SYSTEM INSTABILITY: Browser performance severely degraded due to infinite loops. POSITIVE FINDINGS: Daily summary data displays correctly (Today's Sales: 56, Revenue: ₱3398.97), Download functionality works (sales_report.xlsx successful). ROOT CAUSE: Reports component has critical useEffect dependency issues in GlobalFilter/useGlobalFilter integration. This requires IMMEDIATE attention as the Reports page is completely unusable. The infinite loop issue reported in previous testing has NOT been resolved and has actually worsened."
+
+  - task: "Profit Report Page Testing"
+    implemented: true
+    working: false
+    file: "frontend/src/pages/business/ProfitReport.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ PROFIT REPORT FILTERING ISSUES CONFIRMED: Testing reveals the Profit Report page suffers from similar issues as the main Reports page. CRITICAL FINDINGS: 1) PAGE NAVIGATION ISSUES: Profit Report page navigation successful but title shows 'Prints & Cuts Tagum' instead of 'Profit Report', indicating page loading problems, 2) MULTIPLE ERROR NOTIFICATIONS: Page displays numerous 'Error Occurred - Something went wrong. Please try again. CODE: UNKNOWN-001' notifications, suggesting backend API failures, 3) FILTER FUNCTIONALITY PRESENT: Date range selector visible with 'Last 30 Days' preset selected, but filter testing could not be completed due to page errors, 4) DOWNLOAD BUTTONS VISIBLE: Export to Excel, CSV, and PDF buttons are present and properly styled, but functionality testing blocked by page errors. IMPACT: While the Profit Report page structure appears correct, the multiple error notifications and page loading issues prevent proper testing of the TODAY filter and download functionality. This suggests the same infinite loop/API issues affecting the main Reports page are also impacting the Profit Report page."
 
 ### NEW PROFIT TRACKING FEATURES - ✅ FULLY TESTED AND WORKING
 - **Product Cost Management**: ✅ Required cost field, validation, cost updates
