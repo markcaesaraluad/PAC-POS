@@ -66,16 +66,27 @@ async def create_sale(
         item_with_snapshot["id"] = str(ObjectId())  # Add ID for SaleItem response
         items_with_cost_snapshots.append(item_with_snapshot)
     
+    # Validate business_id and other ObjectId fields to prevent crashes
+    try:
+        business_object_id = ObjectId(business_id)
+        cashier_object_id = ObjectId(current_user["_id"])
+        customer_object_id = ObjectId(sale.customer_id) if sale.customer_id else None
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid ID format in sale data: {str(e)}",
+        )
+    
     # Generate sale number
     sale_number = f"SALE-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:8].upper()}"
     
     # Create sale document
     sale_doc = {
         "_id": ObjectId(),
-        "business_id": ObjectId(business_id),
-        "cashier_id": ObjectId(current_user["_id"]),
+        "business_id": business_object_id,
+        "cashier_id": cashier_object_id,
         "cashier_name": sale.cashier_name,
-        "customer_id": ObjectId(sale.customer_id) if sale.customer_id else None,
+        "customer_id": customer_object_id,
         "customer_name": sale.customer_name,
         "sale_number": sale_number,
         "items": items_with_cost_snapshots,
