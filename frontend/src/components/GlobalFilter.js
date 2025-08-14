@@ -103,7 +103,7 @@ const GlobalFilter = ({
     debounce((value) => {
       handleFilterChange('search', value);
     }, debounceMs),
-    [debounceMs]
+    [debounceMs] // Removed handleFilterChange dependency
   );
 
   // Handle filter changes
