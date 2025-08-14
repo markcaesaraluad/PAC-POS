@@ -9512,6 +9512,153 @@ Test Import Product 2,IMP-002,1234567890124,Books,5.00,12.99,25,active,Second im
         self.log("=== REPORTS TODAY FILTER TESTING COMPLETED ===", "INFO")
         return True
 
+    def test_pdf_generation_weasyprint_fix(self):
+        """Test PDF generation specifically to verify WeasyPrint v66.0 fix"""
+        self.log("=== STARTING PDF GENERATION WEASYPRINT FIX VERIFICATION ===", "INFO")
+        
+        # Switch to business admin token for testing
+        if self.business_admin_token:
+            self.token = self.business_admin_token
+            self.log("Using business admin token for PDF generation testing")
+        
+        # TEST 1: Sales Report PDF Generation
+        self.log("🔍 TEST 1: Sales Report PDF Generation", "INFO")
+        
+        success, response = self.run_test(
+            "Generate Sales Report (PDF Format)",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={
+                "format": "pdf",
+                "start_date": (datetime.now() - timedelta(days=30)).isoformat(),
+                "end_date": datetime.now().isoformat()
+            }
+        )
+        
+        if success:
+            self.log("✅ Sales Report PDF generation successful - WeasyPrint v66.0 working correctly")
+            self.tests_passed += 1
+        else:
+            self.log("❌ CRITICAL: Sales Report PDF generation failed - WeasyPrint issue may persist")
+        self.tests_run += 1
+        
+        # TEST 2: Profit Report PDF Generation
+        self.log("🔍 TEST 2: Profit Report PDF Generation", "INFO")
+        
+        success, response = self.run_test(
+            "Generate Profit Report (PDF Format)",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "pdf",
+                "start_date": (datetime.now() - timedelta(days=30)).isoformat(),
+                "end_date": datetime.now().isoformat()
+            }
+        )
+        
+        if success:
+            self.log("✅ Profit Report PDF generation successful - WeasyPrint v66.0 working correctly")
+            self.tests_passed += 1
+        else:
+            self.log("❌ CRITICAL: Profit Report PDF generation failed - WeasyPrint issue may persist")
+        self.tests_run += 1
+        
+        # TEST 3: Inventory Report PDF Generation
+        self.log("🔍 TEST 3: Inventory Report PDF Generation", "INFO")
+        
+        success, response = self.run_test(
+            "Generate Inventory Report (PDF Format)",
+            "GET",
+            "/api/reports/inventory",
+            200,
+            params={"format": "pdf"}
+        )
+        
+        if success:
+            self.log("✅ Inventory Report PDF generation successful - WeasyPrint v66.0 working correctly")
+            self.tests_passed += 1
+        else:
+            self.log("❌ CRITICAL: Inventory Report PDF generation failed - WeasyPrint issue may persist")
+        self.tests_run += 1
+        
+        # TEST 4: Compare PDF vs Excel functionality
+        self.log("🔍 TEST 4: Compare PDF vs Excel Functionality", "INFO")
+        
+        # Test Excel format for comparison
+        success_excel, response_excel = self.run_test(
+            "Generate Sales Report (Excel Format for Comparison)",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={
+                "format": "excel",
+                "start_date": (datetime.now() - timedelta(days=30)).isoformat(),
+                "end_date": datetime.now().isoformat()
+            }
+        )
+        
+        success_pdf, response_pdf = self.run_test(
+            "Generate Sales Report (PDF Format for Comparison)",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={
+                "format": "pdf",
+                "start_date": (datetime.now() - timedelta(days=30)).isoformat(),
+                "end_date": datetime.now().isoformat()
+            }
+        )
+        
+        if success_excel and success_pdf:
+            self.log("✅ Both PDF and Excel formats working correctly - functionality parity confirmed")
+            self.tests_passed += 1
+        elif success_excel and not success_pdf:
+            self.log("❌ Excel works but PDF fails - WeasyPrint issue confirmed")
+        elif not success_excel and success_pdf:
+            self.log("⚠️ PDF works but Excel fails - unexpected issue")
+        else:
+            self.log("❌ Both PDF and Excel formats failing - broader issue")
+        self.tests_run += 1
+        
+        # TEST 5: Verify specific WeasyPrint error is resolved
+        self.log("🔍 TEST 5: Verify WeasyPrint PDF.__init__() Error Resolution", "INFO")
+        
+        # Test multiple PDF generations in quick succession to stress test
+        pdf_tests = [
+            ("Sales Report PDF", "/api/reports/sales", {"format": "pdf"}),
+            ("Profit Report PDF", "/api/reports/profit", {"format": "pdf"}),
+            ("Inventory Report PDF", "/api/reports/inventory", {"format": "pdf"})
+        ]
+        
+        consecutive_successes = 0
+        for test_name, endpoint, params in pdf_tests:
+            success, response = self.run_test(
+                f"Stress Test - {test_name}",
+                "GET",
+                endpoint,
+                200,
+                params=params
+            )
+            
+            if success:
+                consecutive_successes += 1
+                self.log(f"✅ {test_name} - No PDF.__init__() error detected")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ {test_name} - Potential PDF.__init__() error or other issue")
+            
+            self.tests_run += 1
+        
+        if consecutive_successes == len(pdf_tests):
+            self.log("✅ All PDF generation tests passed - WeasyPrint PDF.__init__() error completely resolved")
+        else:
+            self.log(f"❌ {consecutive_successes}/{len(pdf_tests)} PDF tests passed - WeasyPrint issues may persist")
+        
+        self.log("=== PDF GENERATION WEASYPRINT FIX VERIFICATION COMPLETED ===", "INFO")
+        return consecutive_successes == len(pdf_tests)
+
     def run_all_tests(self):
         """Run focused tests for unified error code system"""
         self.log("Starting Unified Error Code System Testing", "START")
