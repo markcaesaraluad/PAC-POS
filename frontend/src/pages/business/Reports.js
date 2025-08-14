@@ -70,6 +70,11 @@ const Reports = () => {
     setCurrentFilters(newFilters);
   }, []);
 
+  // Clear all filters
+  const clearFilters = useCallback(() => {
+    setCurrentFilters({ date_preset: 'last30days' });
+  }, []);
+
   // Check if there are active filters
   const hasActiveFilters = Object.keys(currentFilters).length > 1 || 
     (Object.keys(currentFilters).length === 1 && !currentFilters.date_preset);
