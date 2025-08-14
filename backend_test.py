@@ -9206,6 +9206,280 @@ Test Import Product 2,IMP-002,1234567890124,Books,5.00,12.99,25,active,Second im
         self.log("=== POS SALES NETWORK ERROR FIX TESTING COMPLETED ===", "INFO")
         return True
 
+    def test_reports_today_filter_issues(self):
+        """Test the specific reports TODAY filter issues reported by user"""
+        self.log("=== TESTING REPORTS TODAY FILTER ISSUES ===", "INFO")
+        
+        # Switch to business admin token for testing
+        if self.business_admin_token:
+            self.token = self.business_admin_token
+            self.log("Using business admin token for reports testing")
+        
+        # Get today's date in YYYY-MM-DD format
+        today = datetime.now().date().isoformat()
+        self.log(f"Testing with today's date: {today}")
+        
+        # TEST 1: Daily Summary Test for today's date
+        self.log("🔍 TEST 1: Daily Summary for Today's Date", "INFO")
+        success, response = self.run_test(
+            "Get Daily Summary Report (Today)",
+            "GET",
+            "/api/reports/daily-summary",
+            200
+        )
+        
+        if success:
+            self.log("✅ Daily summary endpoint accessible")
+            # Check if there's sales data for today
+            sales_data = response.get('sales', {})
+            total_sales = sales_data.get('total_sales', 0)
+            total_revenue = sales_data.get('total_revenue', 0)
+            
+            self.log(f"Today's sales count: {total_sales}")
+            self.log(f"Today's revenue: ${total_revenue}")
+            
+            if total_sales > 0:
+                self.log("✅ Daily summary shows sales data for today")
+                self.tests_passed += 1
+            else:
+                self.log("⚠️ Daily summary shows no sales for today - this may be expected if no sales exist")
+                self.tests_passed += 1  # Not an error if no sales exist
+        else:
+            self.log("❌ Daily summary endpoint failed")
+        self.tests_run += 1
+        
+        # TEST 2: Daily Summary Test with explicit today's date parameter
+        self.log("🔍 TEST 2: Daily Summary with Explicit Today's Date Parameter", "INFO")
+        success, response = self.run_test(
+            "Get Daily Summary Report (Explicit Today Date)",
+            "GET",
+            "/api/reports/daily-summary",
+            200,
+            params={"date": today}
+        )
+        
+        if success:
+            self.log("✅ Daily summary with explicit date parameter works")
+            sales_data = response.get('sales', {})
+            total_sales = sales_data.get('total_sales', 0)
+            self.log(f"Explicit date query - Today's sales count: {total_sales}")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Daily summary with explicit date parameter failed")
+        self.tests_run += 1
+        
+        # TEST 3: Sales Report TODAY Filter Test
+        self.log("🔍 TEST 3: Sales Report with Today's Date Range", "INFO")
+        success, response = self.run_test(
+            "Generate Sales Report (Today's Date Range)",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={
+                "format": "excel",
+                "start_date": today,
+                "end_date": today
+            }
+        )
+        
+        if success:
+            self.log("✅ Sales report with today's date range generated successfully")
+            # Check if we got a file response
+            if hasattr(response, 'content') or isinstance(response, bytes):
+                self.log("✅ Sales report returned file content")
+            else:
+                self.log("⚠️ Sales report response format unexpected")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Sales report with today's date range failed")
+        self.tests_run += 1
+        
+        # TEST 4: Profit Report TODAY Filter Test
+        self.log("🔍 TEST 4: Profit Report with Today's Date Range", "INFO")
+        success, response = self.run_test(
+            "Generate Profit Report (Today's Date Range)",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "excel",
+                "start_date": today,
+                "end_date": today
+            }
+        )
+        
+        if success:
+            self.log("✅ Profit report with today's date range generated successfully")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Profit report with today's date range failed")
+        self.tests_run += 1
+        
+        # TEST 5: Date Range Handling Test - Various Date Formats
+        self.log("🔍 TEST 5: Date Range Handling - Various Formats", "INFO")
+        
+        # Test with ISO datetime format
+        today_datetime = datetime.now().isoformat()
+        success, response = self.run_test(
+            "Sales Report with ISO DateTime Format",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={
+                "format": "excel",
+                "start_date": today_datetime,
+                "end_date": today_datetime
+            }
+        )
+        
+        if success:
+            self.log("✅ Sales report accepts ISO datetime format")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Sales report failed with ISO datetime format")
+        self.tests_run += 1
+        
+        # TEST 6: Test with date range (yesterday to today)
+        self.log("🔍 TEST 6: Date Range Test (Yesterday to Today)", "INFO")
+        yesterday = (datetime.now() - timedelta(days=1)).date().isoformat()
+        
+        success, response = self.run_test(
+            "Sales Report (Yesterday to Today Range)",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={
+                "format": "excel",
+                "start_date": yesterday,
+                "end_date": today
+            }
+        )
+        
+        if success:
+            self.log("✅ Sales report with date range (yesterday to today) works")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Sales report with date range failed")
+        self.tests_run += 1
+        
+        # TEST 7: Test Daily Summary for yesterday (to compare)
+        self.log("🔍 TEST 7: Daily Summary for Yesterday (Comparison)", "INFO")
+        success, response = self.run_test(
+            "Get Daily Summary Report (Yesterday)",
+            "GET",
+            "/api/reports/daily-summary",
+            200,
+            params={"date": yesterday}
+        )
+        
+        if success:
+            self.log("✅ Daily summary for yesterday works")
+            sales_data = response.get('sales', {})
+            total_sales = sales_data.get('total_sales', 0)
+            self.log(f"Yesterday's sales count: {total_sales}")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Daily summary for yesterday failed")
+        self.tests_run += 1
+        
+        # TEST 8: Test Invalid Date Format Handling
+        self.log("🔍 TEST 8: Invalid Date Format Handling", "INFO")
+        success, response = self.run_test(
+            "Sales Report with Invalid Date Format (Should Fail)",
+            "GET",
+            "/api/reports/sales",
+            400,  # Expecting bad request for invalid date
+            params={
+                "format": "excel",
+                "start_date": "invalid-date",
+                "end_date": today
+            }
+        )
+        
+        if success:
+            self.log("✅ Sales report correctly rejects invalid date format")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Sales report should reject invalid date format")
+        self.tests_run += 1
+        
+        # TEST 9: Create a test sale for today to verify filtering works
+        self.log("🔍 TEST 9: Create Test Sale for Today and Verify Filtering", "INFO")
+        
+        # First ensure we have test data
+        if self.product_id and self.customer_id:
+            # Create a sale for today
+            sale_data = {
+                "customer_id": self.customer_id,
+                "customer_name": "Test Customer",
+                "cashier_id": "507f1f77bcf86cd799439011",
+                "cashier_name": "Test Cashier",
+                "items": [
+                    {
+                        "product_id": self.product_id,
+                        "product_name": "Test Product",
+                        "sku": "TEST-SKU",
+                        "quantity": 1,
+                        "unit_price": 25.00,
+                        "unit_price_snapshot": 25.00,
+                        "unit_cost_snapshot": 12.50,
+                        "total_price": 25.00
+                    }
+                ],
+                "subtotal": 25.00,
+                "tax_amount": 2.25,
+                "discount_amount": 0.00,
+                "total_amount": 27.25,
+                "payment_method": "cash",
+                "received_amount": 30.00,
+                "change_amount": 2.75,
+                "notes": "Test sale for today's date filtering"
+            }
+            
+            success, response = self.run_test(
+                "Create Test Sale for Today",
+                "POST",
+                "/api/sales",
+                200,
+                data=sale_data
+            )
+            
+            if success:
+                self.log("✅ Test sale created for today")
+                test_sale_id = response.get('id')
+                
+                # Now test daily summary again to see if it picks up the new sale
+                success, response = self.run_test(
+                    "Get Daily Summary After Creating Test Sale",
+                    "GET",
+                    "/api/reports/daily-summary",
+                    200
+                )
+                
+                if success:
+                    sales_data = response.get('sales', {})
+                    total_sales = sales_data.get('total_sales', 0)
+                    total_revenue = sales_data.get('total_revenue', 0)
+                    
+                    self.log(f"After test sale - Today's sales count: {total_sales}")
+                    self.log(f"After test sale - Today's revenue: ${total_revenue}")
+                    
+                    if total_sales > 0 and total_revenue >= 27.25:
+                        self.log("✅ Daily summary correctly shows today's sales after creating test sale")
+                        self.tests_passed += 1
+                    else:
+                        self.log("❌ Daily summary not showing today's sales correctly - possible date filtering issue")
+                else:
+                    self.log("❌ Daily summary failed after creating test sale")
+                self.tests_run += 1
+            else:
+                self.log("⚠️ Could not create test sale - skipping verification test")
+        else:
+            self.log("⚠️ No test product/customer available - skipping test sale creation")
+        
+        self.log("=== REPORTS TODAY FILTER TESTING COMPLETED ===", "INFO")
+        return True
+
     def run_all_tests(self):
         """Run focused tests for unified error code system"""
         self.log("Starting Unified Error Code System Testing", "START")
