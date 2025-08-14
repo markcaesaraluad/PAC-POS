@@ -18,6 +18,9 @@ const Reports = () => {
   const [dailySummary, setDailySummary] = useState(null);
   const [categories, setCategories] = useState([]);
   const [downloadLoading, setDownloadLoading] = useState({});
+  
+  // Use ref to track the previous filter values to prevent unnecessary API calls
+  const prevFiltersRef = useRef('');
 
   // Filter configuration for GlobalFilter component
   const filterConfig = {
