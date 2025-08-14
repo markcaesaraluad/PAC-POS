@@ -10290,6 +10290,262 @@ Test Import Product 2,IMP-002,1234567890124,Books,5.00,12.99,25,active,Second im
         self.log("=== AUTHENTICATION INVESTIGATION COMPLETED ===", "INFO")
         return True
 
+    def test_profit_report_download_functionality(self):
+        """Test profit report download functionality as requested by user"""
+        self.log("=== STARTING PROFIT REPORT DOWNLOAD FUNCTIONALITY TESTING ===", "INFO")
+        
+        # Switch to business admin token for testing
+        if self.business_admin_token:
+            self.token = self.business_admin_token
+            self.log("Using business admin token for profit report testing")
+        
+        # TEST 1: Test GET /api/reports/profit with format=excel (default parameters)
+        self.log("🔍 TEST 1: Profit Report Excel Download - Default Parameters", "INFO")
+        
+        success, response = self.run_test(
+            "Download Profit Report (Excel - Default Last 30 Days)",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={"format": "excel"}
+        )
+        
+        if success:
+            self.log("✅ Profit report Excel download successful with default parameters")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Profit report Excel download failed with default parameters")
+        self.tests_run += 1
+        
+        # TEST 2: Test GET /api/reports/profit with format=csv (default parameters)
+        self.log("🔍 TEST 2: Profit Report CSV Download - Default Parameters", "INFO")
+        
+        success, response = self.run_test(
+            "Download Profit Report (CSV - Default Last 30 Days)",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={"format": "csv"}
+        )
+        
+        if success:
+            self.log("✅ Profit report CSV download successful with default parameters")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Profit report CSV download failed with default parameters")
+        self.tests_run += 1
+        
+        # TEST 3: Test with specific start_date and end_date parameters
+        self.log("🔍 TEST 3: Profit Report with Specific Date Range", "INFO")
+        
+        from datetime import datetime, timedelta
+        start_date = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+        end_date = datetime.now().strftime('%Y-%m-%d')
+        
+        success, response = self.run_test(
+            "Download Profit Report (Excel - Specific Date Range)",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "excel",
+                "start_date": start_date,
+                "end_date": end_date
+            }
+        )
+        
+        if success:
+            self.log(f"✅ Profit report Excel download successful with date range: {start_date} to {end_date}")
+            self.tests_passed += 1
+        else:
+            self.log(f"❌ Profit report Excel download failed with date range: {start_date} to {end_date}")
+        self.tests_run += 1
+        
+        # TEST 4: Test CSV with specific date range
+        success, response = self.run_test(
+            "Download Profit Report (CSV - Specific Date Range)",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "csv",
+                "start_date": start_date,
+                "end_date": end_date
+            }
+        )
+        
+        if success:
+            self.log(f"✅ Profit report CSV download successful with date range: {start_date} to {end_date}")
+            self.tests_passed += 1
+        else:
+            self.log(f"❌ Profit report CSV download failed with date range: {start_date} to {end_date}")
+        self.tests_run += 1
+        
+        # TEST 5: Test authentication requirement (without token)
+        self.log("🔍 TEST 5: Profit Report Authentication Requirement", "INFO")
+        
+        # Store current token and remove it
+        original_token = self.token
+        self.token = None
+        
+        success, response = self.run_test(
+            "Download Profit Report Without Authentication (Should Fail)",
+            "GET",
+            "/api/reports/profit",
+            401,  # Unauthorized expected
+            params={"format": "excel"}
+        )
+        
+        if success:
+            self.log("✅ Profit report correctly requires authentication (401 Unauthorized)")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Profit report should require authentication but didn't return 401")
+        self.tests_run += 1
+        
+        # Restore token
+        self.token = original_token
+        
+        # TEST 6: Test invalid format parameter
+        self.log("🔍 TEST 6: Profit Report Invalid Format Parameter", "INFO")
+        
+        success, response = self.run_test(
+            "Download Profit Report with Invalid Format (Should Fail)",
+            "GET",
+            "/api/reports/profit",
+            422,  # Validation error expected
+            params={"format": "invalid_format"}
+        )
+        
+        if success:
+            self.log("✅ Profit report correctly rejects invalid format parameter (422 Validation Error)")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Profit report should reject invalid format but didn't return 422")
+        self.tests_run += 1
+        
+        # TEST 7: Test invalid date format
+        self.log("🔍 TEST 7: Profit Report Invalid Date Format", "INFO")
+        
+        success, response = self.run_test(
+            "Download Profit Report with Invalid Date Format (Should Fail)",
+            "GET",
+            "/api/reports/profit",
+            400,  # Bad request expected
+            params={
+                "format": "excel",
+                "start_date": "invalid-date-format"
+            }
+        )
+        
+        if success:
+            self.log("✅ Profit report correctly rejects invalid date format (400 Bad Request)")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Profit report should reject invalid date format but didn't return 400")
+        self.tests_run += 1
+        
+        # TEST 8: Test PDF format (if supported)
+        self.log("🔍 TEST 8: Profit Report PDF Download", "INFO")
+        
+        success, response = self.run_test(
+            "Download Profit Report (PDF Format)",
+            "GET",
+            "/api/reports/profit",
+            200,  # Should work or return specific error
+            params={"format": "pdf"}
+        )
+        
+        if success:
+            self.log("✅ Profit report PDF download successful")
+            self.tests_passed += 1
+        else:
+            self.log("⚠️ Profit report PDF download failed - may not be implemented or dependencies missing")
+        self.tests_run += 1
+        
+        # TEST 9: Test with ISO datetime format
+        self.log("🔍 TEST 9: Profit Report with ISO Datetime Format", "INFO")
+        
+        start_datetime = (datetime.now() - timedelta(days=3)).isoformat()
+        end_datetime = datetime.now().isoformat()
+        
+        success, response = self.run_test(
+            "Download Profit Report (Excel - ISO Datetime Format)",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "excel",
+                "start_date": start_datetime,
+                "end_date": end_datetime
+            }
+        )
+        
+        if success:
+            self.log("✅ Profit report accepts ISO datetime format correctly")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Profit report failed with ISO datetime format")
+        self.tests_run += 1
+        
+        # TEST 10: Test business context requirement (super admin without business context)
+        self.log("🔍 TEST 10: Profit Report Business Context Requirement", "INFO")
+        
+        if self.super_admin_token:
+            # Switch to super admin token
+            self.token = self.super_admin_token
+            
+            success, response = self.run_test(
+                "Download Profit Report as Super Admin (Should Fail)",
+                "GET",
+                "/api/reports/profit",
+                400,  # Bad request expected - super admin needs business context
+                params={"format": "excel"}
+            )
+            
+            if success:
+                self.log("✅ Profit report correctly requires business context for super admin (400 Bad Request)")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Profit report should require business context for super admin")
+            self.tests_run += 1
+            
+            # Restore business admin token
+            self.token = self.business_admin_token
+        
+        self.log("=== PROFIT REPORT DOWNLOAD FUNCTIONALITY TESTING COMPLETED ===", "INFO")
+        return True
+
+    def run_profit_report_tests(self):
+        """Run focused profit report download tests as requested"""
+        self.log("=== STARTING PROFIT REPORT DOWNLOAD TESTING ===", "INFO")
+        
+        # Setup authentication first
+        if not self.test_health_check():
+            self.log("❌ Health check failed - cannot proceed", "ERROR")
+            return False
+            
+        if not self.test_super_admin_setup():
+            self.log("❌ Super admin setup failed - cannot proceed", "ERROR")
+            return False
+            
+        if not self.test_business_admin_login():
+            self.log("❌ Business admin login failed - cannot proceed", "ERROR")
+            return False
+            
+        if not self.test_get_current_user():
+            self.log("❌ Get current user failed - cannot proceed", "ERROR")
+            return False
+        
+        # Run the specific profit report download tests
+        self.test_profit_report_download_functionality()
+        
+        # Print summary
+        self.print_summary()
+        
+        self.log("=== PROFIT REPORT DOWNLOAD TESTING COMPLETED ===", "INFO")
+        return True
+
     def print_summary(self):
         """Print test summary"""
         self.log("\n=== TEST SUMMARY ===", "INFO")
