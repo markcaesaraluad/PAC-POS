@@ -113,20 +113,30 @@ async def create_sale(
     
     # Update product quantities
     for item in sale.items:
+        # Use the validated ObjectId from earlier
+        try:
+            product_object_id = ObjectId(item.product_id)
+        except Exception as e:
+            # This should not happen since we validated earlier, but just in case
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid product ID format during inventory update: {item.product_id}",
+            )
+            
         await products_collection.update_one(
             {
-                "_id": ObjectId(item.product_id),
-                "business_id": ObjectId(business_id)
+                "_id": product_object_id,
+                "business_id": business_object_id
             },
             {"$inc": {"quantity": -item.quantity}}
         )
     
     # Update customer stats if customer provided
-    if sale.customer_id:
+    if sale.customer_id and customer_object_id:
         await customers_collection.update_one(
             {
-                "_id": ObjectId(sale.customer_id),
-                "business_id": ObjectId(business_id)
+                "_id": customer_object_id,
+                "business_id": business_object_id
             },
             {
                 "$inc": {
