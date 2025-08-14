@@ -446,10 +446,20 @@ async def update_sale(
             detail="Super admin must specify business context",
         )
     
+    # Validate ObjectId formats to prevent crashes
+    try:
+        sale_object_id = ObjectId(sale_id)
+        business_object_id = ObjectId(business_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid ID format: {str(e)}",
+        )
+    
     # Find the sale to update
     sale = await sales_collection.find_one({
-        "_id": ObjectId(sale_id),
-        "business_id": ObjectId(business_id)
+        "_id": sale_object_id,
+        "business_id": business_object_id
     })
     
     if not sale:
