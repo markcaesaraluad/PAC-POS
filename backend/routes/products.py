@@ -155,7 +155,7 @@ async def get_products(
         # Use product-specific low stock threshold
         query["$expr"] = {"$lte": ["$quantity", "$low_stock_threshold"]}
     
-    products_cursor = products_collection.find(query).skip(skip).limit(limit)
+    products_cursor = products_collection.find(query).sort("created_at", -1).skip(skip).limit(limit)
     products = await products_cursor.to_list(length=None)
     
     return [create_product_response(product) for product in products]
