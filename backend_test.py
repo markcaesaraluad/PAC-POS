@@ -12266,6 +12266,7 @@ def main():
             print("  reports - Test reports TODAY filter issues")
             print("  pdf_generation - Test PDF generation WeasyPrint fix")
             print("  today_date_filtering - Test specific TODAY date filtering issue")
+            print("  date_boundary_fix - Test date boundary fix for Sales and Profit reports")
             return 1
     else:
         # Default to PDF generation tests for this specific review
