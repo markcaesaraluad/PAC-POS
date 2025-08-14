@@ -10647,26 +10647,27 @@ def run_enhanced_sales_api_testing():
 
 
 def main():
-    """Main test execution"""
+    """Main test execution - focused on category creation fix verification"""
     tester = POSAPITester()
     
     try:
-        # Check command line arguments
-        if len(sys.argv) > 1:
-            if sys.argv[1] == "--focused":
-                success = tester.test_enhanced_pos_system_features()
-            elif sys.argv[1] == "enhanced_sales":
-                success, passed, total = run_enhanced_sales_api_testing()
-                return 0 if success else 1
-            elif sys.argv[1] == "auth":
-                tester.run_authentication_investigation()
-                return 0
-            else:
-                print("Usage: python backend_test.py [--focused|enhanced_sales|auth]")
-                return 1
+        # Run focused category creation tests
+        success = tester.run_category_creation_tests()
+        
+        # Print summary
+        print(f"\n=== TEST SUMMARY ===")
+        print(f"Tests Run: {tester.tests_run}")
+        print(f"Tests Passed: {tester.tests_passed}")
+        print(f"Tests Failed: {tester.tests_run - tester.tests_passed}")
+        print(f"Success Rate: {(tester.tests_passed / tester.tests_run * 100):.1f}%" if tester.tests_run > 0 else "No tests run")
+        
+        if tester.tests_passed == tester.tests_run:
+            print("🎉 ALL TESTS PASSED - Category creation fix verification successful!")
+            return 0
         else:
-            success = tester.run_all_tests()
-        return 0 if success else 1
+            print("❌ SOME TESTS FAILED - Category creation issues may still exist")
+            return 1
+            
     except KeyboardInterrupt:
         print("\n⚠️ Tests interrupted by user")
         return 1
