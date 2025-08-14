@@ -309,15 +309,26 @@ async def get_sale(
     
     business_id = current_user["business_id"]
     
+    # Validate ObjectId formats to prevent crashes
+    try:
+        sale_object_id = ObjectId(sale_id)
+        business_object_id = ObjectId(business_id)
+        cashier_object_id = ObjectId(current_user["_id"])
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid ID format: {str(e)}",
+        )
+    
     # Build query
     query = {
-        "_id": ObjectId(sale_id),
-        "business_id": ObjectId(business_id)
+        "_id": sale_object_id,
+        "business_id": business_object_id
     }
     
     # For cashiers, only allow access to their own sales
     if current_user["role"] == "cashier":
-        query["cashier_id"] = ObjectId(current_user["_id"])
+        query["cashier_id"] = cashier_object_id
     
     sale = await sales_collection.find_one(query)
     
