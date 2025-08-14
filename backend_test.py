@@ -10600,6 +10600,255 @@ Test Import Product 2,IMP-002,1234567890124,Books,5.00,12.99,25,active,Second im
             self.log("❌ Failed to retrieve products for Price Inquiry testing")
             return False
 
+    def test_product_creation_and_listing_fix(self):
+        """Test the specific product creation and listing issue mentioned in review request"""
+        self.log("=== TESTING PRODUCT CREATION AND LISTING FIX ===", "INFO")
+        
+        # Test 1: Get current product count and check sorting
+        success, response = self.run_test(
+            "Get Products List (Check Current State)",
+            "GET",
+            "/api/products",
+            200
+        )
+        
+        initial_count = len(response) if success and isinstance(response, list) else 0
+        self.log(f"Initial product count: {initial_count}")
+        
+        # Check if products are sorted by created_at desc (newest first)
+        if success and isinstance(response, list) and len(response) > 1:
+            first_product_created = response[0].get('created_at')
+            second_product_created = response[1].get('created_at')
+            if first_product_created and second_product_created:
+                # Convert to datetime for comparison
+                from datetime import datetime
+                try:
+                    first_dt = datetime.fromisoformat(first_product_created.replace('Z', '+00:00'))
+                    second_dt = datetime.fromisoformat(second_product_created.replace('Z', '+00:00'))
+                    if first_dt >= second_dt:
+                        self.log("✅ Products are correctly sorted by created_at desc (newest first)")
+                        self.tests_passed += 1
+                    else:
+                        self.log("❌ Products are NOT sorted correctly - oldest appears first")
+                    self.tests_run += 1
+                except Exception as e:
+                    self.log(f"⚠️ Could not verify sorting due to date parsing: {e}")
+        
+        # Test 2: Create a new product with valid data
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        product_data = {
+            "name": f"Test Product Sorting Fix {timestamp}",
+            "description": "Test product to verify sorting fix works correctly",
+            "sku": f"SORT-FIX-{timestamp}",
+            "price": 39.99,
+            "product_cost": 20.00,
+            "quantity": 75,
+            "category_id": self.category_id,  # Use existing category
+            "barcode": f"SORT{timestamp}",
+            "brand": "Test Brand",
+            "supplier": "Test Supplier",
+            "status": "active"
+        }
+        
+        success, response = self.run_test(
+            "Create New Product (Test Sorting Fix)",
+            "POST",
+            "/api/products",
+            200,
+            data=product_data
+        )
+        
+        new_product_id = None
+        if success:
+            self.log("✅ Product creation successful")
+            new_product_id = response.get('id')
+            if new_product_id:
+                self.log(f"Created product ID: {new_product_id}")
+                self.tests_passed += 1
+            self.tests_run += 1
+        else:
+            self.log("❌ Product creation failed")
+            self.tests_run += 1
+            return False
+            
+        # Test 3: Verify the new product appears at the top of the list (due to sort by created_at desc)
+        success, response = self.run_test(
+            "Get Products List (Verify New Product at Top)",
+            "GET",
+            "/api/products",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            final_count = len(response)
+            self.log(f"Final product count: {final_count}")
+            
+            # Check if count increased
+            if final_count > initial_count:
+                self.log("✅ Product count increased - new product appears in list")
+                self.tests_passed += 1
+                
+                # CRITICAL TEST: Verify the new product is at the TOP of the list (index 0)
+                if len(response) > 0:
+                    first_product = response[0]
+                    if first_product.get('id') == new_product_id:
+                        self.log("🎉 SORTING FIX VERIFIED: New product appears at TOP of list (sorted by created_at desc)")
+                        self.tests_passed += 1
+                    else:
+                        self.log(f"❌ SORTING ISSUE: New product NOT at top. First product ID: {first_product.get('id')}, Expected: {new_product_id}")
+                    self.tests_run += 1
+                else:
+                    self.log("❌ No products in list despite successful creation")
+                    self.tests_run += 1
+                    
+            else:
+                self.log("❌ Product count did not increase - new product not in list")
+                self.tests_run += 1
+        else:
+            self.log("❌ Failed to get products list after creation")
+            self.tests_run += 1
+            
+        # Test 4: Test that the product can be found by search
+        if new_product_id:
+            success, response = self.run_test(
+                "Search for New Product by Name",
+                "GET",
+                "/api/products",
+                200,
+                params={"search": "Test Product Sorting Fix"}
+            )
+            
+            if success and isinstance(response, list) and len(response) > 0:
+                # Check if our product is in the search results
+                product_found = any(p.get('id') == new_product_id for p in response)
+                if product_found:
+                    self.log("✅ New product found via search functionality")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ New product not found in search results")
+                self.tests_run += 1
+            else:
+                self.log("❌ Search functionality failed or returned no results")
+                self.tests_run += 1
+                
+        # Test 5: Verify CSV bulk import template download functionality
+        success, response = self.run_test(
+            "Download CSV Import Template",
+            "GET",
+            "/api/products/download-template",
+            200,
+            params={"format": "csv"}
+        )
+        
+        if success:
+            self.log("✅ CSV bulk import template download works correctly")
+            self.tests_passed += 1
+        else:
+            self.log("❌ CSV bulk import template download failed")
+        self.tests_run += 1
+        
+        # Test 6: Verify Excel bulk import template download functionality
+        success, response = self.run_test(
+            "Download Excel Import Template",
+            "GET",
+            "/api/products/download-template",
+            200,
+            params={"format": "excel"}
+        )
+        
+        if success:
+            self.log("✅ Excel bulk import template download works correctly")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Excel bulk import template download failed")
+        self.tests_run += 1
+        
+        # Test 7: Create another product to further verify sorting
+        second_product_data = {
+            "name": f"Second Test Product {timestamp}",
+            "description": "Second test product to verify consistent sorting",
+            "sku": f"SORT-FIX-2-{timestamp}",
+            "price": 49.99,
+            "product_cost": 25.00,
+            "quantity": 50,
+            "category_id": self.category_id,
+            "barcode": f"SORT2{timestamp}",
+            "brand": "Test Brand 2",
+            "supplier": "Test Supplier 2",
+            "status": "active"
+        }
+        
+        # Wait a moment to ensure different created_at timestamp
+        import time
+        time.sleep(1)
+        
+        success, response = self.run_test(
+            "Create Second Product (Verify Sorting Consistency)",
+            "POST",
+            "/api/products",
+            200,
+            data=second_product_data
+        )
+        
+        second_product_id = None
+        if success:
+            second_product_id = response.get('id')
+            self.log(f"Second product created with ID: {second_product_id}")
+            
+            # Test 8: Verify the second product now appears at the top
+            success, response = self.run_test(
+                "Get Products List (Verify Second Product at Top)",
+                "GET",
+                "/api/products",
+                200
+            )
+            
+            if success and isinstance(response, list) and len(response) > 0:
+                first_product = response[0]
+                if first_product.get('id') == second_product_id:
+                    self.log("🎉 SORTING CONSISTENCY VERIFIED: Second (newer) product appears at TOP of list")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ SORTING INCONSISTENCY: Second product NOT at top. First product ID: {first_product.get('id')}")
+                self.tests_run += 1
+        
+        self.log("=== PRODUCT CREATION AND LISTING FIX TESTING COMPLETED ===", "INFO")
+        return True
+
+    def run_product_creation_and_listing_tests(self):
+        """Run focused product creation and listing tests as requested in review"""
+        self.log("=== STARTING PRODUCT CREATION AND LISTING FIX VERIFICATION ===", "INFO")
+        
+        # Setup authentication first
+        if not self.test_health_check():
+            self.log("❌ Health check failed - cannot proceed", "ERROR")
+            return False
+            
+        if not self.test_super_admin_setup():
+            self.log("❌ Super admin setup failed - cannot proceed", "ERROR")
+            return False
+            
+        if not self.test_business_admin_login():
+            self.log("❌ Business admin login failed - cannot proceed", "ERROR")
+            return False
+            
+        if not self.test_get_current_user():
+            self.log("❌ Get current user failed - cannot proceed", "ERROR")
+            return False
+        
+        # Ensure we have a category for testing
+        if not self.category_id:
+            self.test_categories_crud()
+        
+        # Run the specific product creation and listing fix verification tests
+        self.test_product_creation_and_listing_fix()
+        
+        # Print summary
+        self.print_summary()
+        
+        self.log("=== PRODUCT CREATION AND LISTING FIX VERIFICATION COMPLETED ===", "INFO")
+        return True
+
 
 def run_enhanced_sales_api_testing():
     """Run focused testing for enhanced sales API with new item fields"""
