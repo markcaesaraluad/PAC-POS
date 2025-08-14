@@ -9,6 +9,7 @@ import Login from './components/auth/Login';
 import SuperAdminLayout from './components/layouts/SuperAdminLayout';
 import BusinessLayout from './components/layouts/BusinessLayout';
 import POSLayout from './components/layouts/POSLayout';
+import ErrorDisplay from './components/ErrorDisplay'; // Unified error handling
 
 // Super Admin Pages
 import SuperAdminDashboard from './pages/super-admin/Dashboard';
