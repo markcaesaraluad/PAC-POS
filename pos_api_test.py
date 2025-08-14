@@ -7,7 +7,7 @@ import requests
 import json
 
 def test_pos_api_sequence():
-    base_url = "https://pos-enhance.preview.emergentagent.com"
+    base_url = "https://pos-upgrade-1.preview.emergentagent.com"
     
     # Step 1: Login as business admin
     print("🔐 Step 1: Logging in as business admin...")

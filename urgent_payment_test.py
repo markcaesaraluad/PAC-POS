@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 class UrgentPaymentTester:
-    def __init__(self, base_url="https://024794f4-6a2a-4277-b4f4-10910bab6541.preview.emergentagent.com"):
+    def __init__(self, base_url="https://pos-upgrade-1.preview.emergentagent.com"):
         self.base_url = base_url
         self.token = None
         self.tests_run = 0
@@ -250,7 +250,7 @@ class UrgentPaymentTester:
             headers = {
                 'Content-Type': 'application/json',
                 'Authorization': f'Bearer {self.token}',
-                'Origin': 'https://024794f4-6a2a-4277-b4f4-10910bab6541.preview.emergentagent.com'
+                'Origin': 'https://pos-upgrade-1.preview.emergentagent.com'
             }
             
             response = requests.options(url, headers=headers)
