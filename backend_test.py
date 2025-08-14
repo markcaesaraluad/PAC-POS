@@ -7869,6 +7869,11 @@ class POSAPITester:
         self.test_products_crud()
         self.test_customers_crud()
         
+        # URGENT TEST: POS Sales Network Error Fix
+        self.log("=== POS SALES NETWORK ERROR FIX TESTING ===", "INFO")
+        self.test_pos_sales_network_error_fix()
+        self.log("=== POS SALES NETWORK ERROR FIX TESTING COMPLETED ===", "INFO")
+        
         # MAIN TEST: Unified Error Code System Testing
         self.log("=== UNIFIED ERROR CODE SYSTEM TESTING ===", "INFO")
         self.test_unified_error_code_system()
