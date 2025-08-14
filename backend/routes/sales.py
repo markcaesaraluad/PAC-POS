@@ -402,7 +402,14 @@ async def get_daily_sales_stats(
     
     # For cashiers, only their sales
     if current_user["role"] == "cashier":
-        query["cashier_id"] = ObjectId(current_user["_id"])
+        try:
+            cashier_object_id = ObjectId(current_user["_id"])
+            query["cashier_id"] = cashier_object_id
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid cashier ID format: {current_user['_id']}",
+            )
     
     # Get sales for the day
     sales_cursor = sales_collection.find(query)
