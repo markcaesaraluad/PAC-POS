@@ -73,16 +73,16 @@ const Reports = () => {
     loadDailySummary();
   }, [filters]);
 
-  const loadCategories = async () => {
+  const loadCategories = useCallback(async () => {
     try {
       const response = await categoriesAPI.getCategories();
       setCategories(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Failed to load categories:', error);
     }
-  };
+  }, []);
 
-  const loadDailySummary = async () => {
+  const loadDailySummary = useCallback(async () => {
     try {
       // Get current filter parameters for the daily summary
       const params = generateQueryParams();
@@ -104,7 +104,7 @@ const Reports = () => {
     } catch (error) {
       console.error('Failed to load daily summary:', error);
     }
-  };
+  }, [generateQueryParams]);
 
   const downloadReport = async (reportType, format = 'excel') => {
     const loadingKey = `${reportType}-${format}`;
