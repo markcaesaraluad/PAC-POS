@@ -154,6 +154,9 @@ function App() {
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       )}
+      
+      {/* Global Error Display System */}
+      <ErrorDisplay />
     </div>
   );
 }
