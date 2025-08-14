@@ -399,6 +399,16 @@ async def update_product(
             detail="Super admin must specify business context",
         )
     
+    # Validate ObjectId format to prevent crashes
+    try:
+        product_object_id = ObjectId(product_id)
+        business_object_id = ObjectId(business_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid ID format: {str(e)}",
+        )
+    
     # Build update data
     update_data = {k: v for k, v in product_update.dict(exclude_unset=True).items()}
     if update_data:
@@ -409,8 +419,8 @@ async def update_product(
     if 'product_cost' in update_data:
         # Get current product to compare costs
         current_product = await products_collection.find_one({
-            "_id": ObjectId(product_id),
-            "business_id": ObjectId(business_id)
+            "_id": product_object_id,
+            "business_id": business_object_id
         })
         
         if current_product and current_product.get("product_cost") != update_data["product_cost"]:
@@ -419,8 +429,8 @@ async def update_product(
     
     result = await products_collection.update_one(
         {
-            "_id": ObjectId(product_id),
-            "business_id": ObjectId(business_id)
+            "_id": product_object_id,
+            "business_id": business_object_id
         },
         {"$set": update_data}
     )
