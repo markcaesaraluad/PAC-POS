@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { reportsAPI, categoriesAPI } from '../../services/api';
 import { useCurrency } from '../../context/CurrencyContext';
 import GlobalFilter from '../../components/GlobalFilter';
