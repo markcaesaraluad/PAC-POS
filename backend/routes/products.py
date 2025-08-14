@@ -4,7 +4,7 @@ from models import ProductCreate, ProductResponse, ProductUpdate, ProductCostHis
 from auth_utils import get_business_admin_or_super, get_any_authenticated_user
 from database import get_collection
 from bson import ObjectId
-from datetime import datetime
+from datetime import datetime, timezone
 import uuid
 import io
 import pandas as pd
