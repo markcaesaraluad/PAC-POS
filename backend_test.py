@@ -1641,6 +1641,322 @@ class POSAPITester:
         self.log("=== PRINTER SETTINGS TESTING COMPLETED ===", "INFO")
         return True
 
+    def test_product_deletion_fix_verification(self):
+        """URGENT: Test Product Deletion Fix - Verify UNKNOWN-001 error resolution"""
+        self.log("=== URGENT: PRODUCT DELETION FIX VERIFICATION ===", "INFO")
+        
+        # Switch to business admin token for testing
+        if self.business_admin_token:
+            self.token = self.business_admin_token
+            self.log("Using business admin token for product deletion testing")
+        
+        # TEST 1: Create test products for deletion testing
+        self.log("🔍 TEST 1: Creating Test Products for Deletion Testing", "INFO")
+        
+        # Create a product that will NOT be used in sales (safe to delete)
+        unused_product_data = {
+            "name": "Test Product for Deletion",
+            "description": "Product that will be deleted safely",
+            "sku": f"DELETE-TEST-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            "price": 19.99,
+            "product_cost": 10.00,
+            "quantity": 50,
+            "category_id": self.category_id,
+            "barcode": f"DEL{datetime.now().strftime('%H%M%S')}"
+        }
+
+        success, response = self.run_test(
+            "Create Unused Product for Deletion Test",
+            "POST",
+            "/api/products",
+            200,
+            data=unused_product_data
+        )
+        
+        unused_product_id = None
+        if success and 'id' in response:
+            unused_product_id = response['id']
+            self.log(f"Unused product created with ID: {unused_product_id}")
+        else:
+            self.log("❌ Cannot test product deletion - failed to create unused product", "ERROR")
+            return False
+
+        # Create a product that WILL be used in sales (should be protected)
+        used_product_data = {
+            "name": "Test Product Used in Sales",
+            "description": "Product that will be used in sales and protected from deletion",
+            "sku": f"USED-TEST-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            "price": 29.99,
+            "product_cost": 15.00,
+            "quantity": 100,
+            "category_id": self.category_id,
+            "barcode": f"USD{datetime.now().strftime('%H%M%S')}"
+        }
+
+        success, response = self.run_test(
+            "Create Product for Sales Usage Test",
+            "POST",
+            "/api/products",
+            200,
+            data=used_product_data
+        )
+        
+        used_product_id = None
+        if success and 'id' in response:
+            used_product_id = response['id']
+            self.log(f"Product for sales usage created with ID: {used_product_id}")
+        else:
+            self.log("❌ Cannot test product deletion - failed to create product for sales", "ERROR")
+            return False
+
+        # TEST 2: Create a sale using the "used" product to protect it from deletion
+        self.log("🔍 TEST 2: Creating Sale to Protect Product from Deletion", "INFO")
+        
+        if not self.customer_id:
+            self.log("❌ Cannot create sale - missing customer data", "ERROR")
+            return False
+
+        sale_data_for_protection = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": used_product_id,
+                    "product_name": "Test Product Used in Sales",
+                    "sku": used_product_data['sku'],
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.00,
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "discount_amount": 0.00,
+            "total_amount": 32.69,
+            "payment_method": "cash",
+            "received_amount": 35.00,
+            "change_amount": 2.31,
+            "notes": "Sale to protect product from deletion"
+        }
+
+        success, response = self.run_test(
+            "Create Sale Using Product (Protection Test)",
+            "POST",
+            "/api/sales",
+            200,
+            data=sale_data_for_protection
+        )
+
+        if success:
+            self.log("✅ Sale created successfully - product is now protected from deletion")
+        else:
+            self.log("❌ Failed to create sale - product protection test may be invalid")
+
+        # TEST 3: Valid Product Deletion (unused product)
+        self.log("🔍 TEST 3: Valid Product Deletion - Unused Product", "INFO")
+        
+        success, response = self.run_test(
+            "Delete Unused Product (Should Succeed with 204)",
+            "DELETE",
+            f"/api/products/{unused_product_id}",
+            204
+        )
+
+        if success:
+            self.log("✅ Unused product deleted successfully with 204 No Content")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Failed to delete unused product - this indicates the UNKNOWN-001 error may still exist")
+        self.tests_run += 1
+
+        # TEST 4: Product Used in Sales Protection
+        self.log("🔍 TEST 4: Product Used in Sales Protection", "INFO")
+        
+        success, response = self.run_test(
+            "Delete Product Used in Sales (Should Return 409 Conflict)",
+            "DELETE",
+            f"/api/products/{used_product_id}",
+            409
+        )
+
+        if success:
+            self.log("✅ Product used in sales correctly protected - returned 409 Conflict and marked as inactive")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Product protection failed - should return 409 Conflict for products used in sales")
+        self.tests_run += 1
+
+        # TEST 5: Error Handling - Invalid Product ID Format
+        self.log("🔍 TEST 5: Error Handling - Invalid Product ID Format", "INFO")
+        
+        invalid_ids = ["invalid-id", "12345", "not-an-objectid", "507f1f77bcf86cd799439011x"]
+        
+        for invalid_id in invalid_ids:
+            success, response = self.run_test(
+                f"Delete Product with Invalid ID '{invalid_id}' (Should Return 400)",
+                "DELETE",
+                f"/api/products/{invalid_id}",
+                400
+            )
+
+            if success:
+                self.log(f"✅ Invalid ID '{invalid_id}' correctly rejected with 400 Bad Request")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Invalid ID '{invalid_id}' not properly handled - should return 400 Bad Request")
+            self.tests_run += 1
+
+        # TEST 6: Error Handling - Non-existent Product
+        self.log("🔍 TEST 6: Error Handling - Non-existent Product", "INFO")
+        
+        # Use a valid ObjectId format but non-existent product
+        non_existent_id = "507f1f77bcf86cd799439999"
+        
+        success, response = self.run_test(
+            "Delete Non-existent Product (Should Return 404)",
+            "DELETE",
+            f"/api/products/{non_existent_id}",
+            404
+        )
+
+        if success:
+            self.log("✅ Non-existent product correctly handled with 404 Not Found")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Non-existent product not properly handled - should return 404 Not Found")
+        self.tests_run += 1
+
+        # TEST 7: Verify Product Status After Protection (should be marked inactive)
+        self.log("🔍 TEST 7: Verify Product Status After Protection", "INFO")
+        
+        success, response = self.run_test(
+            "Get Protected Product Status",
+            "GET",
+            f"/api/products/{used_product_id}",
+            200
+        )
+
+        if success:
+            is_active = response.get('is_active', True)
+            status = response.get('status', 'active')
+            
+            if not is_active or status == 'inactive':
+                self.log("✅ Protected product correctly marked as inactive instead of deleted")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Protected product should be marked as inactive after deletion attempt")
+            self.tests_run += 1
+        else:
+            self.log("❌ Could not verify protected product status")
+            self.tests_run += 1
+
+        # TEST 8: Authentication Required
+        self.log("🔍 TEST 8: Authentication Required for Deletion", "INFO")
+        
+        # Store current token and test without authentication
+        original_token = self.token
+        self.token = None
+        
+        success, response = self.run_test(
+            "Delete Product Without Authentication (Should Return 401)",
+            "DELETE",
+            f"/api/products/{used_product_id}",
+            401
+        )
+
+        if success:
+            self.log("✅ Authentication correctly required for product deletion")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Product deletion should require authentication")
+        self.tests_run += 1
+        
+        # Restore token
+        self.token = original_token
+
+        # TEST 9: ObjectId Validation Comprehensive Test
+        self.log("🔍 TEST 9: ObjectId Validation Comprehensive Test", "INFO")
+        
+        malformed_ids = [
+            "",  # Empty string
+            "null",  # String null
+            "undefined",  # String undefined
+            "507f1f77bcf86cd79943901",  # Too short
+            "507f1f77bcf86cd799439011aa",  # Too long
+            "gggggggggggggggggggggggg",  # Invalid characters
+            "507f1f77-bcf8-6cd7-9943-9011",  # With dashes
+            "507F1F77BCF86CD799439011"  # All caps (should work but test anyway)
+        ]
+        
+        for malformed_id in malformed_ids:
+            success, response = self.run_test(
+                f"Delete Product with Malformed ID '{malformed_id}' (Should Return 400)",
+                "DELETE",
+                f"/api/products/{malformed_id}",
+                400
+            )
+
+            if success:
+                self.log(f"✅ Malformed ID '{malformed_id}' correctly rejected")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Malformed ID '{malformed_id}' should be rejected with 400 Bad Request")
+            self.tests_run += 1
+
+        # TEST 10: Backend Stability Test - Multiple Rapid Deletion Attempts
+        self.log("🔍 TEST 10: Backend Stability Test - Multiple Rapid Deletion Attempts", "INFO")
+        
+        # Create multiple test products for rapid deletion
+        rapid_test_products = []
+        for i in range(3):
+            rapid_product_data = {
+                "name": f"Rapid Delete Test Product {i+1}",
+                "description": f"Product for rapid deletion test {i+1}",
+                "sku": f"RAPID-{i+1}-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                "price": 9.99 + i,
+                "product_cost": 5.00 + i,
+                "quantity": 10 + i,
+                "category_id": self.category_id
+            }
+
+            success, response = self.run_test(
+                f"Create Rapid Test Product {i+1}",
+                "POST",
+                "/api/products",
+                200,
+                data=rapid_product_data
+            )
+            
+            if success and 'id' in response:
+                rapid_test_products.append(response['id'])
+
+        # Rapidly delete all test products
+        rapid_deletion_success = 0
+        for i, product_id in enumerate(rapid_test_products):
+            success, response = self.run_test(
+                f"Rapid Delete Test Product {i+1}",
+                "DELETE",
+                f"/api/products/{product_id}",
+                204
+            )
+            
+            if success:
+                rapid_deletion_success += 1
+
+        if rapid_deletion_success == len(rapid_test_products):
+            self.log("✅ Backend remains stable under rapid deletion attempts")
+            self.tests_passed += 1
+        else:
+            self.log(f"❌ Backend stability issue - only {rapid_deletion_success}/{len(rapid_test_products)} rapid deletions succeeded")
+        self.tests_run += 1
+
+        self.log("=== PRODUCT DELETION FIX VERIFICATION COMPLETED ===", "INFO")
+        return True
+
     def test_pos_sales_network_error_final_verification(self):
         """URGENT: Final comprehensive test to verify ALL network errors in POS-SALE have been resolved.
         This test focuses on ObjectId validation fixes and system stability under various conditions.
