@@ -874,7 +874,7 @@ const POSInterface = () => {
       let response;
       
       // Feature 5: Handle settle payment for ongoing sales
-      if (settleInfo.isSettling && settleInfo.originalSaleId) {
+      if (settleInfo && settleInfo.isSettling && settleInfo.originalSaleId) {
         // This is a settlement payment for an ongoing sale
         const updateData = {
           status: 'completed',
