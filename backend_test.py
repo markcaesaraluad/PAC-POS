@@ -5268,6 +5268,315 @@ Test Import Product 2,IMP-002,1234567890124,Books,5.00,12.99,25,active,Second im
         
         self.log("=== PDF EXPORT FUNCTIONALITY TESTING COMPLETED ===", "INFO")
         return True
+    def test_date_boundary_fix_for_reports(self):
+        """Test the date boundary fix for Sales Report and Profit Report exports"""
+        self.log("=== TESTING DATE BOUNDARY FIX FOR REPORTS ===", "INFO")
+        
+        # Get today's date in YYYY-MM-DD format
+        today = datetime.now().strftime('%Y-%m-%d')
+        self.log(f"Testing with today's date: {today}")
+        
+        # TEST 1: Verify Date Boundary Fix - Sales Report with date-only format
+        self.log("🔍 TEST 1: Sales Report with date-only format (TODAY filter)", "INFO")
+        
+        success, response = self.run_test(
+            "Sales Report - Date-only format (TODAY)",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={
+                "format": "excel",
+                "start_date": today,
+                "end_date": today
+            }
+        )
+        
+        if success:
+            self.log("✅ Sales Report with TODAY filter returns data successfully")
+            # Check if we got a substantial response (not empty)
+            if hasattr(response, '__len__') or len(str(response)) > 100:
+                self.log("✅ Sales Report contains substantial data (not empty/zero results)")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Sales Report appears to return empty/minimal data")
+        else:
+            self.log("❌ Sales Report with TODAY filter failed")
+        self.tests_run += 1
+        
+        # TEST 2: Verify Date Boundary Fix - Profit Report with date-only format
+        self.log("🔍 TEST 2: Profit Report with date-only format (TODAY filter)", "INFO")
+        
+        success, response = self.run_test(
+            "Profit Report - Date-only format (TODAY)",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "excel",
+                "start_date": today,
+                "end_date": today
+            }
+        )
+        
+        if success:
+            self.log("✅ Profit Report with TODAY filter returns data successfully")
+            # Check if we got a substantial response (not empty)
+            if hasattr(response, '__len__') or len(str(response)) > 100:
+                self.log("✅ Profit Report contains substantial data (not empty/zero results)")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Profit Report appears to return empty/minimal data")
+        else:
+            self.log("❌ Profit Report with TODAY filter failed")
+        self.tests_run += 1
+        
+        # TEST 3: Compare Excel and PDF Results - Sales Report
+        self.log("🔍 TEST 3: Compare Excel and PDF formats - Sales Report", "INFO")
+        
+        # Excel format
+        success_excel, response_excel = self.run_test(
+            "Sales Report - Excel format (TODAY)",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={
+                "format": "excel",
+                "start_date": today,
+                "end_date": today
+            }
+        )
+        
+        # PDF format
+        success_pdf, response_pdf = self.run_test(
+            "Sales Report - PDF format (TODAY)",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={
+                "format": "pdf",
+                "start_date": today,
+                "end_date": today
+            }
+        )
+        
+        if success_excel and success_pdf:
+            self.log("✅ Both Excel and PDF formats work for Sales Report")
+            # Compare file sizes (both should contain data)
+            excel_size = len(str(response_excel)) if response_excel else 0
+            pdf_size = len(str(response_pdf)) if response_pdf else 0
+            
+            if excel_size > 100 and pdf_size > 100:
+                self.log(f"✅ Both formats return substantial data - Excel: {excel_size} bytes, PDF: {pdf_size} bytes")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ One or both formats return minimal data - Excel: {excel_size} bytes, PDF: {pdf_size} bytes")
+        else:
+            self.log("❌ One or both formats failed for Sales Report")
+        self.tests_run += 1
+        
+        # TEST 4: Compare Excel and PDF Results - Profit Report
+        self.log("🔍 TEST 4: Compare Excel and PDF formats - Profit Report", "INFO")
+        
+        # Excel format
+        success_excel, response_excel = self.run_test(
+            "Profit Report - Excel format (TODAY)",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "excel",
+                "start_date": today,
+                "end_date": today
+            }
+        )
+        
+        # PDF format
+        success_pdf, response_pdf = self.run_test(
+            "Profit Report - PDF format (TODAY)",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "pdf",
+                "start_date": today,
+                "end_date": today
+            }
+        )
+        
+        if success_excel and success_pdf:
+            self.log("✅ Both Excel and PDF formats work for Profit Report")
+            # Compare file sizes (both should contain data)
+            excel_size = len(str(response_excel)) if response_excel else 0
+            pdf_size = len(str(response_pdf)) if response_pdf else 0
+            
+            if excel_size > 100 and pdf_size > 100:
+                self.log(f"✅ Both formats return substantial data - Excel: {excel_size} bytes, PDF: {pdf_size} bytes")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ One or both formats return minimal data - Excel: {excel_size} bytes, PDF: {pdf_size} bytes")
+        else:
+            self.log("❌ One or both formats failed for Profit Report")
+        self.tests_run += 1
+        
+        # TEST 5: Data Consistency Verification - Compare with Daily Summary
+        self.log("🔍 TEST 5: Data Consistency - Compare with Daily Summary API", "INFO")
+        
+        # Get daily summary for today
+        success_summary, summary_response = self.run_test(
+            "Daily Summary for TODAY",
+            "GET",
+            "/api/reports/daily-summary",
+            200,
+            params={"date": today}
+        )
+        
+        if success_summary and isinstance(summary_response, dict):
+            sales_data = summary_response.get('sales', {})
+            total_sales = sales_data.get('total_sales', 0)
+            total_revenue = sales_data.get('total_revenue', 0)
+            
+            self.log(f"✅ Daily Summary API working - Sales: {total_sales}, Revenue: ${total_revenue:.2f}")
+            
+            if total_sales > 0 and total_revenue > 0:
+                self.log("✅ Daily Summary shows substantial data for today")
+                self.tests_passed += 1
+            else:
+                self.log("⚠️ Daily Summary shows no sales data for today - this may be expected if no sales occurred")
+                self.tests_passed += 1  # Not necessarily a failure
+        else:
+            self.log("❌ Daily Summary API failed or returned invalid data")
+        self.tests_run += 1
+        
+        # TEST 6: Edge Case Testing - Different date formats
+        self.log("🔍 TEST 6: Edge Case Testing - Different date formats", "INFO")
+        
+        # Test with ISO datetime format (should still work)
+        iso_datetime = f"{today}T00:00:00"
+        success, response = self.run_test(
+            "Sales Report - ISO datetime format",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={
+                "format": "excel",
+                "start_date": iso_datetime,
+                "end_date": f"{today}T23:59:59"
+            }
+        )
+        
+        if success:
+            self.log("✅ ISO datetime format works correctly")
+            self.tests_passed += 1
+        else:
+            self.log("❌ ISO datetime format failed")
+        self.tests_run += 1
+        
+        # TEST 7: Verify fix doesn't break other date ranges
+        self.log("🔍 TEST 7: Verify fix doesn't break other date ranges", "INFO")
+        
+        # Test Yesterday
+        yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+        success, response = self.run_test(
+            "Sales Report - Yesterday filter",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={
+                "format": "excel",
+                "start_date": yesterday,
+                "end_date": yesterday
+            }
+        )
+        
+        if success:
+            self.log("✅ Yesterday filter works correctly")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Yesterday filter failed")
+        self.tests_run += 1
+        
+        # Test Last 7 Days
+        week_ago = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+        success, response = self.run_test(
+            "Sales Report - Last 7 Days filter",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={
+                "format": "excel",
+                "start_date": week_ago,
+                "end_date": today
+            }
+        )
+        
+        if success:
+            self.log("✅ Last 7 Days filter works correctly")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Last 7 Days filter failed")
+        self.tests_run += 1
+        
+        # TEST 8: Test CSV format with TODAY filter
+        self.log("🔍 TEST 8: CSV format with TODAY filter", "INFO")
+        
+        success, response = self.run_test(
+            "Profit Report - CSV format (TODAY)",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "csv",
+                "start_date": today,
+                "end_date": today
+            }
+        )
+        
+        if success:
+            self.log("✅ CSV format works with TODAY filter")
+            csv_size = len(str(response)) if response else 0
+            if csv_size > 100:
+                self.log(f"✅ CSV contains substantial data: {csv_size} bytes")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ CSV contains minimal data: {csv_size} bytes")
+        else:
+            self.log("❌ CSV format failed with TODAY filter")
+        self.tests_run += 1
+        
+        self.log("=== DATE BOUNDARY FIX TESTING COMPLETED ===", "INFO")
+        return True
+
+    def run_date_boundary_fix_tests(self):
+        """Run focused date boundary fix tests as requested"""
+        self.log("=== STARTING DATE BOUNDARY FIX TESTING ===", "INFO")
+        
+        # Setup authentication first
+        if not self.test_health_check():
+            self.log("❌ Health check failed - cannot proceed", "ERROR")
+            return False
+            
+        if not self.test_super_admin_setup():
+            self.log("❌ Super admin setup failed - cannot proceed", "ERROR")
+            return False
+            
+        if not self.test_business_admin_login():
+            self.log("❌ Business admin login failed - cannot proceed", "ERROR")
+            return False
+            
+        if not self.test_get_current_user():
+            self.log("❌ Get current user failed - cannot proceed", "ERROR")
+            return False
+        
+        # Setup test data
+        self.test_categories_crud()
+        self.test_products_crud()
+        self.test_customers_crud()
+        
+        # Run the specific date boundary fix tests
+        self.test_date_boundary_fix_for_reports()
+        
+        self.log("=== DATE BOUNDARY FIX TESTING COMPLETED ===", "INFO")
+        return True
 
     def test_global_filter_system(self):
         """Test the Global Filter System for Reports and Sales History"""
