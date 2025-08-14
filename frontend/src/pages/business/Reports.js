@@ -93,40 +93,42 @@ const Reports = () => {
 
   // Only reload daily summary when filters actually change, not on every render
   useEffect(() => {
-    const currentFiltersStr = JSON.stringify(filters);
+    if (loadingRef.current) return; // Prevent concurrent requests
     
-    // Only make API call if filters have actually changed
-    if (prevFiltersRef.current !== currentFiltersStr) {
-      prevFiltersRef.current = currentFiltersStr;
-      
-      // Use a timeout to debounce rapid filter changes
-      const timeoutId = setTimeout(async () => {
-        try {
-          // Get current filter parameters for the daily summary
-          const params = generateQueryParams();
-          
-          // For daily summary, we need to handle date filtering differently
-          let summaryParams = {};
-          
-          // If we have date filters, use them
-          if (params.start_date && params.end_date && params.start_date === params.end_date) {
-            // If start and end date are the same, use the date parameter
-            summaryParams.date = params.start_date;
-          } else if (params.date_preset === 'today') {
-            // For today preset, don't pass any date parameter (defaults to today)
-            summaryParams = {};
-          }
-          
-          const response = await reportsAPI.getDailySummary(summaryParams);
-          setDailySummary(response.data);
-        } catch (error) {
-          console.error('Failed to load daily summary:', error);
+    loadingRef.current = true;
+    
+    // Use a timeout to debounce rapid filter changes
+    const timeoutId = setTimeout(async () => {
+      try {
+        // Get current filter parameters for the daily summary
+        const params = generateQueryParams();
+        
+        // For daily summary, we need to handle date filtering differently
+        let summaryParams = {};
+        
+        // If we have date filters, use them
+        if (params.start_date && params.end_date && params.start_date === params.end_date) {
+          // If start and end date are the same, use the date parameter
+          summaryParams.date = params.start_date;
+        } else if (params.date_preset === 'today') {
+          // For today preset, don't pass any date parameter (defaults to today)
+          summaryParams = {};
         }
-      }, 300);
+        
+        const response = await reportsAPI.getDailySummary(summaryParams);
+        setDailySummary(response.data);
+      } catch (error) {
+        console.error('Failed to load daily summary:', error);
+      } finally {
+        loadingRef.current = false;
+      }
+    }, 300);
 
-      return () => clearTimeout(timeoutId);
-    }
-  }, [filters, generateQueryParams]);
+    return () => {
+      clearTimeout(timeoutId);
+      loadingRef.current = false;
+    };
+  }, [currentFilters, generateQueryParams]);
 
   const loadCategories = useCallback(async () => {
     try {
