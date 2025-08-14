@@ -194,15 +194,18 @@ const GlobalFilter = ({
           setActiveFilters(parsedFilters);
           setSearchValue(parsedFilters.search || '');
           
+          // Use the callback in a timeout to prevent infinite loops
           if (onFilterChange) {
-            onFilterChange(parsedFilters);
+            setTimeout(() => {
+              onFilterChange(parsedFilters);
+            }, 0);
           }
         } catch (error) {
           console.error('Error loading saved filters:', error);
         }
       }
     }
-  }, [enablePersistence, persistenceKey, onFilterChange]);
+  }, [enablePersistence, persistenceKey]); // Removed onFilterChange from dependencies
 
   // Count active filters
   const activeFilterCount = Object.keys(activeFilters).length;
