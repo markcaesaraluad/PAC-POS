@@ -446,8 +446,8 @@ async def update_product(
         cost_history_collection = await get_collection("product_cost_history")
         cost_history_doc = {
             "_id": ObjectId(),
-            "business_id": ObjectId(business_id),
-            "product_id": ObjectId(product_id),
+            "business_id": business_object_id,
+            "product_id": product_object_id,
             "cost": new_cost,
             "effective_from": datetime.utcnow(),
             "changed_by": ObjectId(current_user["_id"]),
@@ -458,8 +458,8 @@ async def update_product(
     
     # Return updated product
     updated_product = await products_collection.find_one({
-        "_id": ObjectId(product_id),
-        "business_id": ObjectId(business_id)
+        "_id": product_object_id,
+        "business_id": business_object_id
     })
     
     return create_product_response(updated_product)
