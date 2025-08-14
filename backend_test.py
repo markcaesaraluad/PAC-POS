@@ -2843,6 +2843,260 @@ class POSAPITester:
         self.log("=== ENHANCED POS FEATURES TESTING COMPLETED ===", "INFO")
         return True
 
+    def test_urgent_payment_network_error_reproduction(self):
+        """URGENT: Debug Network Error After Payment - Reproduce exact error from user report"""
+        self.log("=== URGENT: PAYMENT NETWORK ERROR REPRODUCTION ===", "INFO")
+        self.log("Simulating exact POS payment transaction to capture network error", "INFO")
+        
+        # Switch to business admin token for testing
+        if self.business_admin_token:
+            self.token = self.business_admin_token
+            self.log("Using business admin token for payment flow testing")
+        
+        # STEP 1: Login as business admin (simulate user login)
+        self.log("🔍 STEP 1: Business Admin Login", "INFO")
+        success, response = self.run_test(
+            "Business Admin Login for Payment Flow",
+            "POST",
+            "/api/auth/login",
+            200,
+            data={
+                "email": "admin@printsandcuts.com",
+                "password": "admin123456",
+                "business_subdomain": "prints-cuts-tagum"
+            }
+        )
+        
+        if not success or 'access_token' not in response:
+            self.log("❌ CRITICAL: Cannot reproduce payment error - login failed", "ERROR")
+            return False
+        
+        self.token = response['access_token']
+        self.log("✅ Business admin login successful")
+        
+        # STEP 2: Get available products (simulate POS loading)
+        self.log("🔍 STEP 2: Get Available Products", "INFO")
+        success, products_response = self.run_test(
+            "Get Available Products for POS",
+            "GET",
+            "/api/products",
+            200
+        )
+        
+        if not success or not isinstance(products_response, list) or len(products_response) == 0:
+            self.log("❌ CRITICAL: No products available for payment testing", "ERROR")
+            return False
+        
+        # Get first available product for testing
+        test_product = products_response[0]
+        product_id = test_product.get('id')
+        product_name = test_product.get('name', 'Test Product')
+        product_price = test_product.get('price', 29.99)
+        product_sku = test_product.get('sku', 'UNKNOWN-SKU')
+        product_cost = test_product.get('product_cost', 15.00)
+        
+        self.log(f"✅ Using product: {product_name} (ID: {product_id}, Price: ${product_price})")
+        
+        # STEP 3: Get customers (simulate customer selection)
+        self.log("🔍 STEP 3: Get Customers for Transaction", "INFO")
+        success, customers_response = self.run_test(
+            "Get Customers for POS",
+            "GET",
+            "/api/customers",
+            200
+        )
+        
+        customer_id = None
+        customer_name = "Walk-in Customer"
+        
+        if success and isinstance(customers_response, list) and len(customers_response) > 0:
+            test_customer = customers_response[0]
+            customer_id = test_customer.get('id')
+            customer_name = test_customer.get('name', 'Test Customer')
+            self.log(f"✅ Using customer: {customer_name} (ID: {customer_id})")
+        else:
+            self.log("⚠️ No customers found, using walk-in customer")
+        
+        # STEP 4: Create realistic sales transaction payload (exact frontend structure)
+        self.log("🔍 STEP 4: Create Realistic Payment Transaction", "INFO")
+        
+        # Simulate exact data structure that frontend would send
+        realistic_payment_data = {
+            "customer_id": customer_id,
+            "customer_name": customer_name,
+            "cashier_id": "507f1f77bcf86cd799439011",  # Simulate current user ID
+            "cashier_name": "admin@printsandcuts.com",  # Simulate current user name
+            "items": [
+                {
+                    "product_id": product_id,
+                    "product_name": product_name,
+                    "sku": product_sku,
+                    "quantity": 2,
+                    "unit_price": product_price,
+                    "unit_price_snapshot": product_price,
+                    "unit_cost_snapshot": product_cost,
+                    "total_price": product_price * 2
+                }
+            ],
+            "subtotal": product_price * 2,
+            "tax_amount": round((product_price * 2) * 0.09, 2),  # 9% tax
+            "discount_amount": 0.00,
+            "total_amount": round((product_price * 2) * 1.09, 2),
+            "payment_method": "cash",
+            "received_amount": round((product_price * 2) * 1.09 + 10, 2),  # Extra $10
+            "change_amount": 10.00,
+            "notes": "URGENT TEST: Reproducing payment network error"
+        }
+        
+        self.log(f"Payment data prepared: Total ${realistic_payment_data['total_amount']}")
+        
+        # STEP 5: Attempt to POST the sale (this is where the error should occur)
+        self.log("🔍 STEP 5: POST Sale Transaction (Critical Test)", "INFO")
+        self.log("This is where the 'Network Error: Check connection and try again' should occur", "WARN")
+        
+        success, sale_response = self.run_test(
+            "POST Sale Transaction (Payment Completion)",
+            "POST",
+            "/api/sales",
+            200,  # Expected success
+            data=realistic_payment_data
+        )
+        
+        if success:
+            self.log("✅ UNEXPECTED: Payment transaction completed successfully", "INFO")
+            self.log("This suggests the network error has been resolved", "INFO")
+            sale_id = sale_response.get('id')
+            if sale_id:
+                self.log(f"Sale created with ID: {sale_id}")
+        else:
+            self.log("❌ REPRODUCED: Payment transaction failed", "ERROR")
+            self.log("This matches the user's reported 'Network Error' issue", "ERROR")
+        
+        # STEP 6: Test various error conditions that might cause network errors
+        self.log("🔍 STEP 6: Test Error Conditions", "INFO")
+        
+        # Test with invalid product ID (common cause of network errors)
+        invalid_payment_data = realistic_payment_data.copy()
+        invalid_payment_data['items'][0]['product_id'] = "invalid-product-id"
+        
+        success, error_response = self.run_test(
+            "Payment with Invalid Product ID",
+            "POST",
+            "/api/sales",
+            400,  # Expected error
+            data=invalid_payment_data
+        )
+        
+        if not success:
+            self.log("❌ Invalid product ID causes network error", "ERROR")
+        
+        # Test with missing required fields
+        missing_fields_data = realistic_payment_data.copy()
+        del missing_fields_data['cashier_id']
+        
+        success, error_response = self.run_test(
+            "Payment with Missing Cashier ID",
+            "POST",
+            "/api/sales",
+            422,  # Expected validation error
+            data=missing_fields_data
+        )
+        
+        if not success:
+            self.log("❌ Missing required fields cause network error", "ERROR")
+        
+        # STEP 7: Test network connectivity
+        self.log("🔍 STEP 7: Network Connectivity Test", "INFO")
+        
+        success, health_response = self.run_test(
+            "Health Check (Network Connectivity)",
+            "GET",
+            "/api/health",
+            200
+        )
+        
+        if success:
+            self.log("✅ Network connectivity is working")
+        else:
+            self.log("❌ Network connectivity issues detected", "ERROR")
+        
+        # STEP 8: Test CORS headers
+        self.log("🔍 STEP 8: CORS Headers Test", "INFO")
+        
+        try:
+            import requests
+            url = f"{self.base_url}/api/sales"
+            headers = {
+                'Content-Type': 'application/json',
+                'Authorization': f'Bearer {self.token}',
+                'Origin': 'https://024794f4-6a2a-4277-b4f4-10910bab6541.preview.emergentagent.com'
+            }
+            
+            response = requests.options(url, headers=headers)
+            self.log(f"CORS preflight response: {response.status_code}")
+            
+            cors_headers = {
+                'Access-Control-Allow-Origin': response.headers.get('Access-Control-Allow-Origin'),
+                'Access-Control-Allow-Methods': response.headers.get('Access-Control-Allow-Methods'),
+                'Access-Control-Allow-Headers': response.headers.get('Access-Control-Allow-Headers')
+            }
+            
+            self.log(f"CORS headers: {cors_headers}")
+            
+            if cors_headers['Access-Control-Allow-Origin']:
+                self.log("✅ CORS headers are present")
+            else:
+                self.log("❌ CORS headers missing - potential cause of network error", "ERROR")
+                
+        except Exception as e:
+            self.log(f"❌ CORS test failed: {str(e)}", "ERROR")
+        
+        # STEP 9: Test with exact frontend data structure
+        self.log("🔍 STEP 9: Test with Frontend-like Data", "INFO")
+        
+        # Simulate data that might come from React frontend with potential issues
+        frontend_like_data = {
+            "customer_id": customer_id or None,
+            "customer_name": customer_name or "",
+            "cashier_id": None,  # This might be null from frontend
+            "cashier_name": None,  # This might be null from frontend
+            "items": [
+                {
+                    "product_id": product_id,
+                    "product_name": product_name,
+                    "sku": None,  # This might be null from frontend
+                    "quantity": 1,
+                    "unit_price": product_price,
+                    "unit_price_snapshot": None,  # This might be null from frontend
+                    "unit_cost_snapshot": None,  # This might be null from frontend
+                    "total_price": product_price
+                }
+            ],
+            "subtotal": product_price,
+            "tax_amount": 0,
+            "discount_amount": 0,
+            "total_amount": product_price,
+            "payment_method": "cash",
+            "received_amount": product_price + 5,
+            "change_amount": 5,
+            "notes": "Frontend-like data with potential null values"
+        }
+        
+        success, frontend_response = self.run_test(
+            "Payment with Frontend-like Null Values",
+            "POST",
+            "/api/sales",
+            422,  # Expected validation error due to null values
+            data=frontend_like_data
+        )
+        
+        if not success:
+            self.log("❌ Frontend null values cause validation errors", "ERROR")
+            self.log("This could be the root cause of the 'Network Error' message", "ERROR")
+        
+        self.log("=== PAYMENT NETWORK ERROR REPRODUCTION COMPLETED ===", "INFO")
+        return True
+
     def test_profit_tracking_functionality(self):
         """Test comprehensive profit tracking functionality"""
         self.log("=== STARTING PROFIT TRACKING TESTING ===", "INFO")
