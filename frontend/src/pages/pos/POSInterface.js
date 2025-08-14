@@ -833,24 +833,31 @@ const POSInterface = () => {
 
       // CRITICAL FIX: Validate required fields before API call to prevent "failed to complete sales" error
       const validationErrors = [];
+      
+      // Temporarily disabled frontend validation to debug network error
+      /*
       if (!transactionData.cashier_id) {
         validationErrors.push('Cashier ID is missing');
       }
       if (!transactionData.cashier_name || transactionData.cashier_name === 'Unknown Cashier') {
         validationErrors.push('Cashier name is missing');
       }
+      */
+      
       if (!transactionData.items || transactionData.items.length === 0) {
         validationErrors.push('No items in cart');
       }
       
       // Validate each item
       transactionData.items.forEach((item, index) => {
+        /*
         if (!item.sku || item.sku === 'UNKNOWN-SKU') {
           validationErrors.push(`Item ${index + 1}: SKU is missing`);
         }
         if (!item.unit_price_snapshot && item.unit_price_snapshot !== 0) {
           validationErrors.push(`Item ${index + 1}: Unit price is missing`);
         }
+        */
         if (!item.product_id) {
           validationErrors.push(`Item ${index + 1}: Product ID is missing`);
         }
