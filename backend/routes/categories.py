@@ -33,13 +33,16 @@ async def create_category(
             detail="Category name already exists",
         )
     
+    now = datetime.utcnow()
     category_doc = {
         "_id": ObjectId(),
         "business_id": ObjectId(business_id),
         "name": category.name,
         "description": category.description,
-        "color": category.color,
-        "created_at": datetime.utcnow()
+        "color": category.color or "#3B82F6",  # Default color if not provided
+        "is_active": True,
+        "created_at": now,
+        "updated_at": now
     }
     
     await categories_collection.insert_one(category_doc)
@@ -51,7 +54,9 @@ async def create_category(
         description=category_doc["description"],
         color=category_doc["color"],
         product_count=0,
-        created_at=category_doc["created_at"]
+        is_active=category_doc["is_active"],
+        created_at=category_doc["created_at"],
+        updated_at=category_doc["updated_at"]
     )
 
 @router.get("", response_model=List[CategoryResponse])
