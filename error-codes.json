@@ -1,0 +1,110 @@
+{
+  "registry": {
+    "POS-SCAN-001": {
+      "title": "Barcode not found",
+      "userMessage": "Item not found. Please check barcode.",
+      "devCause": "Scan lookup returned 404/null",
+      "commonFix": "Verify product barcode or create product",
+      "severity": "medium",
+      "area": "POS",
+      "lastSeenAt": null,
+      "occurrenceCount": 0
+    },
+    "POS-PAY-001": {
+      "title": "Insufficient payment",
+      "userMessage": "Payment is less than amount due.",
+      "devCause": "amount_received < due after discount/tax",
+      "commonFix": "Re-enter amount or adjust discount",
+      "severity": "high",
+      "area": "POS",
+      "lastSeenAt": null,
+      "occurrenceCount": 0
+    },
+    "POS-PAY-002": {
+      "title": "Payment save failed",
+      "userMessage": "Could not save transaction.",
+      "devCause": "DB insert/transaction error",
+      "commonFix": "Retry; check DB connectivity & constraints",
+      "severity": "high",
+      "area": "POS",
+      "lastSeenAt": null,
+      "occurrenceCount": 0
+    },
+    "POS-PRINT-001": {
+      "title": "Printer not configured",
+      "userMessage": "No printer selected. Configure a printer in Settings.",
+      "devCause": "Missing printer config",
+      "commonFix": "Set printer; re-test",
+      "severity": "medium",
+      "area": "POS",
+      "lastSeenAt": null,
+      "occurrenceCount": 0
+    },
+    "POS-PRINT-002": {
+      "title": "Print failed",
+      "userMessage": "Printing failed. Please try again.",
+      "devCause": "Bluetooth/Web print failure (device offline, etc.)",
+      "commonFix": "Verify device; check connection; reconnect printer",
+      "severity": "medium",
+      "area": "POS",
+      "lastSeenAt": null,
+      "occurrenceCount": 0
+    },
+    "SETTINGS-IMG-001": {
+      "title": "Logo upload failed",
+      "userMessage": "Logo upload failed.",
+      "devCause": "File type/size/storage error",
+      "commonFix": "Validate file; check storage path/permissions",
+      "severity": "low",
+      "area": "SETTINGS",
+      "lastSeenAt": null,
+      "occurrenceCount": 0
+    },
+    "REPORT-EXP-001": {
+      "title": "PDF export failed",
+      "userMessage": "Could not generate PDF.",
+      "devCause": "Generator/runtime error",
+      "commonFix": "Inspect server logs with correlationId",
+      "severity": "medium",
+      "area": "REPORT",
+      "lastSeenAt": null,
+      "occurrenceCount": 0
+    },
+    "DB-TXN-001": {
+      "title": "Transaction not persisted",
+      "userMessage": "We couldn't save your sale. Please try again.",
+      "devCause": "Sale header/lines insert failed or rolled back",
+      "commonFix": "Retry; validate payload; inspect DB",
+      "severity": "high",
+      "area": "DB",
+      "lastSeenAt": null,
+      "occurrenceCount": 0
+    },
+    "AUTH-001": {
+      "title": "Session expired",
+      "userMessage": "Session expired. Please sign in again.",
+      "devCause": "Token invalid/expired",
+      "commonFix": "Re-authenticate",
+      "severity": "low",
+      "area": "AUTH",
+      "lastSeenAt": null,
+      "occurrenceCount": 0
+    }
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-01-14T12:00:00Z",
+    "totalCodes": 9,
+    "nextSequence": {
+      "POS": 3,
+      "SETTINGS": 2,
+      "REPORT": 2,
+      "DB": 2,
+      "AUTH": 2,
+      "PRINT": 1,
+      "INVENTORY": 1,
+      "CUSTOMER": 1,
+      "UNKNOWN": 1
+    }
+  }
+}
