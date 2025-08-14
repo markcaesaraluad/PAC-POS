@@ -238,14 +238,20 @@ export const reportsAPI = {
     };
     return apiClient.get('/api/reports/customers', config);
   },
-  getProfitReport: (params = {}) => {
-    const config = { 
-      params,
-      responseType: 'blob'
-    };
-    return apiClient.get('/api/reports/profit', config);
-  },
   getDailySummary: (params = {}) => apiClient.get('/api/reports/daily-summary', { params }),
+};
+
+export const profitReportsAPI = {
+  getProfitReport: (params = {}) => apiClient.get('/api/reports/profit', { params }),
+  exportProfitReport: (params = {}) => apiClient.get('/api/reports/profit/export', { params }),
+};
+
+// Diagnostics API (Admin only)
+export const diagnosticsAPI = {
+  getErrorCodes: (params = {}) => apiClient.get('/api/diagnostics/error-codes', { params }),
+  getRecentErrors: (params = {}) => apiClient.get('/api/diagnostics/recent-errors', { params }),
+  getErrorCodeDetails: (errorCode) => apiClient.get(`/api/diagnostics/error-codes/${errorCode}`),
+  exportRecentErrors: (params = {}) => apiClient.get('/api/diagnostics/export-recent-errors', { params })
 };
 
 export default apiClient;
