@@ -4,7 +4,7 @@ Admin-only access for error codes registry and recent errors
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Dict, Any, Optional
-from auth import get_authenticated_user
+from routes.auth import get_authenticated_user
 from utils.error_codes import error_code_manager
 import logging
 
