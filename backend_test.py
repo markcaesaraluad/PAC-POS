@@ -6759,18 +6759,9 @@ class POSAPITester:
         return True
 
     def run_all_tests(self):
-        """Run focused tests for login authentication fix and payment reference codes verification"""
-        self.log("Starting Login Authentication Fix & Payment Reference Codes Verification Testing", "START")
+        """Run focused tests for sales completion error reproduction"""
+        self.log("Starting Sales Completion Error Reproduction Testing", "START")
         self.log(f"Testing against: {self.base_url}")
-        
-        # URGENT: Test Login Authentication Fix First
-        self.log("=== PRIORITY 1: LOGIN AUTHENTICATION FIX TESTING ===", "INFO")
-        login_success = self.test_login_authentication_fix()
-        if not login_success:
-            self.log("❌ CRITICAL: Login authentication fix test failed", "ERROR")
-            # Continue with other tests to provide full context
-        else:
-            self.log("✅ LOGIN AUTHENTICATION FIX VERIFIED SUCCESSFULLY", "PASS")
         
         # Basic connectivity
         if not self.test_health_check():
@@ -6782,7 +6773,7 @@ class POSAPITester:
             self.log("❌ Super admin setup failed - stopping tests", "CRITICAL")
             return False
 
-        # Authentication tests (redundant but kept for completeness)
+        # Authentication tests
         if not self.test_business_admin_login():
             self.log("⚠️ Business admin login failed - continuing with super admin", "WARNING")
             # Continue with super admin token for testing
@@ -6796,10 +6787,10 @@ class POSAPITester:
         self.test_products_crud()
         self.test_customers_crud()
         
-        # SECONDARY FOCUS: Payment Reference Codes & Downpayments Testing
-        self.log("=== PRIORITY 2: PAYMENT REFERENCE CODES & DOWNPAYMENTS TESTING ===", "INFO")
-        self.test_payment_reference_codes_and_downpayments()
-        self.log("=== PAYMENT REFERENCE CODES & DOWNPAYMENTS TESTING COMPLETED ===", "INFO")
+        # URGENT: Sales Completion Error Reproduction Testing
+        self.log("=== URGENT: SALES COMPLETION ERROR REPRODUCTION TESTING ===", "INFO")
+        self.test_sales_completion_error_reproduction()
+        self.log("=== SALES COMPLETION ERROR REPRODUCTION TESTING COMPLETED ===", "INFO")
         
         # Final summary
         self.log("=== TEST SUMMARY ===", "INFO")
