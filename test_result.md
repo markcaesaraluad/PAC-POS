@@ -1187,6 +1187,9 @@ agent_communication:
 - Authentication error returns 403 instead of 401 (acceptable behavior)
 - These are minor and don't affect core POS functionality
 
+  - agent: "testing"
+    message: "🔍 SPECIFIC USER REPORTED ISSUES TESTING COMPLETED - CRITICAL FINDINGS: 1) Category Creation Error: POST /api/categories fails with 500 Internal Server Error (UNKNOWN-003) when creating new categories. This is a server-side issue requiring immediate investigation. 2) Product Listing Issue: New products are created successfully but don't appear in default GET /api/products due to pagination limits (50 max). Products are accessible via direct ID and search. 3) CSV Bulk Import: Template downloads work, but actual file upload testing requires multipart form data implementation. RECOMMENDATION: Fix category creation 500 error as highest priority. Product listing behavior is expected with pagination but could be improved with better sorting (newest first)."
+
 ### NEW PROFIT TRACKING FEATURES - ✅ FULLY TESTED AND WORKING
 - **Product Cost Management**: ✅ Required cost field, validation, cost updates
 - **Product Cost History**: ✅ Admin-only access, chronological tracking, proper ordering
