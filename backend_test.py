@@ -11187,10 +11187,13 @@ def main():
             success = tester.run_product_creation_and_listing_tests()
         elif test_mode == "category_creation":
             success = tester.run_category_creation_tests()
+        elif test_mode == "reports":
+            success = tester.run_reports_today_filter_tests()
         else:
             print("Unknown test mode. Available modes:")
             print("  product_listing - Test product creation and listing fix")
             print("  category_creation - Test category creation fix")
+            print("  reports - Test reports TODAY filter issues")
             return 1
     else:
         # Default to category creation tests
