@@ -11563,6 +11563,49 @@ Test Import Product 2,IMP-002,1234567890124,Books,5.00,12.99,25,active,Second im
         self.log("=== PRODUCT CREATION AND LISTING FIX VERIFICATION COMPLETED ===", "INFO")
         return True
 
+    def run_pdf_generation_tests(self):
+        """Run focused PDF generation tests as requested"""
+        self.log("=== STARTING PDF GENERATION WEASYPRINT FIX TESTING ===", "INFO")
+        
+        # Setup authentication first
+        if not self.test_health_check():
+            self.log("❌ Health check failed - cannot proceed", "ERROR")
+            return False
+            
+        if not self.test_super_admin_setup():
+            self.log("❌ Super admin setup failed - cannot proceed", "ERROR")
+            return False
+            
+        if not self.test_business_admin_login():
+            self.log("❌ Business admin login failed - cannot proceed", "ERROR")
+            return False
+            
+        if not self.test_get_current_user():
+            self.log("❌ Get current user failed - cannot proceed", "ERROR")
+            return False
+        
+        # Run the specific PDF generation tests
+        success = self.test_pdf_generation_weasyprint_fix()
+        
+        # Print summary
+        self.print_test_summary()
+        
+        self.log("=== PDF GENERATION WEASYPRINT FIX TESTING COMPLETED ===", "INFO")
+        return success
+
+    def print_test_summary(self):
+        """Print test summary"""
+        self.log("\n=== TEST SUMMARY ===", "INFO")
+        self.log(f"Tests Run: {self.tests_run}")
+        self.log(f"Tests Passed: {self.tests_passed}")
+        self.log(f"Tests Failed: {self.tests_run - self.tests_passed}")
+        self.log(f"Success Rate: {(self.tests_passed/self.tests_run)*100:.1f}%" if self.tests_run > 0 else "No tests run")
+        
+        if self.tests_passed == self.tests_run:
+            self.log("🎉 ALL TESTS PASSED!", "PASS")
+        else:
+            self.log("❌ Some tests failed. Check logs above for details.", "FAIL")
+
 
 def run_enhanced_sales_api_testing():
     """Run focused testing for enhanced sales API with new item fields"""
