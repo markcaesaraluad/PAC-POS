@@ -923,7 +923,7 @@ const POSInterface = () => {
     } catch (error) {
       console.error('Transaction error:', error);
       
-      // Improved error handling to convert complex objects to strings
+      // CRITICAL FIX: Improved error handling to show specific validation messages
       let message;
       if (error.response?.data?.detail) {
         // Handle FastAPI validation errors that might be arrays or objects
@@ -931,19 +931,39 @@ const POSInterface = () => {
         if (typeof detail === 'string') {
           message = detail;
         } else if (Array.isArray(detail)) {
-          // Handle Pydantic validation errors array
-          message = detail.map(err => `${err.loc?.join('.')}: ${err.msg}`).join(', ');
+          // Handle Pydantic validation errors array - show specific field errors
+          const fieldErrors = detail.map(err => {
+            const field = err.loc?.join('.') || 'unknown field';
+            const msg = err.msg || 'validation error';
+            return `${field}: ${msg}`;
+          });
+          message = `Validation errors: ${fieldErrors.join(', ')}`;
         } else if (typeof detail === 'object') {
           // Handle object-based errors
           message = JSON.stringify(detail);
         } else {
           message = 'Validation error occurred';
         }
+      } else if (error.response?.status === 422) {
+        message = 'Invalid data provided. Please check all fields and try again.';
+      } else if (error.response?.status === 400) {
+        message = 'Bad request. Please check your input data.';
+      } else if (error.response?.status === 500) {
+        message = 'Server error occurred. Please try again or contact support.';
+      } else if (error.response?.status === 404) {
+        message = 'Resource not found. Please refresh and try again.';
+      } else if (error.code === 'NETWORK_ERROR' || !error.response) {
+        message = 'Network error. Please check your connection and try again.';
       } else {
         message = `Failed to ${transactionMode === 'sale' ? 'complete sale' : 'create invoice'}`;
       }
       
       toast.error(message);
+      console.error('Transaction error details:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
     } finally {
       setIsProcessing(false);
     }
