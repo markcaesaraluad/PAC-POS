@@ -62,11 +62,22 @@ const Reports = () => {
     enablePersistence: true
   });
 
-  // Load initial data
+  // Load initial data - only run once on mount
   useEffect(() => {
     loadCategories();
-    loadDailySummary();
-  }, [loadCategories, loadDailySummary]);
+    
+    // Load initial daily summary without filters
+    const initialLoad = async () => {
+      try {
+        const response = await reportsAPI.getDailySummary();
+        setDailySummary(response.data);
+      } catch (error) {
+        console.error('Failed to load initial daily summary:', error);
+      }
+    };
+    
+    initialLoad();
+  }, []); // Empty dependency array - only run on mount
 
   // Only reload daily summary when filters change, but prevent infinite loops
   useEffect(() => {
