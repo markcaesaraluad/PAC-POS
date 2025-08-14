@@ -12257,6 +12257,8 @@ def main():
             tester.test_customers_crud()
             # Run the specific test
             success = tester.test_today_date_filtering_issue()
+        elif test_mode == "date_boundary_fix":
+            success = tester.run_date_boundary_fix_tests()
         else:
             print("Unknown test mode. Available modes:")
             print("  product_listing - Test product creation and listing fix")
