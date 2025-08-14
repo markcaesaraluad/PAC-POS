@@ -20,19 +20,77 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor for error handling
+// Response interceptor for unified error handling
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Handle standardized error responses from our error handling middleware
+    if (error.response?.data?.ok === false) {
+      const errorData = error.response.data;
+      
+      // Store error details for diagnostics
+      const errorDetails = {
+        errorCode: errorData.errorCode,
+        correlationId: errorData.correlationId,
+        message: errorData.message,
+        route: window.location.pathname,
+        timestamp: new Date().toISOString(),
+        statusCode: error.response.status
+      };
+      
+      // Store in session storage for recent errors tracking (client-side)
+      try {
+        const recentErrors = JSON.parse(sessionStorage.getItem('pos-recent-errors') || '[]');
+        recentErrors.unshift(errorDetails);
+        // Keep only last 50 errors
+        if (recentErrors.length > 50) {
+          recentErrors.splice(50);
+        }
+        sessionStorage.setItem('pos-recent-errors', JSON.stringify(recentErrors));
+      } catch (e) {
+        console.warn('Failed to store error in session storage:', e);
+      }
+      
+      // Trigger error display (will be handled by our error display system)
+      window.dispatchEvent(new CustomEvent('pos-error', { 
+        detail: errorDetails 
+      }));
+      
+      // Don't show duplicate toasts for auth errors (handled by auth logic)
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+        return Promise.reject(error);
+      }
+      
+      // Return enhanced error for component handling
+      error.posErrorDetails = errorDetails;
+      return Promise.reject(error);
+    }
+    
+    // Handle legacy/non-standardized errors
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
     
-    // Don't show toast for expected errors
+    // For non-standardized errors, show generic message
     const isExpectedError = [400, 401, 403, 404, 422].includes(error.response?.status);
     if (!isExpectedError) {
-      toast.error('Something went wrong. Please try again.');
+      // Generate a correlation ID for non-standardized errors
+      const correlationId = 'client-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+      const errorDetails = {
+        errorCode: 'UNKNOWN-001',
+        correlationId: correlationId,
+        message: 'Something went wrong. Please try again.',
+        route: window.location.pathname,
+        timestamp: new Date().toISOString(),
+        statusCode: error.response?.status || 0
+      };
+      
+      window.dispatchEvent(new CustomEvent('pos-error', { 
+        detail: errorDetails 
+      }));
     }
     
     return Promise.reject(error);
