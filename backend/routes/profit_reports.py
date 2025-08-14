@@ -48,6 +48,9 @@ async def get_profit_report(
     else:
         try:
             end_dt = datetime.fromisoformat(end_date)
+            # If end_date is date-only (no time component), set it to end of day
+            if end_date and len(end_date) == 10:  # YYYY-MM-DD format (10 characters)
+                end_dt = end_dt.replace(hour=23, minute=59, second=59, microsecond=999999)
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
