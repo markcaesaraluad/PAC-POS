@@ -18,9 +18,12 @@ const Reports = () => {
   const [dailySummary, setDailySummary] = useState(null);
   const [categories, setCategories] = useState([]);
   const [downloadLoading, setDownloadLoading] = useState({});
-  
-  // Use ref to track the previous filter values to prevent unnecessary API calls
-  const prevFiltersRef = useRef('');
+  const [currentFilters, setCurrentFilters] = useState({
+    date_preset: 'last30days'
+  });
+
+  // Use ref to track if we're already loading to prevent multiple concurrent requests
+  const loadingRef = useRef(false);
 
   // Filter configuration for GlobalFilter component
   const filterConfig = {
@@ -49,21 +52,27 @@ const Reports = () => {
     },
   };
 
-  // Global filter hook for managing filter state
-  const {
-    filters,
-    setFilters,
-    loading: filterLoading,
-    generateQueryParams,
-    clearFilters,
-    hasActiveFilters
-  } = useGlobalFilter({
-    defaultFilters: {
-      date_preset: 'last30days'
-    },
-    persistenceKey: 'reports-filter',
-    enablePersistence: true
-  });
+  // Generate query parameters from current filters
+  const generateQueryParams = useCallback(() => {
+    const params = {};
+    
+    Object.entries(currentFilters).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== '') {
+        params[key] = value;
+      }
+    });
+    
+    return params;
+  }, [currentFilters]);
+
+  // Handle filter changes
+  const handleFilterChange = useCallback((newFilters) => {
+    setCurrentFilters(newFilters);
+  }, []);
+
+  // Check if there are active filters
+  const hasActiveFilters = Object.keys(currentFilters).length > 1 || 
+    (Object.keys(currentFilters).length === 1 && !currentFilters.date_preset);
 
   // Load initial data - only run once on mount
   useEffect(() => {
