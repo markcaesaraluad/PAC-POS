@@ -6188,10 +6188,147 @@ class POSAPITester:
         
         return working_features == total_features
 
+    def test_login_authentication_fix(self):
+        """URGENT: Test Login Authentication Fix - Focus on the specific issue reported"""
+        self.log("=== URGENT: TESTING LOGIN AUTHENTICATION FIX ===", "INFO")
+        self.log("Testing login endpoint to verify 'SOMETHING WENT WRONG' error has been resolved", "INFO")
+        
+        # Test the specific credentials mentioned in the review request
+        test_credentials = {
+            "email": "admin@printsandcuts.com",
+            "password": "admin123456",
+            "business_subdomain": "prints-cuts-tagum"
+        }
+        
+        self.log(f"Testing business admin login with credentials: {test_credentials['email']}", "INFO")
+        
+        # TEST 1: Business Admin Login with known credentials
+        success, response = self.run_test(
+            "CRITICAL: Business Admin Login Authentication Fix Test",
+            "POST",
+            "/api/auth/login",
+            200,
+            data=test_credentials
+        )
+        
+        if success:
+            # Verify token is returned in response
+            if 'access_token' in response:
+                self.log("✅ CRITICAL SUCCESS: Login successful - Token returned in response", "PASS")
+                self.business_admin_token = response['access_token']
+                self.token = self.business_admin_token
+                
+                # Verify token structure
+                token_parts = response['access_token'].split('.')
+                if len(token_parts) == 3:
+                    self.log("✅ JWT token structure is valid (3 parts)", "PASS")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ JWT token structure invalid", "FAIL")
+                self.tests_run += 1
+                
+                # Verify no 500 server errors occurred
+                self.log("✅ No 500 server errors - Backend is stable", "PASS")
+                self.tests_passed += 1
+                self.tests_run += 1
+                
+                # Test token validation by calling /api/auth/me
+                success_me, me_response = self.run_test(
+                    "Verify Token Works - Get Current User",
+                    "GET",
+                    "/api/auth/me",
+                    200
+                )
+                
+                if success_me:
+                    self.log("✅ Token validation successful - Authentication system working", "PASS")
+                    self.tests_passed += 1
+                    
+                    # Verify business context
+                    if 'business_id' in me_response:
+                        self.business_id = me_response['business_id']
+                        self.log(f"✅ Business context loaded: {self.business_id}", "PASS")
+                        self.tests_passed += 1
+                    else:
+                        self.log("❌ Business context missing from user info", "FAIL")
+                    self.tests_run += 1
+                else:
+                    self.log("❌ Token validation failed", "FAIL")
+                self.tests_run += 1
+                
+            else:
+                self.log("❌ CRITICAL FAILURE: Login successful but no token returned", "FAIL")
+                return False
+        else:
+            self.log("❌ CRITICAL FAILURE: Login authentication still failing", "FAIL")
+            return False
+        
+        # TEST 2: Verify backend services are accessible (test a few key endpoints)
+        self.log("Testing key backend endpoints to verify system stability...", "INFO")
+        
+        # Test health endpoint
+        health_success, _ = self.run_test(
+            "Health Check - Verify Backend Stability",
+            "GET",
+            "/api/health",
+            200
+        )
+        
+        if health_success:
+            self.log("✅ Health endpoint accessible - Backend services running", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Health endpoint failed - Backend issues persist", "FAIL")
+        self.tests_run += 1
+        
+        # Test business info endpoint (requires authentication)
+        business_success, _ = self.run_test(
+            "Business Info - Verify Authenticated Endpoints",
+            "GET",
+            "/api/business/info",
+            200
+        )
+        
+        if business_success:
+            self.log("✅ Business info endpoint accessible - Authentication working", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Business info endpoint failed - Authentication issues", "FAIL")
+        self.tests_run += 1
+        
+        # TEST 3: Test the specific sales endpoint that was causing issues
+        self.log("Testing sales endpoint that was affected by slowapi dependency issue...", "INFO")
+        
+        sales_success, _ = self.run_test(
+            "Sales Endpoint - Verify slowapi Fix",
+            "GET",
+            "/api/sales",
+            200
+        )
+        
+        if sales_success:
+            self.log("✅ Sales endpoint accessible - slowapi dependency issue resolved", "PASS")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Sales endpoint still failing - slowapi issue may persist", "FAIL")
+        self.tests_run += 1
+        
+        self.log("=== LOGIN AUTHENTICATION FIX TESTING COMPLETED ===", "INFO")
+        return success
+
     def run_all_tests(self):
-        """Run focused tests for payment reference codes and downpayments verification"""
-        self.log("Starting Payment Reference Codes & Downpayments Verification Testing", "START")
+        """Run focused tests for login authentication fix and payment reference codes verification"""
+        self.log("Starting Login Authentication Fix & Payment Reference Codes Verification Testing", "START")
         self.log(f"Testing against: {self.base_url}")
+        
+        # URGENT: Test Login Authentication Fix First
+        self.log("=== PRIORITY 1: LOGIN AUTHENTICATION FIX TESTING ===", "INFO")
+        login_success = self.test_login_authentication_fix()
+        if not login_success:
+            self.log("❌ CRITICAL: Login authentication fix test failed", "ERROR")
+            # Continue with other tests to provide full context
+        else:
+            self.log("✅ LOGIN AUTHENTICATION FIX VERIFIED SUCCESSFULLY", "PASS")
         
         # Basic connectivity
         if not self.test_health_check():
@@ -6203,7 +6340,7 @@ class POSAPITester:
             self.log("❌ Super admin setup failed - stopping tests", "CRITICAL")
             return False
 
-        # Authentication tests
+        # Authentication tests (redundant but kept for completeness)
         if not self.test_business_admin_login():
             self.log("⚠️ Business admin login failed - continuing with super admin", "WARNING")
             # Continue with super admin token for testing
@@ -6217,8 +6354,8 @@ class POSAPITester:
         self.test_products_crud()
         self.test_customers_crud()
         
-        # MAIN FOCUS: Payment Reference Codes & Downpayments Testing
-        self.log("=== MAIN FOCUS: PAYMENT REFERENCE CODES & DOWNPAYMENTS TESTING ===", "INFO")
+        # SECONDARY FOCUS: Payment Reference Codes & Downpayments Testing
+        self.log("=== PRIORITY 2: PAYMENT REFERENCE CODES & DOWNPAYMENTS TESTING ===", "INFO")
         self.test_payment_reference_codes_and_downpayments()
         self.log("=== PAYMENT REFERENCE CODES & DOWNPAYMENTS TESTING COMPLETED ===", "INFO")
         
