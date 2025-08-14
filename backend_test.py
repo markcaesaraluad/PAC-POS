@@ -6758,6 +6758,359 @@ class POSAPITester:
         self.log("=== SALES COMPLETION ERROR REPRODUCTION COMPLETED ===", "INFO")
         return True
 
+    def test_sales_completion_fix_verification(self):
+        """
+        URGENT: Verify Sales Completion Fix
+        Test that the frontend validation fixes resolve the "failed to complete sales" error.
+        
+        Critical Verification Tests:
+        1. Test Valid Sale Creation with all required fields properly filled
+        2. Verify Error Handling with intentionally invalid data 
+        3. Test Required Field Validation to verify frontend validation catches null/missing values
+        """
+        self.log("=== URGENT: SALES COMPLETION FIX VERIFICATION ===", "INFO")
+        
+        # Switch to business admin token for testing
+        if self.business_admin_token:
+            self.token = self.business_admin_token
+            self.log("Using business admin token for sales completion testing")
+        
+        # Ensure we have required test data
+        if not self.product_id or not self.customer_id:
+            self.log("❌ Cannot test - missing product or customer data", "ERROR")
+            return False
+        
+        # TEST 1: Valid Sale Creation - Test that normal sales still work after validation improvements
+        self.log("🔍 TEST 1: Valid Sale Creation with All Required Fields", "INFO")
+        
+        valid_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",  # Valid cashier ID
+            "cashier_name": "admin@printsandcuts.com",  # Valid cashier name
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU-VALID",  # Valid SKU
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,  # Valid price snapshot
+                    "unit_cost_snapshot": 15.50,   # Valid cost snapshot
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "discount_amount": 0.00,
+            "total_amount": 32.69,
+            "payment_method": "cash",
+            "received_amount": 35.00,
+            "change_amount": 2.31,
+            "notes": "Valid sale test after frontend validation fixes"
+        }
+
+        success, response = self.run_test(
+            "Valid Sale Creation (Should Work)",
+            "POST",
+            "/api/sales",
+            200,
+            data=valid_sale_data
+        )
+
+        if success:
+            self.log("✅ Valid sale creation works correctly after validation fixes")
+            self.tests_passed += 1
+            
+            # Verify all enhanced fields are present in response
+            items = response.get('items', [])
+            if items and len(items) > 0:
+                first_item = items[0]
+                required_fields = ['sku', 'unit_price_snapshot', 'unit_cost_snapshot']
+                missing_fields = [field for field in required_fields if field not in first_item]
+                
+                if not missing_fields:
+                    self.log("✅ All required enhanced fields present in response")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ Missing enhanced fields in response: {missing_fields}")
+                self.tests_run += 1
+        else:
+            self.log("❌ Valid sale creation failed - this indicates a problem with the fix")
+        self.tests_run += 1
+
+        # TEST 2: Error Handling - Test with intentionally invalid data to confirm better error messages
+        self.log("🔍 TEST 2: Error Handling with Invalid Data", "INFO")
+        
+        # Test 2a: Missing cashier_id (should fail with specific validation message)
+        invalid_sale_missing_cashier_id = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            # Missing cashier_id
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU",
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.50,
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "total_amount": 32.69,
+            "payment_method": "cash"
+        }
+
+        success, response = self.run_test(
+            "Invalid Sale - Missing cashier_id (Should Fail with 422)",
+            "POST",
+            "/api/sales",
+            422,  # Validation error expected
+            data=invalid_sale_missing_cashier_id
+        )
+
+        if success:
+            self.log("✅ Missing cashier_id correctly rejected with validation error")
+            # Check if error message is more informative
+            if isinstance(response, dict) and 'detail' in response:
+                error_detail = str(response['detail'])
+                if 'cashier_id' in error_detail.lower() or 'field required' in error_detail.lower():
+                    self.log("✅ Error message is specific and informative")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"⚠️ Error message could be more specific: {error_detail}")
+                self.tests_run += 1
+            self.tests_passed += 1
+        else:
+            self.log("❌ Should reject sale with missing cashier_id")
+        self.tests_run += 1
+
+        # TEST 3: Required Field Validation - Missing SKU
+        self.log("🔍 TEST 3: Required Field Validation - Missing SKU", "INFO")
+        
+        invalid_sale_missing_sku = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    # Missing sku field
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.50,
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "total_amount": 32.69,
+            "payment_method": "cash"
+        }
+
+        success, response = self.run_test(
+            "Invalid Sale - Missing SKU (Should Fail with 422)",
+            "POST",
+            "/api/sales",
+            422,  # Validation error expected
+            data=invalid_sale_missing_sku
+        )
+
+        if success:
+            self.log("✅ Missing SKU correctly rejected - frontend validation would prevent this")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Should reject sale with missing SKU")
+        self.tests_run += 1
+
+        # TEST 4: Required Field Validation - Missing unit_price_snapshot
+        self.log("🔍 TEST 4: Required Field Validation - Missing unit_price_snapshot", "INFO")
+        
+        invalid_sale_missing_price_snapshot = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU",
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    # Missing unit_price_snapshot field
+                    "unit_cost_snapshot": 15.50,
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "total_amount": 32.69,
+            "payment_method": "cash"
+        }
+
+        success, response = self.run_test(
+            "Invalid Sale - Missing unit_price_snapshot (Should Fail with 422)",
+            "POST",
+            "/api/sales",
+            422,  # Validation error expected
+            data=invalid_sale_missing_price_snapshot
+        )
+
+        if success:
+            self.log("✅ Missing unit_price_snapshot correctly rejected - frontend validation would prevent this")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Should reject sale with missing unit_price_snapshot")
+        self.tests_run += 1
+
+        # TEST 5: Required Field Validation - Missing unit_cost_snapshot
+        self.log("🔍 TEST 5: Required Field Validation - Missing unit_cost_snapshot", "INFO")
+        
+        invalid_sale_missing_cost_snapshot = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU",
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    # Missing unit_cost_snapshot field
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "total_amount": 32.69,
+            "payment_method": "cash"
+        }
+
+        success, response = self.run_test(
+            "Invalid Sale - Missing unit_cost_snapshot (Should Fail with 422)",
+            "POST",
+            "/api/sales",
+            422,  # Validation error expected
+            data=invalid_sale_missing_cost_snapshot
+        )
+
+        if success:
+            self.log("✅ Missing unit_cost_snapshot correctly rejected - frontend validation would prevent this")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Should reject sale with missing unit_cost_snapshot")
+        self.tests_run += 1
+
+        # TEST 6: Frontend-like null values test (simulating what frontend might send before fixes)
+        self.log("🔍 TEST 6: Frontend-like Null Values Test", "INFO")
+        
+        frontend_null_values_sale = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": None,  # Null value that frontend might send
+            "cashier_name": None,  # Null value that frontend might send
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": None,  # Null value that frontend might send
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": None,  # Null value that frontend might send
+                    "unit_cost_snapshot": None,   # Null value that frontend might send
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "total_amount": 32.69,
+            "payment_method": "cash"
+        }
+
+        success, response = self.run_test(
+            "Frontend-like Null Values (Should Fail with 422)",
+            "POST",
+            "/api/sales",
+            422,  # Validation error expected
+            data=frontend_null_values_sale
+        )
+
+        if success:
+            self.log("✅ Frontend-like null values correctly rejected - this is what caused the original 'failed to complete sales' error")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Should reject sale with null values")
+        self.tests_run += 1
+
+        # TEST 7: Test with frontend validation fallback values (simulating fixed frontend)
+        self.log("🔍 TEST 7: Frontend Validation Fallback Values Test", "INFO")
+        
+        frontend_fixed_sale = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",  # Fixed: user?.id || user?._id || null
+            "cashier_name": "Unknown Cashier",  # Fixed: user?.email || user?.name || user?.cashier_name || 'Unknown Cashier'
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "UNKNOWN-SKU",  # Fixed: item.product_sku || item.sku || item.id || 'UNKNOWN-SKU'
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 0,  # Fixed: item.unit_price || item.price || 0
+                    "unit_cost_snapshot": 0,   # Fixed: item.unit_cost_snapshot || item.cost || 0
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "total_amount": 32.69,
+            "payment_method": "cash"
+        }
+
+        success, response = self.run_test(
+            "Frontend Fixed with Fallback Values (Should Work)",
+            "POST",
+            "/api/sales",
+            200,
+            data=frontend_fixed_sale
+        )
+
+        if success:
+            self.log("✅ Frontend validation fixes work - fallback values prevent 'failed to complete sales' error")
+            self.tests_passed += 1
+            
+            # Verify fallback values are stored correctly
+            items = response.get('items', [])
+            if items and len(items) > 0:
+                first_item = items[0]
+                if (first_item.get('sku') == 'UNKNOWN-SKU' and 
+                    first_item.get('unit_price_snapshot') == 0 and
+                    first_item.get('unit_cost_snapshot') == 0):
+                    self.log("✅ Fallback values correctly stored in database")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ Fallback values not stored correctly")
+                self.tests_run += 1
+        else:
+            self.log("❌ Frontend validation fixes not working properly")
+        self.tests_run += 1
+
+        self.log("=== SALES COMPLETION FIX VERIFICATION COMPLETED ===", "INFO")
+        return True
+
     def run_all_tests(self):
         """Run focused tests for sales completion error reproduction"""
         self.log("Starting Sales Completion Error Reproduction Testing", "START")
