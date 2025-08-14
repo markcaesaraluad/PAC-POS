@@ -9514,6 +9514,11 @@ Test Import Product 2,IMP-002,1234567890124,Books,5.00,12.99,25,active,Second im
         self.test_specific_user_reported_issues()
         self.log("=== SPECIFIC USER REPORTED ISSUES TESTING COMPLETED ===", "INFO")
         
+        # URGENT TEST: Reports TODAY Filter Issues
+        self.log("=== REPORTS TODAY FILTER ISSUES TESTING ===", "INFO")
+        self.test_reports_today_filter_issues()
+        self.log("=== REPORTS TODAY FILTER ISSUES TESTING COMPLETED ===", "INFO")
+        
         # URGENT TEST: Product Deletion Fix Verification
         self.log("=== PRODUCT DELETION FIX TESTING ===", "INFO")
         self.test_product_deletion_fix_verification()
