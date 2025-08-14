@@ -7111,9 +7111,390 @@ class POSAPITester:
         self.log("=== SALES COMPLETION FIX VERIFICATION COMPLETED ===", "INFO")
         return True
 
+    def test_unified_error_code_system(self):
+        """Test the unified error code system implementation"""
+        self.log("=== STARTING UNIFIED ERROR CODE SYSTEM TESTING ===", "INFO")
+        
+        # Switch to business admin token for testing
+        if self.business_admin_token:
+            self.token = self.business_admin_token
+            self.log("Using business admin token for error code system testing")
+        
+        # TEST 1: Test Diagnostics API - Get Error Codes Registry
+        self.log("🔍 TEST 1: Get Error Codes Registry", "INFO")
+        
+        success, response = self.run_test(
+            "Get Error Codes Registry",
+            "GET",
+            "/api/diagnostics/error-codes",
+            200
+        )
+        
+        if success:
+            self.log("✅ Error codes registry endpoint accessible")
+            
+            # Verify response structure
+            if response.get("ok") == True and "data" in response:
+                self.log("✅ Error codes registry has correct response format")
+                self.tests_passed += 1
+                
+                # Check for initial error codes from error-codes.json
+                error_codes = response["data"]
+                expected_codes = ["POS-SCAN-001", "AUTH-001", "POS-PAY-001", "POS-PAY-002"]
+                
+                found_codes = [code for code in expected_codes if code in error_codes]
+                if len(found_codes) >= 2:  # At least some initial codes should be present
+                    self.log(f"✅ Initial error codes loaded: {found_codes}")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ Expected initial error codes not found. Found: {list(error_codes.keys())}")
+                self.tests_run += 1
+                
+                # Verify error code structure
+                if error_codes:
+                    first_code = list(error_codes.keys())[0]
+                    first_error = error_codes[first_code]
+                    required_fields = ["title", "userMessage", "severity", "area"]
+                    
+                    if all(field in first_error for field in required_fields):
+                        self.log("✅ Error code entries have required fields")
+                        self.tests_passed += 1
+                    else:
+                        self.log(f"❌ Error code missing required fields. Found: {list(first_error.keys())}")
+                    self.tests_run += 1
+            else:
+                self.log("❌ Error codes registry response format incorrect")
+            self.tests_run += 1
+        else:
+            self.log("❌ Failed to access error codes registry")
+            self.tests_run += 1
+        
+        # TEST 2: Test Diagnostics API - Get Recent Errors
+        self.log("🔍 TEST 2: Get Recent Errors", "INFO")
+        
+        success, response = self.run_test(
+            "Get Recent Errors",
+            "GET",
+            "/api/diagnostics/recent-errors",
+            200
+        )
+        
+        if success:
+            self.log("✅ Recent errors endpoint accessible")
+            
+            # Verify response structure
+            if response.get("ok") == True and "data" in response:
+                self.log("✅ Recent errors has correct response format")
+                self.tests_passed += 1
+                
+                recent_errors = response["data"]
+                if isinstance(recent_errors, list):
+                    self.log(f"✅ Recent errors returned as list with {len(recent_errors)} entries")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ Recent errors should be a list")
+                self.tests_run += 1
+            else:
+                self.log("❌ Recent errors response format incorrect")
+            self.tests_run += 1
+        else:
+            self.log("❌ Failed to access recent errors")
+            self.tests_run += 1
+        
+        # TEST 3: Trigger Error to Test Auto-Generation - Invalid Product Lookup
+        self.log("🔍 TEST 3: Trigger Invalid Product Lookup (Should Generate POS-SCAN-001)", "INFO")
+        
+        success, response = self.run_test(
+            "Invalid Product Barcode Lookup (Trigger Error)",
+            "GET",
+            "/api/products/barcode/INVALID-BARCODE-12345",
+            404  # Expecting 404 error
+        )
+        
+        if success:
+            self.log("✅ Invalid barcode lookup correctly returned 404")
+            
+            # Check if response has error code format
+            if response.get("ok") == False and "errorCode" in response:
+                error_code = response["errorCode"]
+                correlation_id = response.get("correlationId")
+                
+                self.log(f"✅ Error response has standardized format with errorCode: {error_code}")
+                self.tests_passed += 1
+                
+                if correlation_id:
+                    self.log(f"✅ Correlation ID generated: {correlation_id}")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ Missing correlation ID in error response")
+                self.tests_run += 1
+                
+                # Check if it's the expected POS-SCAN-001 or auto-generated
+                if "POS" in error_code and ("SCAN" in error_code or "001" in error_code):
+                    self.log(f"✅ Appropriate POS-related error code generated: {error_code}")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"⚠️ Different error code generated: {error_code} (may be auto-generated)")
+                self.tests_run += 1
+            else:
+                self.log("❌ Error response doesn't have standardized format")
+            self.tests_run += 1
+        else:
+            self.log("❌ Invalid barcode lookup test failed")
+            self.tests_run += 1
+        
+        # TEST 4: Trigger Authentication Error
+        self.log("🔍 TEST 4: Trigger Authentication Error (Should Generate AUTH-001)", "INFO")
+        
+        # Store current token and use invalid token
+        original_token = self.token
+        self.token = "invalid_token_12345"
+        
+        success, response = self.run_test(
+            "Invalid Authentication (Trigger Error)",
+            "GET",
+            "/api/business/info",
+            401  # Expecting 401 error
+        )
+        
+        # Restore original token
+        self.token = original_token
+        
+        if success:
+            self.log("✅ Invalid authentication correctly returned 401")
+            
+            # Check if response has error code format
+            if response.get("ok") == False and "errorCode" in response:
+                error_code = response["errorCode"]
+                correlation_id = response.get("correlationId")
+                
+                self.log(f"✅ Auth error has standardized format with errorCode: {error_code}")
+                self.tests_passed += 1
+                
+                if correlation_id:
+                    self.log(f"✅ Correlation ID generated for auth error: {correlation_id}")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ Missing correlation ID in auth error response")
+                self.tests_run += 1
+                
+                # Check if it's AUTH-001 or similar
+                if "AUTH" in error_code:
+                    self.log(f"✅ Appropriate AUTH error code generated: {error_code}")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"⚠️ Different error code generated: {error_code} (may be auto-generated)")
+                self.tests_run += 1
+            else:
+                self.log("❌ Auth error response doesn't have standardized format")
+            self.tests_run += 1
+        else:
+            self.log("❌ Authentication error test failed")
+            self.tests_run += 1
+        
+        # TEST 5: Test Invalid Sales Data (Should Generate Validation Error)
+        self.log("🔍 TEST 5: Trigger Invalid Sales Data Error", "INFO")
+        
+        invalid_sale_data = {
+            "customer_id": "invalid_customer_id_format",
+            "items": [
+                {
+                    "product_id": "invalid_product_id",
+                    "quantity": -1,  # Invalid quantity
+                    "unit_price": "not_a_number"  # Invalid price
+                }
+            ],
+            "total_amount": "invalid_amount"
+        }
+        
+        success, response = self.run_test(
+            "Invalid Sales Data (Trigger Validation Error)",
+            "POST",
+            "/api/sales",
+            422,  # Expecting validation error
+            data=invalid_sale_data
+        )
+        
+        if success:
+            self.log("✅ Invalid sales data correctly returned 422 validation error")
+            
+            # Check if response has error code format
+            if response.get("ok") == False and "errorCode" in response:
+                error_code = response["errorCode"]
+                self.log(f"✅ Sales validation error has errorCode: {error_code}")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Sales validation error doesn't have standardized format")
+            self.tests_run += 1
+        else:
+            self.log("❌ Sales validation error test failed")
+            self.tests_run += 1
+        
+        # TEST 6: Verify Error Code Registry Updated After Errors
+        self.log("🔍 TEST 6: Verify Error Code Registry Updated After Triggered Errors", "INFO")
+        
+        success, response = self.run_test(
+            "Get Updated Error Codes Registry",
+            "GET",
+            "/api/diagnostics/error-codes",
+            200
+        )
+        
+        if success and response.get("ok") == True:
+            error_codes = response["data"]
+            
+            # Check if occurrence counts have been updated
+            codes_with_occurrences = {
+                code: details for code, details in error_codes.items() 
+                if details.get("occurrenceCount", 0) > 0
+            }
+            
+            if codes_with_occurrences:
+                self.log(f"✅ Error codes with occurrences found: {list(codes_with_occurrences.keys())}")
+                self.tests_passed += 1
+                
+                # Verify occurrence tracking
+                for code, details in codes_with_occurrences.items():
+                    if details.get("lastSeenAt"):
+                        self.log(f"✅ Error code {code} has lastSeenAt timestamp")
+                        self.tests_passed += 1
+                        break
+                else:
+                    self.log("❌ No error codes have lastSeenAt timestamps")
+                self.tests_run += 1
+            else:
+                self.log("⚠️ No error codes show occurrence counts (may be expected if errors weren't triggered)")
+            self.tests_run += 1
+        
+        # TEST 7: Test Error Code Filtering
+        self.log("🔍 TEST 7: Test Error Code Filtering", "INFO")
+        
+        success, response = self.run_test(
+            "Filter Error Codes by Area (POS)",
+            "GET",
+            "/api/diagnostics/error-codes",
+            200,
+            params={"area": "POS"}
+        )
+        
+        if success and response.get("ok") == True:
+            filtered_codes = response["data"]
+            
+            # Verify all returned codes are POS-related
+            pos_codes = [code for code, details in filtered_codes.items() if details.get("area") == "POS"]
+            
+            if len(pos_codes) == len(filtered_codes):
+                self.log(f"✅ Area filtering works correctly - {len(pos_codes)} POS codes found")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Area filtering failed - expected all POS codes, got mixed areas")
+            self.tests_run += 1
+        
+        # TEST 8: Test Recent Errors After Triggering Errors
+        self.log("🔍 TEST 8: Test Recent Errors After Triggering Errors", "INFO")
+        
+        success, response = self.run_test(
+            "Get Recent Errors After Tests",
+            "GET",
+            "/api/diagnostics/recent-errors",
+            200,
+            params={"limit": 10}
+        )
+        
+        if success and response.get("ok") == True:
+            recent_errors = response["data"]
+            
+            if recent_errors and len(recent_errors) > 0:
+                self.log(f"✅ Recent errors found: {len(recent_errors)} entries")
+                self.tests_passed += 1
+                
+                # Verify recent error structure
+                first_error = recent_errors[0]
+                required_fields = ["errorCode", "title", "lastSeenAt", "occurrenceCount"]
+                
+                if all(field in first_error for field in required_fields):
+                    self.log("✅ Recent error entries have required fields")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ Recent error missing fields. Found: {list(first_error.keys())}")
+                self.tests_run += 1
+            else:
+                self.log("⚠️ No recent errors found (may be expected)")
+            self.tests_run += 1
+        
+        # TEST 9: Test Specific Error Code Details
+        self.log("🔍 TEST 9: Test Specific Error Code Details", "INFO")
+        
+        success, response = self.run_test(
+            "Get Specific Error Code Details (POS-SCAN-001)",
+            "GET",
+            "/api/diagnostics/error-codes/POS-SCAN-001",
+            200
+        )
+        
+        if success and response.get("ok") == True:
+            error_details = response["data"]
+            
+            if error_details.get("errorCode") == "POS-SCAN-001":
+                self.log("✅ Specific error code details retrieved correctly")
+                self.tests_passed += 1
+                
+                # Verify detailed structure
+                if error_details.get("title") and error_details.get("userMessage"):
+                    self.log("✅ Error code details have title and userMessage")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ Error code details missing title or userMessage")
+                self.tests_run += 1
+            else:
+                self.log("❌ Wrong error code returned in details")
+            self.tests_run += 1
+        
+        # TEST 10: Test Error Response Format Consistency
+        self.log("🔍 TEST 10: Test Error Response Format Consistency", "INFO")
+        
+        # Trigger another error to test format consistency
+        success, response = self.run_test(
+            "Another Invalid Request (Test Format Consistency)",
+            "GET",
+            "/api/products/invalid-product-id-format",
+            404
+        )
+        
+        if success:
+            # Verify standardized error response format
+            required_fields = ["ok", "errorCode", "message", "correlationId"]
+            
+            if all(field in response for field in required_fields):
+                self.log("✅ Error response format is consistent and standardized")
+                self.tests_passed += 1
+                
+                # Verify ok is false
+                if response["ok"] == False:
+                    self.log("✅ Error response 'ok' field is correctly set to false")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ Error response 'ok' field should be false")
+                self.tests_run += 1
+                
+                # Verify message is user-friendly
+                message = response["message"]
+                if message and len(message) > 0 and not message.startswith("500") and not message.startswith("Error"):
+                    self.log("✅ Error message is user-friendly")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"⚠️ Error message may not be user-friendly: {message}")
+                self.tests_run += 1
+            else:
+                self.log(f"❌ Error response missing required fields. Found: {list(response.keys())}")
+            self.tests_run += 1
+        
+        self.log("=== UNIFIED ERROR CODE SYSTEM TESTING COMPLETED ===", "INFO")
+        return True
+
     def run_all_tests(self):
-        """Run focused tests for sales completion error reproduction"""
-        self.log("Starting Sales Completion Error Reproduction Testing", "START")
+        """Run focused tests for unified error code system"""
+        self.log("Starting Unified Error Code System Testing", "START")
         self.log(f"Testing against: {self.base_url}")
         
         # Basic connectivity
@@ -7140,10 +7521,10 @@ class POSAPITester:
         self.test_products_crud()
         self.test_customers_crud()
         
-        # URGENT: Sales Completion Fix Verification Testing
-        self.log("=== URGENT: SALES COMPLETION FIX VERIFICATION TESTING ===", "INFO")
-        self.test_sales_completion_fix_verification()
-        self.log("=== SALES COMPLETION FIX VERIFICATION TESTING COMPLETED ===", "INFO")
+        # MAIN TEST: Unified Error Code System Testing
+        self.log("=== UNIFIED ERROR CODE SYSTEM TESTING ===", "INFO")
+        self.test_unified_error_code_system()
+        self.log("=== UNIFIED ERROR CODE SYSTEM TESTING COMPLETED ===", "INFO")
         
         # Final summary
         self.log("=== TEST SUMMARY ===", "INFO")
