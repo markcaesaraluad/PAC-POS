@@ -280,9 +280,9 @@ const Reports = () => {
       {/* Global Filter Component */}
       <GlobalFilter
         filters={filterConfig}
-        onFilterChange={setFilters}
-        loading={filterLoading}
-        initialFilters={filters}
+        onFilterChange={handleFilterChange}
+        loading={false}
+        initialFilters={currentFilters}
         className="mb-6"
         searchPlaceholder="Search reports by customer, product, SKU..."
       />
