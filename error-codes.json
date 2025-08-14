@@ -87,13 +87,13 @@
       "commonFix": "Re-authenticate",
       "severity": "low",
       "area": "AUTH",
-      "lastSeenAt": null,
-      "occurrenceCount": 0
+      "lastSeenAt": "2025-08-14T13:41:42.644402+00:00",
+      "occurrenceCount": 1
     }
   },
   "metadata": {
     "version": "1.0.0",
-    "lastUpdated": "2025-01-14T12:00:00Z",
+    "lastUpdated": "2025-08-14T13:41:42.644414+00:00",
     "totalCodes": 9,
     "nextSequence": {
       "POS": 3,
