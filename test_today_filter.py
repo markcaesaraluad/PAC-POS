@@ -135,9 +135,44 @@ class TodayFilterTester:
             print(f"   Error: {response.text}")
             
         # TEST 5: Date boundary testing - explicit time ranges
-        print("\n⏰ TEST 5: Date Boundary Testing")
+        print("\n⏰ TEST 5: Date Boundary Testing - DETAILED")
         
-        # Test with explicit time boundaries
+        # Test 1: Date only (potential issue)
+        response = requests.get(f"{self.base_url}/reports/sales", 
+                              params={
+                                  "format": "excel",
+                                  "start_date": today_date_str,
+                                  "end_date": today_date_str  # This defaults to 00:00:00
+                              }, 
+                              headers=headers)
+        
+        date_only_size = 0
+        if response.status_code == 200:
+            date_only_size = len(response.content)
+            print(f"✅ Sales Report (Date Only): {date_only_size} bytes")
+        else:
+            print(f"❌ Sales Report (Date Only) failed: {response.status_code}")
+            
+        # Test 2: Explicit start of day to start of next day
+        tomorrow = today + timedelta(days=1)
+        tomorrow_start = tomorrow.replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        response = requests.get(f"{self.base_url}/reports/sales", 
+                              params={
+                                  "format": "excel",
+                                  "start_date": today_start.isoformat(),
+                                  "end_date": tomorrow_start.isoformat()
+                              }, 
+                              headers=headers)
+        
+        full_day_size = 0
+        if response.status_code == 200:
+            full_day_size = len(response.content)
+            print(f"✅ Sales Report (Full Day): {full_day_size} bytes")
+        else:
+            print(f"❌ Sales Report (Full Day) failed: {response.status_code}")
+            
+        # Test 3: Explicit time boundaries (00:00:00 to 23:59:59)
         response = requests.get(f"{self.base_url}/reports/sales", 
                               params={
                                   "format": "excel",
@@ -146,27 +181,71 @@ class TodayFilterTester:
                               }, 
                               headers=headers)
         
+        explicit_time_size = 0
         if response.status_code == 200:
-            content_length = len(response.content)
-            print(f"✅ Sales Report (Explicit Time): {content_length} bytes")
+            explicit_time_size = len(response.content)
+            print(f"✅ Sales Report (Explicit Time): {explicit_time_size} bytes")
         else:
             print(f"❌ Sales Report (Explicit Time) failed: {response.status_code}")
             
-        # Test with date-only end_date (potential issue)
+        # Test 4: Start date with time, end date without time
         response = requests.get(f"{self.base_url}/reports/sales", 
                               params={
                                   "format": "excel",
-                                  "start_date": today_date_str,
-                                  "end_date": today_date_str  # This might default to 00:00:00
+                                  "start_date": today_start.isoformat(),
+                                  "end_date": today_date_str  # Date only - should default to 00:00:00
                               }, 
                               headers=headers)
         
+        mixed_format_size = 0
         if response.status_code == 200:
-            content_length = len(response.content)
-            print(f"✅ Sales Report (Date Only): {content_length} bytes")
-            print("   ⚠️ This might be the issue - end_date without time defaults to 00:00:00")
+            mixed_format_size = len(response.content)
+            print(f"✅ Sales Report (Mixed Format): {mixed_format_size} bytes")
         else:
-            print(f"❌ Sales Report (Date Only) failed: {response.status_code}")
+            print(f"❌ Sales Report (Mixed Format) failed: {response.status_code}")
+            
+        print(f"\n📊 SIZE COMPARISON:")
+        print(f"   Date Only (start=date, end=date): {date_only_size} bytes")
+        print(f"   Full Day (start=00:00, end=next_day_00:00): {full_day_size} bytes")
+        print(f"   Explicit Time (start=00:00, end=23:59): {explicit_time_size} bytes")
+        print(f"   Mixed Format (start=00:00, end=date): {mixed_format_size} bytes")
+        
+        if date_only_size < explicit_time_size:
+            print(f"\n🚨 ISSUE CONFIRMED:")
+            print(f"   Date-only format returns {explicit_time_size - date_only_size} fewer bytes")
+            print(f"   This suggests end_date without time defaults to 00:00:00")
+            print(f"   This excludes all sales after midnight on the end date")
+        
+        # Test the same with Profit Report
+        print(f"\n💰 PROFIT REPORT COMPARISON:")
+        
+        # Date only
+        response = requests.get(f"{self.base_url}/reports/profit", 
+                              params={
+                                  "format": "excel",
+                                  "start_date": today_date_str,
+                                  "end_date": today_date_str
+                              }, 
+                              headers=headers)
+        
+        profit_date_only = len(response.content) if response.status_code == 200 else 0
+        
+        # Explicit time
+        response = requests.get(f"{self.base_url}/reports/profit", 
+                              params={
+                                  "format": "excel",
+                                  "start_date": today_start.isoformat(),
+                                  "end_date": today_end.isoformat()
+                              }, 
+                              headers=headers)
+        
+        profit_explicit_time = len(response.content) if response.status_code == 200 else 0
+        
+        print(f"   Profit Report (Date Only): {profit_date_only} bytes")
+        print(f"   Profit Report (Explicit Time): {profit_explicit_time} bytes")
+        
+        if profit_date_only < profit_explicit_time:
+            print(f"   🚨 Same issue in Profit Report: {profit_explicit_time - profit_date_only} bytes difference")
             
         print("\n🔍 INVESTIGATION COMPLETE")
         print("Key findings:")
