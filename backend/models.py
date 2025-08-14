@@ -84,6 +84,7 @@ class BusinessResponse(BusinessBase):
 class CategoryBase(BaseModel):
     name: str
     description: Optional[str] = None
+    color: Optional[str] = "#3B82F6"  # Default color
 
 class CategoryCreate(CategoryBase):
     pass
@@ -91,12 +92,14 @@ class CategoryCreate(CategoryBase):
 class CategoryUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
+    color: Optional[str] = None
     is_active: Optional[bool] = None
 
 class CategoryResponse(CategoryBase):
     id: str
     business_id: str
-    is_active: bool
+    product_count: int = 0
+    is_active: bool = True
     created_at: datetime
     updated_at: datetime
 
