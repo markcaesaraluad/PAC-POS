@@ -17,8 +17,8 @@ class TodayFilterTester:
         """Login and get token"""
         # Super admin login
         response = requests.post(f"{self.base_url}/auth/login", json={
-            "email": "superadmin@example.com",
-            "password": "superadmin123"
+            "email": "admin@pos.com",
+            "password": "admin123"
         })
         
         if response.status_code == 200:
@@ -37,7 +37,7 @@ class TodayFilterTester:
                     # Business admin login
                     response = requests.post(f"{self.base_url}/auth/login", 
                                            json={
-                                               "email": "admin@example.com",
+                                               "email": "admin@business.com",
                                                "password": "admin123",
                                                "subdomain": subdomain
                                            },
