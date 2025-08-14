@@ -681,7 +681,20 @@ const POSInterface = () => {
       const epsilon = 0.01; // 1 cent tolerance
       
       if (received < (totalAmount - epsilon)) {
-        toast.error(`Insufficient payment. Required: ${formatAmount(totalAmount)}, Received: ${formatAmount(received)}`);
+        // Trigger POS-PAY-001 error code
+        const errorDetails = {
+          errorCode: 'POS-PAY-001',
+          correlationId: 'pay-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+          message: `Payment is less than amount due. Required: ${formatAmount(totalAmount)}, Received: ${formatAmount(received)}`,
+          route: window.location.pathname,
+          timestamp: new Date().toISOString(),
+          context: { required: totalAmount, received, shortfall: totalAmount - received }
+        };
+        
+        window.dispatchEvent(new CustomEvent('pos-error', { 
+          detail: errorDetails 
+        }));
+        
         console.log('Payment failed - insufficient amount');
         return;
       }
