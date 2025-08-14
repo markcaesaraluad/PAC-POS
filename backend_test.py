@@ -11695,6 +11695,222 @@ def run_enhanced_sales_api_testing():
         else:
             self.log("❌ Some tests failed. Check logs above for details.", "FAIL")
 
+    def test_today_date_filtering_issue(self):
+        """Test the specific TODAY date filtering issue in Sales and Profit Reports"""
+        self.log("=== TESTING TODAY DATE FILTERING ISSUE ===", "INFO")
+        
+        # Get today's date in different formats
+        today = datetime.now()
+        today_date_str = today.strftime('%Y-%m-%d')
+        today_iso_str = today.isoformat()
+        today_start = today.replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = today.replace(hour=23, minute=59, second=59, microsecond=999999)
+        
+        self.log(f"Testing with today's date: {today_date_str}")
+        self.log(f"Today start: {today_start}")
+        self.log(f"Today end: {today_end}")
+        
+        # First, create a test sale for today if none exists
+        self.create_test_sale_for_today()
+        
+        # TEST 1: Debug TODAY Filter Date Parsing - Sales Report
+        self.log("🔍 TEST 1: Debug TODAY Filter Date Parsing - Sales Report", "INFO")
+        
+        # Test with YYYY-MM-DD format
+        success, response = self.run_test(
+            "Sales Report - Today (YYYY-MM-DD format)",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={
+                "format": "excel",
+                "start_date": today_date_str,
+                "end_date": today_date_str
+            }
+        )
+        
+        if success:
+            content_length = len(response) if isinstance(response, bytes) else 0
+            self.log(f"✅ Sales report generated for today (YYYY-MM-DD): {content_length} bytes")
+        else:
+            self.log("❌ Sales report failed for today (YYYY-MM-DD)")
+        
+        # Test with explicit time boundaries
+        success, response = self.run_test(
+            "Sales Report - Today (Explicit Time Boundaries)",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={
+                "format": "excel",
+                "start_date": today_start.isoformat(),
+                "end_date": today_end.isoformat()
+            }
+        )
+        
+        if success:
+            content_length = len(response) if isinstance(response, bytes) else 0
+            self.log(f"✅ Sales report with explicit boundaries: {content_length} bytes")
+        else:
+            self.log("❌ Sales report failed with explicit boundaries")
+        
+        # TEST 2: Sales Report Data Verification
+        self.log("🔍 TEST 2: Sales Report Data Verification", "INFO")
+        
+        # Test Excel format
+        success, response = self.run_test(
+            "Sales Report - Excel Format Today",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={
+                "format": "excel",
+                "start_date": today_date_str
+            }
+        )
+        
+        if success:
+            content_length = len(response) if isinstance(response, bytes) else 0
+            self.log(f"✅ Excel sales report for today: {content_length} bytes")
+            if content_length > 1000:  # Reasonable size for Excel with data
+                self.log("✅ Excel report appears to contain data (size > 1KB)")
+            else:
+                self.log("⚠️ Excel report may be empty or contain minimal data")
+        
+        # TEST 3: Profit Report Data Verification
+        self.log("🔍 TEST 3: Profit Report Data Verification", "INFO")
+        
+        # Test Excel format
+        success, response = self.run_test(
+            "Profit Report - Excel Format Today",
+            "GET",
+            "/api/reports/profit",
+            200,
+            params={
+                "format": "excel",
+                "start_date": today_date_str
+            }
+        )
+        
+        if success:
+            content_length = len(response) if isinstance(response, bytes) else 0
+            self.log(f"✅ Excel profit report for today: {content_length} bytes")
+            if content_length > 1000:
+                self.log("✅ Excel profit report appears to contain data")
+            else:
+                self.log("⚠️ Excel profit report may be empty")
+        
+        # TEST 4: Date Range Boundary Testing
+        self.log("🔍 TEST 4: Date Range Boundary Testing", "INFO")
+        
+        # Test with end_date without time (should default to 00:00:00)
+        success, response = self.run_test(
+            "Sales Report - End Date Without Time",
+            "GET",
+            "/api/reports/sales",
+            200,
+            params={
+                "format": "excel",
+                "start_date": today_date_str,
+                "end_date": today_date_str  # This might default to 00:00:00
+            }
+        )
+        
+        if success:
+            content_length = len(response) if isinstance(response, bytes) else 0
+            self.log(f"✅ Sales report with date-only end_date: {content_length} bytes")
+        
+        # TEST 5: Database Query Investigation via Daily Summary
+        self.log("🔍 TEST 5: Database Query Investigation via Daily Summary", "INFO")
+        
+        # Get daily summary for today to see actual data
+        success, response = self.run_test(
+            "Daily Summary - Today",
+            "GET",
+            "/api/reports/daily-summary",
+            200,
+            params={"date": today_date_str}
+        )
+        
+        if success and isinstance(response, dict):
+            sales_count = response.get('sales', {}).get('total_sales', 0)
+            revenue = response.get('sales', {}).get('total_revenue', 0)
+            items_sold = response.get('products', {}).get('total_items_sold', 0)
+            
+            self.log(f"✅ Daily Summary for today:")
+            self.log(f"   - Total Sales: {sales_count}")
+            self.log(f"   - Total Revenue: ${revenue}")
+            self.log(f"   - Items Sold: {items_sold}")
+            
+            if sales_count > 0:
+                self.log("✅ Data exists for today - reports should contain data")
+            else:
+                self.log("⚠️ No sales data for today - reports will be empty")
+        
+        self.log("=== TODAY DATE FILTERING ISSUE TESTING COMPLETED ===", "INFO")
+        return True
+    
+    def create_test_sale_for_today(self):
+        """Create a test sale for today to ensure we have data to test with"""
+        self.log("🔧 Creating test sale for today...", "INFO")
+        
+        # Ensure we have required test data
+        if not self.product_id or not self.customer_id:
+            self.log("⚠️ Missing product or customer - creating test data first")
+            if not self.category_id:
+                self.test_categories_crud()
+            if not self.product_id:
+                self.test_products_crud()
+            if not self.customer_id:
+                self.test_customers_crud()
+        
+        if not self.product_id or not self.customer_id:
+            self.log("❌ Cannot create test sale - missing required data")
+            return False
+        
+        # Create a sale for today
+        today_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer for Today",
+            "cashier_id": "507f1f77bcf86cd799439011",  # Mock cashier ID
+            "cashier_name": "Test Cashier",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product for Today",
+                    "sku": f"TODAY-{datetime.now().strftime('%H%M%S')}",
+                    "quantity": 1,
+                    "unit_price": 27.25,
+                    "unit_price_snapshot": 27.25,
+                    "unit_cost_snapshot": 15.00,
+                    "total_price": 27.25
+                }
+            ],
+            "subtotal": 27.25,
+            "tax_amount": 2.45,
+            "discount_amount": 0.00,
+            "total_amount": 29.70,
+            "payment_method": "cash",
+            "received_amount": 30.00,
+            "change_amount": 0.30,
+            "notes": f"Test sale created for today's date filtering test - {datetime.now().isoformat()}"
+        }
+        
+        success, response = self.run_test(
+            "Create Test Sale for Today",
+            "POST",
+            "/api/sales",
+            200,
+            data=today_sale_data
+        )
+        
+        if success:
+            self.log("✅ Test sale created for today")
+            return True
+        else:
+            self.log("❌ Failed to create test sale for today")
+            return False
+
 def main():
     """Main test execution with command line argument support"""
     tester = POSAPITester()
