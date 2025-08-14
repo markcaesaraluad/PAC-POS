@@ -101,13 +101,25 @@ backend:
         agent: "testing"
         comment: "✅ CRITICAL POS BUG FIX VERIFICATION COMPLETED: Products API working perfectly for POS interface. API returns 38 products successfully (no 'No products found' issue). All required POS fields present (id, name, price, quantity, category_id, sku, status). Empty category_id parameter handling works correctly (returns all products). Category filtering (0 products for specific category), search functionality (34 products for 'test'), status filtering (5 active products), and pagination (10 products with limit) all working correctly. Product structure fully compatible with POS interface. Backend API is NOT the cause of POS display issues - the API is functioning correctly."
 
-  - task: "Categories CRUD Operations"
+  - task: "URGENT: Specific User Reported Issues Testing"
     implemented: true
-    working: true
-    file: "backend/routes/categories.py"
+    working: false
+    file: "backend/routes/categories.py, backend/routes/products.py"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL ISSUES IDENTIFIED: 1) Category Creation Error - POST /api/categories returns 500 Internal Server Error with UNKNOWN-003 error code when creating new categories with valid data. Root cause appears to be server-side validation or database constraint issue. 2) Product Listing Pagination Issue - New products are created successfully (200 status) but don't appear in the default GET /api/products list due to pagination limits (returns 50 products max). Product is accessible via direct ID lookup and search, indicating creation works but listing has pagination/ordering issues. 3) CSV Bulk Import - Template download endpoints work correctly, but actual file upload testing requires multipart form data which wasn't fully tested. TECHNICAL DETAILS: Category creation fails with standardized error response including correlationId, suggesting error handling middleware is working but underlying category creation logic has issues. Product creation works but default product listing doesn't show newest products, likely due to default sorting/pagination behavior."
+
+  - task: "Categories CRUD Operations"
+    implemented: true
+    working: false
+    file: "backend/routes/categories.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
     status_history:
       - working: false
         agent: "testing"
@@ -115,6 +127,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ FIXED: All category CRUD operations working correctly. Create, Read, Update operations successful. Minor: Create test fails due to existing 'Test Category' (expected behavior)."
+      - working: false
+        agent: "testing"
+        comment: "❌ CRITICAL REGRESSION: Category creation now failing with 500 Internal Server Error (UNKNOWN-003). This is a new issue that wasn't present in previous testing. Error response: {'ok': false, 'errorCode': 'UNKNOWN-003', 'message': 'An unexpected error occurred. Please try again.', 'correlationId': 'e4d92909-29db-4163-98b9-ca30e9137780', 'details': {'statusCode': 500, 'path': '/api/categories'}}. This suggests a server-side issue in the category creation logic that needs immediate investigation."
 
   - task: "Customers CRUD Operations"
     implemented: true
