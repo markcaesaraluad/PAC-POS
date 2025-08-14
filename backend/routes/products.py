@@ -362,8 +362,17 @@ async def get_product(
     
     business_id = current_user["business_id"]
     
+    # Validate ObjectId format to prevent crashes
+    try:
+        product_object_id = ObjectId(product_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid product ID format: {product_id}",
+        )
+    
     product = await products_collection.find_one({
-        "_id": ObjectId(product_id),
+        "_id": product_object_id,
         "business_id": ObjectId(business_id)
     })
     
