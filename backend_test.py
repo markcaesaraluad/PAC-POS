@@ -6316,6 +6316,448 @@ class POSAPITester:
         self.log("=== LOGIN AUTHENTICATION FIX TESTING COMPLETED ===", "INFO")
         return success
 
+    def test_sales_completion_error_reproduction(self):
+        """
+        URGENT: Reproduce the exact 'failed to complete sales' error by testing with problematic data
+        that could be coming from the frontend.
+        
+        Focus on:
+        1. Invalid cashier_id format (frontend passes user?.id which might not be correct MongoDB ObjectId format)
+        2. Missing required fields from frontend transaction data
+        3. Problematic data (invalid product_id, customer_id, missing item fields)
+        4. Exactly what frontend sends including null/undefined values
+        """
+        self.log("=== URGENT: REPRODUCING SALES COMPLETION ERROR ===", "INFO")
+        
+        # Switch to business admin token for testing
+        if self.business_admin_token:
+            self.token = self.business_admin_token
+            self.log("Using business admin token for sales completion error testing")
+        
+        # Ensure we have test data
+        if not self.product_id or not self.customer_id:
+            self.log("❌ Cannot test - missing product or customer data", "ERROR")
+            return False
+
+        # TEST 1: Invalid cashier_id format (frontend passes user?.id which might not be correct MongoDB ObjectId format)
+        self.log("🔍 TEST 1: Invalid cashier_id Format (Non-ObjectId)", "INFO")
+        
+        invalid_cashier_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "invalid-cashier-id-format",  # Invalid ObjectId format
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU-001",
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.50,
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "discount_amount": 0.00,
+            "total_amount": 32.69,
+            "payment_method": "cash",
+            "received_amount": 35.00,
+            "change_amount": 2.31
+        }
+
+        success, response = self.run_test(
+            "Create Sale with Invalid cashier_id Format",
+            "POST",
+            "/api/sales",
+            422,  # Expecting validation error
+            data=invalid_cashier_sale_data
+        )
+
+        if success:
+            self.log("✅ REPRODUCED ERROR: Invalid cashier_id format causes validation error")
+            self.log(f"Error response: {response}")
+        else:
+            self.log("❌ Expected validation error for invalid cashier_id format")
+
+        # TEST 2: Null/undefined cashier_id (frontend user?.id could be null)
+        self.log("🔍 TEST 2: Null cashier_id (user?.id is null)", "INFO")
+        
+        null_cashier_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": None,  # Null cashier_id
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU-002",
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.50,
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "discount_amount": 0.00,
+            "total_amount": 32.69,
+            "payment_method": "cash"
+        }
+
+        success, response = self.run_test(
+            "Create Sale with Null cashier_id",
+            "POST",
+            "/api/sales",
+            422,  # Expecting validation error
+            data=null_cashier_sale_data
+        )
+
+        if success:
+            self.log("✅ REPRODUCED ERROR: Null cashier_id causes validation error")
+            self.log(f"Error response: {response}")
+        else:
+            self.log("❌ Expected validation error for null cashier_id")
+
+        # TEST 3: Missing cashier_name (required field)
+        self.log("🔍 TEST 3: Missing cashier_name Field", "INFO")
+        
+        missing_cashier_name_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",  # Valid ObjectId
+            # Missing cashier_name field
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU-003",
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.50,
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "discount_amount": 0.00,
+            "total_amount": 32.69,
+            "payment_method": "cash"
+        }
+
+        success, response = self.run_test(
+            "Create Sale with Missing cashier_name",
+            "POST",
+            "/api/sales",
+            422,  # Expecting validation error
+            data=missing_cashier_name_data
+        )
+
+        if success:
+            self.log("✅ REPRODUCED ERROR: Missing cashier_name causes validation error")
+            self.log(f"Error response: {response}")
+        else:
+            self.log("❌ Expected validation error for missing cashier_name")
+
+        # TEST 4: Invalid product_id format
+        self.log("🔍 TEST 4: Invalid product_id Format", "INFO")
+        
+        invalid_product_id_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": "invalid-product-id",  # Invalid ObjectId format
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU-004",
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.50,
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "discount_amount": 0.00,
+            "total_amount": 32.69,
+            "payment_method": "cash"
+        }
+
+        success, response = self.run_test(
+            "Create Sale with Invalid product_id Format",
+            "POST",
+            "/api/sales",
+            400,  # Expecting bad request or validation error
+            data=invalid_product_id_data
+        )
+
+        if success:
+            self.log("✅ REPRODUCED ERROR: Invalid product_id format causes error")
+            self.log(f"Error response: {response}")
+        else:
+            self.log("❌ Expected error for invalid product_id format")
+
+        # TEST 5: Invalid customer_id format
+        self.log("🔍 TEST 5: Invalid customer_id Format", "INFO")
+        
+        invalid_customer_id_data = {
+            "customer_id": "invalid-customer-id",  # Invalid ObjectId format
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU-005",
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.50,
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "discount_amount": 0.00,
+            "total_amount": 32.69,
+            "payment_method": "cash"
+        }
+
+        success, response = self.run_test(
+            "Create Sale with Invalid customer_id Format",
+            "POST",
+            "/api/sales",
+            400,  # Expecting bad request or validation error
+            data=invalid_customer_id_data
+        )
+
+        if success:
+            self.log("✅ REPRODUCED ERROR: Invalid customer_id format causes error")
+            self.log(f"Error response: {response}")
+        else:
+            self.log("❌ Expected error for invalid customer_id format")
+
+        # TEST 6: Missing required item fields (sku)
+        self.log("🔍 TEST 6: Missing Required Item Field - SKU", "INFO")
+        
+        missing_sku_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    # Missing sku field
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.50,
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "discount_amount": 0.00,
+            "total_amount": 32.69,
+            "payment_method": "cash"
+        }
+
+        success, response = self.run_test(
+            "Create Sale with Missing SKU Field",
+            "POST",
+            "/api/sales",
+            422,  # Expecting validation error
+            data=missing_sku_data
+        )
+
+        if success:
+            self.log("✅ REPRODUCED ERROR: Missing SKU field causes validation error")
+            self.log(f"Error response: {response}")
+        else:
+            self.log("❌ Expected validation error for missing SKU field")
+
+        # TEST 7: Missing required item fields (unit_price_snapshot)
+        self.log("🔍 TEST 7: Missing Required Item Field - unit_price_snapshot", "INFO")
+        
+        missing_price_snapshot_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU-007",
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    # Missing unit_price_snapshot field
+                    "unit_cost_snapshot": 15.50,
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "discount_amount": 0.00,
+            "total_amount": 32.69,
+            "payment_method": "cash"
+        }
+
+        success, response = self.run_test(
+            "Create Sale with Missing unit_price_snapshot Field",
+            "POST",
+            "/api/sales",
+            422,  # Expecting validation error
+            data=missing_price_snapshot_data
+        )
+
+        if success:
+            self.log("✅ REPRODUCED ERROR: Missing unit_price_snapshot field causes validation error")
+            self.log(f"Error response: {response}")
+        else:
+            self.log("❌ Expected validation error for missing unit_price_snapshot field")
+
+        # TEST 8: Missing required item fields (unit_cost_snapshot)
+        self.log("🔍 TEST 8: Missing Required Item Field - unit_cost_snapshot", "INFO")
+        
+        missing_cost_snapshot_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU-008",
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    # Missing unit_cost_snapshot field
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "discount_amount": 0.00,
+            "total_amount": 32.69,
+            "payment_method": "cash"
+        }
+
+        success, response = self.run_test(
+            "Create Sale with Missing unit_cost_snapshot Field",
+            "POST",
+            "/api/sales",
+            422,  # Expecting validation error
+            data=missing_cost_snapshot_data
+        )
+
+        if success:
+            self.log("✅ REPRODUCED ERROR: Missing unit_cost_snapshot field causes validation error")
+            self.log(f"Error response: {response}")
+        else:
+            self.log("❌ Expected validation error for missing unit_cost_snapshot field")
+
+        # TEST 9: Frontend-like data with potential null/undefined values
+        self.log("🔍 TEST 9: Frontend-like Data with Null/Undefined Values", "INFO")
+        
+        frontend_like_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "user-id-from-frontend",  # Non-ObjectId format like frontend might send
+            "cashier_name": None,  # Null value
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": None,  # Null SKU
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": None,  # Null snapshot
+                    "unit_cost_snapshot": None,  # Null snapshot
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "discount_amount": 0.00,
+            "total_amount": 32.69,
+            "payment_method": "cash",
+            "received_amount": None,  # Null received amount
+            "change_amount": None  # Null change amount
+        }
+
+        success, response = self.run_test(
+            "Create Sale with Frontend-like Null Values",
+            "POST",
+            "/api/sales",
+            422,  # Expecting validation error
+            data=frontend_like_data
+        )
+
+        if success:
+            self.log("✅ REPRODUCED ERROR: Frontend-like null values cause validation error")
+            self.log(f"Error response: {response}")
+        else:
+            self.log("❌ Expected validation error for frontend-like null values")
+
+        # TEST 10: Insufficient payment amount validation
+        self.log("🔍 TEST 10: Insufficient Payment Amount", "INFO")
+        
+        insufficient_payment_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "admin@printsandcuts.com",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU-010",
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.50,
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "discount_amount": 0.00,
+            "total_amount": 32.69,
+            "payment_method": "cash",
+            "received_amount": 20.00,  # Insufficient amount
+            "change_amount": -12.69  # Negative change
+        }
+
+        success, response = self.run_test(
+            "Create Sale with Insufficient Payment Amount",
+            "POST",
+            "/api/sales",
+            400,  # Expecting bad request
+            data=insufficient_payment_data
+        )
+
+        if success:
+            self.log("✅ REPRODUCED ERROR: Insufficient payment amount causes error")
+            self.log(f"Error response: {response}")
+        else:
+            self.log("❌ Expected error for insufficient payment amount")
+
+        self.log("=== SALES COMPLETION ERROR REPRODUCTION COMPLETED ===", "INFO")
+        return True
+
     def run_all_tests(self):
         """Run focused tests for login authentication fix and payment reference codes verification"""
         self.log("Starting Login Authentication Fix & Payment Reference Codes Verification Testing", "START")
