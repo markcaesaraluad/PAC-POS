@@ -10647,13 +10647,28 @@ def run_enhanced_sales_api_testing():
 
 
 def main():
-    """Main test execution - focused on category creation fix verification"""
+    """Main test execution with command line argument support"""
     tester = POSAPITester()
     
-    try:
-        # Run focused category creation tests
-        success = tester.run_category_creation_tests()
+    # Check command line arguments for specific test modes
+    import sys
+    if len(sys.argv) > 1:
+        test_mode = sys.argv[1].lower()
         
+        if test_mode == "product_listing":
+            success = tester.run_product_creation_and_listing_tests()
+        elif test_mode == "category_creation":
+            success = tester.run_category_creation_tests()
+        else:
+            print("Unknown test mode. Available modes:")
+            print("  product_listing - Test product creation and listing fix")
+            print("  category_creation - Test category creation fix")
+            return 1
+    else:
+        # Default to category creation tests
+        success = tester.run_category_creation_tests()
+    
+    try:
         # Print summary
         print(f"\n=== TEST SUMMARY ===")
         print(f"Tests Run: {tester.tests_run}")
@@ -10662,10 +10677,10 @@ def main():
         print(f"Success Rate: {(tester.tests_passed / tester.tests_run * 100):.1f}%" if tester.tests_run > 0 else "No tests run")
         
         if tester.tests_passed == tester.tests_run:
-            print("🎉 ALL TESTS PASSED - Category creation fix verification successful!")
+            print("🎉 ALL TESTS PASSED!")
             return 0
         else:
-            print("❌ SOME TESTS FAILED - Category creation issues may still exist")
+            print("❌ SOME TESTS FAILED")
             return 1
             
     except KeyboardInterrupt:
