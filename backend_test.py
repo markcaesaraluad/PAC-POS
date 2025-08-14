@@ -8907,6 +8907,11 @@ class POSAPITester:
         self.test_products_crud()
         self.test_customers_crud()
         
+        # URGENT TEST: Product Deletion Fix Verification
+        self.log("=== PRODUCT DELETION FIX TESTING ===", "INFO")
+        self.test_product_deletion_fix_verification()
+        self.log("=== PRODUCT DELETION FIX TESTING COMPLETED ===", "INFO")
+        
         # URGENT TEST: POS Sales Network Error Fix
         self.log("=== POS SALES NETWORK ERROR FIX TESTING ===", "INFO")
         self.test_pos_sales_network_error_fix()
