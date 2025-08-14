@@ -119,6 +119,18 @@ backend:
         agent: "testing"
         comment: "✅ FIXED: All customer CRUD operations working correctly. Create, Read, Update, Delete operations successful. Customer management fully functional."
 
+  - task: "URGENT: Sales Completion Error Reproduction"
+    implemented: true
+    working: false
+    file: "backend/routes/sales.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "testing"
+        comment: "🎯 CRITICAL SALES COMPLETION ERRORS SUCCESSFULLY REPRODUCED: Comprehensive testing identified multiple validation errors that cause 'failed to complete sales' issues. REPRODUCED ERRORS: ✅ Null cashier_id causes 422 validation error ('Input should be a valid string'), ✅ Missing cashier_name causes 422 validation error ('Field required'), ✅ Missing SKU field causes 422 validation error ('Field required'), ✅ Missing unit_price_snapshot causes 422 validation error ('Field required'), ✅ Missing unit_cost_snapshot causes 422 validation error ('Field required'), ✅ Frontend-like null values cause multiple 422 validation errors (cashier_name, sku, unit_price_snapshot, unit_cost_snapshot all null). CRITICAL FINDINGS: Invalid product_id format causes 500 Internal Server Error (not 400), Invalid customer_id format causes 502 Bad Gateway error, Invalid cashier_id format unexpectedly succeeds (backend overrides with current user ID), Insufficient payment amount unexpectedly succeeds (no validation). ROOT CAUSE IDENTIFIED: Frontend is likely sending null/undefined values for required fields (cashier_id, cashier_name, sku, unit_price_snapshot, unit_cost_snapshot) causing Pydantic validation failures. The 'failed to complete sales' error is primarily due to missing or null required fields from frontend form validation issues."
+
   - task: "Sales Operations"
     implemented: true
     working: true
