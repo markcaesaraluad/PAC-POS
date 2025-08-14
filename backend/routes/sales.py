@@ -493,7 +493,7 @@ async def update_sale(
     
     # Update the sale
     result = await sales_collection.update_one(
-        {"_id": ObjectId(sale_id)},
+        {"_id": sale_object_id},
         {"$set": update_data}
     )
     
@@ -504,7 +504,7 @@ async def update_sale(
         )
     
     # Fetch updated sale
-    updated_sale = await sales_collection.find_one({"_id": ObjectId(sale_id)})
+    updated_sale = await sales_collection.find_one({"_id": sale_object_id})
     
     return SaleResponse(
         id=str(updated_sale["_id"]),
