@@ -4,7 +4,7 @@ Admin-only access for error codes registry and recent errors
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Dict, Any, Optional
-from routes.auth import get_authenticated_user
+from auth_utils import get_any_authenticated_user
 from utils.error_codes import error_code_manager
 import logging
 
@@ -17,7 +17,7 @@ async def get_error_codes(
     area: Optional[str] = Query(None, description="Filter by error area"),
     severity: Optional[str] = Query(None, description="Filter by severity"),
     search: Optional[str] = Query(None, description="Search in title or message"),
-    current_user = Depends(get_authenticated_user)
+    current_user = Depends(get_any_authenticated_user)
 ):
     """
     Get error codes registry (Admin only)
@@ -67,7 +67,7 @@ async def get_error_codes(
 @router.get("/recent-errors")
 async def get_recent_errors(
     limit: int = Query(50, le=100, description="Maximum number of recent errors"),
-    current_user = Depends(get_authenticated_user)
+    current_user = Depends(get_any_authenticated_user)
 ):
     """
     Get recent errors (Admin only)
@@ -99,7 +99,7 @@ async def get_recent_errors(
 @router.get("/error-codes/{error_code}")
 async def get_error_code_details(
     error_code: str,
-    current_user = Depends(get_authenticated_user)
+    current_user = Depends(get_any_authenticated_user)
 ):
     """
     Get specific error code details (Admin only)
@@ -141,7 +141,7 @@ async def get_error_code_details(
 async def export_recent_errors(
     format: str = Query("json", regex="^(json|csv)$", description="Export format"),
     limit: int = Query(50, le=100, description="Maximum number of recent errors"),
-    current_user = Depends(get_authenticated_user)
+    current_user = Depends(get_any_authenticated_user)
 ):
     """
     Export recent errors (Admin only)
