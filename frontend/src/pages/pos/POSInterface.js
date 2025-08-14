@@ -142,11 +142,19 @@ const POSInterface = () => {
     } catch (error) {
       console.error('Barcode scan error:', error);
       
-      // Show "Item not found" as requested, but keep field focused
-      toast.error(`Item not found`, {
-        duration: 3000,
-        position: 'top-center'
-      });
+      // Trigger POS-SCAN-001 error code
+      const errorDetails = {
+        errorCode: 'POS-SCAN-001',
+        correlationId: 'scan-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+        message: 'Item not found. Please check barcode.',
+        route: window.location.pathname,
+        timestamp: new Date().toISOString(),
+        context: { searchTerm, barcode }
+      };
+      
+      window.dispatchEvent(new CustomEvent('pos-error', { 
+        detail: errorDetails 
+      }));
       
       // Clear search field and maintain focus for next attempt
       setSearchTerm('');
