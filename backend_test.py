@@ -1641,6 +1641,474 @@ class POSAPITester:
         self.log("=== PRINTER SETTINGS TESTING COMPLETED ===", "INFO")
         return True
 
+    def test_pos_sales_network_error_final_verification(self):
+        """URGENT: Final comprehensive test to verify ALL network errors in POS-SALE have been resolved.
+        This test focuses on ObjectId validation fixes and system stability under various conditions.
+        """
+        self.log("=== URGENT: POS SALES NETWORK ERROR FINAL VERIFICATION ===", "INFO")
+        
+        # Switch to business admin token for testing
+        if self.business_admin_token:
+            self.token = self.business_admin_token
+            self.log("Using business admin token for comprehensive POS sales testing")
+        
+        # Ensure we have required test data
+        if not self.product_id or not self.customer_id:
+            self.log("❌ Cannot test - missing product or customer data", "ERROR")
+            return False
+        
+        # TEST 1: Sales Creation with Valid Product IDs
+        self.log("🔍 TEST 1: Sales Creation with Valid Product IDs", "INFO")
+        
+        valid_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Test Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",  # Valid ObjectId format
+            "cashier_name": "Test Cashier",
+            "items": [
+                {
+                    "product_id": self.product_id,  # Valid product ID
+                    "product_name": "Test Product",
+                    "sku": "TEST-SKU-001",
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.50,
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "discount_amount": 0.00,
+            "total_amount": 32.69,
+            "payment_method": "cash",
+            "received_amount": 35.00,
+            "change_amount": 2.31,
+            "notes": "Valid sale test"
+        }
+
+        success, response = self.run_test(
+            "Create Sale with Valid Product IDs",
+            "POST",
+            "/api/sales",
+            200,
+            data=valid_sale_data
+        )
+
+        if success:
+            self.log("✅ Valid sale creation working correctly")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Valid sale creation failed - critical issue")
+        self.tests_run += 1
+
+        # TEST 2: Sales Creation with Invalid Product IDs (should return 400, not crash)
+        self.log("🔍 TEST 2: Sales Creation with Invalid Product IDs", "INFO")
+        
+        invalid_product_ids = [
+            "invalid-id",
+            "12345",
+            "not-an-objectid",
+            "507f1f77bcf86cd799439011x",  # Invalid ObjectId (extra character)
+            "",
+            "null"
+        ]
+        
+        for invalid_id in invalid_product_ids:
+            invalid_sale_data = {
+                "customer_id": self.customer_id,
+                "customer_name": "Test Customer",
+                "cashier_id": "507f1f77bcf86cd799439011",
+                "cashier_name": "Test Cashier",
+                "items": [
+                    {
+                        "product_id": invalid_id,
+                        "product_name": "Invalid Product",
+                        "sku": "INVALID-SKU",
+                        "quantity": 1,
+                        "unit_price": 29.99,
+                        "unit_price_snapshot": 29.99,
+                        "unit_cost_snapshot": 15.50,
+                        "total_price": 29.99
+                    }
+                ],
+                "subtotal": 29.99,
+                "tax_amount": 2.70,
+                "discount_amount": 0.00,
+                "total_amount": 32.69,
+                "payment_method": "cash"
+            }
+
+            success, response = self.run_test(
+                f"Create Sale with Invalid Product ID: {invalid_id}",
+                "POST",
+                "/api/sales",
+                400,  # Should return 400 Bad Request, not crash
+                data=invalid_sale_data
+            )
+
+            if success:
+                self.log(f"✅ Invalid product ID '{invalid_id}' properly handled with 400 error")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Invalid product ID '{invalid_id}' not properly handled")
+            self.tests_run += 1
+
+        # TEST 3: Sales Creation with Invalid Customer IDs
+        self.log("🔍 TEST 3: Sales Creation with Invalid Customer IDs", "INFO")
+        
+        invalid_customer_ids = [
+            "invalid-customer-id",
+            "12345",
+            "not-valid-objectid"
+        ]
+        
+        for invalid_customer_id in invalid_customer_ids:
+            invalid_customer_sale_data = {
+                "customer_id": invalid_customer_id,
+                "customer_name": "Invalid Customer",
+                "cashier_id": "507f1f77bcf86cd799439011",
+                "cashier_name": "Test Cashier",
+                "items": [
+                    {
+                        "product_id": self.product_id,
+                        "product_name": "Test Product",
+                        "sku": "TEST-SKU",
+                        "quantity": 1,
+                        "unit_price": 29.99,
+                        "unit_price_snapshot": 29.99,
+                        "unit_cost_snapshot": 15.50,
+                        "total_price": 29.99
+                    }
+                ],
+                "subtotal": 29.99,
+                "tax_amount": 2.70,
+                "discount_amount": 0.00,
+                "total_amount": 32.69,
+                "payment_method": "cash"
+            }
+
+            success, response = self.run_test(
+                f"Create Sale with Invalid Customer ID: {invalid_customer_id}",
+                "POST",
+                "/api/sales",
+                400,  # Should return 400 Bad Request
+                data=invalid_customer_sale_data
+            )
+
+            if success:
+                self.log(f"✅ Invalid customer ID '{invalid_customer_id}' properly handled")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Invalid customer ID '{invalid_customer_id}' not properly handled")
+            self.tests_run += 1
+
+        # TEST 4: Complete POS Transaction Flow with Various Payment Methods
+        self.log("🔍 TEST 4: Complete POS Transaction Flow", "INFO")
+        
+        payment_methods = ["cash", "card", "ewallet"]
+        
+        for payment_method in payment_methods:
+            transaction_data = {
+                "customer_id": self.customer_id,
+                "customer_name": "POS Test Customer",
+                "cashier_id": "507f1f77bcf86cd799439011",
+                "cashier_name": "POS Cashier",
+                "items": [
+                    {
+                        "product_id": self.product_id,
+                        "product_name": "POS Test Product",
+                        "sku": f"POS-{payment_method.upper()}",
+                        "quantity": 2,
+                        "unit_price": 19.99,
+                        "unit_price_snapshot": 19.99,
+                        "unit_cost_snapshot": 10.00,
+                        "total_price": 39.98
+                    }
+                ],
+                "subtotal": 39.98,
+                "tax_amount": 3.60,
+                "discount_amount": 0.00,
+                "total_amount": 43.58,
+                "payment_method": payment_method,
+                "received_amount": 50.00 if payment_method == "cash" else None,
+                "change_amount": 6.42 if payment_method == "cash" else None,
+                "payment_ref_code": f"REF-{payment_method.upper()}-001" if payment_method in ["ewallet", "card"] else None,
+                "notes": f"POS transaction test with {payment_method}"
+            }
+
+            success, response = self.run_test(
+                f"Complete POS Transaction - {payment_method.title()}",
+                "POST",
+                "/api/sales",
+                200,
+                data=transaction_data
+            )
+
+            if success:
+                self.log(f"✅ POS transaction with {payment_method} completed successfully")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ POS transaction with {payment_method} failed")
+            self.tests_run += 1
+
+        # TEST 5: Downpayment Scenarios
+        self.log("🔍 TEST 5: Downpayment Scenarios", "INFO")
+        
+        downpayment_sale_data = {
+            "customer_id": self.customer_id,
+            "customer_name": "Downpayment Customer",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "Downpayment Cashier",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Downpayment Product",
+                    "sku": "DOWN-PAY-001",
+                    "quantity": 1,
+                    "unit_price": 100.00,
+                    "unit_price_snapshot": 100.00,
+                    "unit_cost_snapshot": 50.00,
+                    "total_price": 100.00
+                }
+            ],
+            "subtotal": 100.00,
+            "tax_amount": 9.00,
+            "discount_amount": 0.00,
+            "total_amount": 109.00,
+            "payment_method": "cash",
+            "received_amount": 50.00,
+            "change_amount": 0.00,
+            "status": "ongoing",
+            "downpayment_amount": 50.00,
+            "balance_due": 59.00,
+            "notes": "Downpayment transaction test"
+        }
+
+        success, response = self.run_test(
+            "Create Sale with Downpayment",
+            "POST",
+            "/api/sales",
+            200,
+            data=downpayment_sale_data
+        )
+
+        if success:
+            self.log("✅ Downpayment sale created successfully")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Downpayment sale creation failed")
+        self.tests_run += 1
+
+        # TEST 6: Edge Cases and Error Handling
+        self.log("🔍 TEST 6: Edge Cases and Error Handling", "INFO")
+        
+        # Test with malformed ObjectIds in all ID fields
+        malformed_ids_test_data = {
+            "customer_id": "malformed-customer-id",
+            "customer_name": "Malformed Test",
+            "cashier_id": "malformed-cashier-id",
+            "cashier_name": "Malformed Cashier",
+            "items": [
+                {
+                    "product_id": "malformed-product-id",
+                    "product_name": "Malformed Product",
+                    "sku": "MALFORMED-SKU",
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.50,
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "discount_amount": 0.00,
+            "total_amount": 32.69,
+            "payment_method": "cash"
+        }
+
+        success, response = self.run_test(
+            "Create Sale with All Malformed ObjectIds",
+            "POST",
+            "/api/sales",
+            400,  # Should return 400, not crash
+            data=malformed_ids_test_data
+        )
+
+        if success:
+            self.log("✅ All malformed ObjectIds properly handled with 400 error")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Malformed ObjectIds not properly handled")
+        self.tests_run += 1
+
+        # TEST 7: Test with null/empty ID values
+        self.log("🔍 TEST 7: Null/Empty ID Values", "INFO")
+        
+        null_ids_test_data = {
+            "customer_id": None,
+            "customer_name": "Null Customer Test",
+            "cashier_id": "507f1f77bcf86cd799439011",
+            "cashier_name": "Test Cashier",
+            "items": [
+                {
+                    "product_id": self.product_id,
+                    "product_name": "Test Product",
+                    "sku": "NULL-TEST-SKU",
+                    "quantity": 1,
+                    "unit_price": 29.99,
+                    "unit_price_snapshot": 29.99,
+                    "unit_cost_snapshot": 15.50,
+                    "total_price": 29.99
+                }
+            ],
+            "subtotal": 29.99,
+            "tax_amount": 2.70,
+            "discount_amount": 0.00,
+            "total_amount": 32.69,
+            "payment_method": "cash"
+        }
+
+        success, response = self.run_test(
+            "Create Sale with Null Customer ID",
+            "POST",
+            "/api/sales",
+            200,  # Should work with null customer_id
+            data=null_ids_test_data
+        )
+
+        if success:
+            self.log("✅ Null customer ID properly handled")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Null customer ID not properly handled")
+        self.tests_run += 1
+
+        # TEST 8: System Stability Under Load (Multiple Concurrent Requests)
+        self.log("🔍 TEST 8: System Stability Under Load", "INFO")
+        
+        # Test rapid succession of valid/invalid requests
+        for i in range(5):
+            # Valid request
+            valid_load_test_data = {
+                "customer_id": self.customer_id,
+                "customer_name": f"Load Test Customer {i}",
+                "cashier_id": "507f1f77bcf86cd799439011",
+                "cashier_name": "Load Test Cashier",
+                "items": [
+                    {
+                        "product_id": self.product_id,
+                        "product_name": f"Load Test Product {i}",
+                        "sku": f"LOAD-TEST-{i}",
+                        "quantity": 1,
+                        "unit_price": 10.00 + i,
+                        "unit_price_snapshot": 10.00 + i,
+                        "unit_cost_snapshot": 5.00 + i,
+                        "total_price": 10.00 + i
+                    }
+                ],
+                "subtotal": 10.00 + i,
+                "tax_amount": 1.00,
+                "discount_amount": 0.00,
+                "total_amount": 11.00 + i,
+                "payment_method": "cash",
+                "notes": f"Load test transaction {i}"
+            }
+
+            success, response = self.run_test(
+                f"Load Test Valid Sale {i+1}",
+                "POST",
+                "/api/sales",
+                200,
+                data=valid_load_test_data
+            )
+
+            if success:
+                self.tests_passed += 1
+            self.tests_run += 1
+
+            # Invalid request (should not crash system)
+            invalid_load_test_data = {
+                "customer_id": f"invalid-customer-{i}",
+                "customer_name": f"Invalid Load Test {i}",
+                "cashier_id": "invalid-cashier-id",
+                "cashier_name": "Invalid Cashier",
+                "items": [
+                    {
+                        "product_id": f"invalid-product-{i}",
+                        "product_name": f"Invalid Product {i}",
+                        "sku": f"INVALID-{i}",
+                        "quantity": 1,
+                        "unit_price": 10.00,
+                        "unit_price_snapshot": 10.00,
+                        "unit_cost_snapshot": 5.00,
+                        "total_price": 10.00
+                    }
+                ],
+                "subtotal": 10.00,
+                "tax_amount": 1.00,
+                "discount_amount": 0.00,
+                "total_amount": 11.00,
+                "payment_method": "cash"
+            }
+
+            success, response = self.run_test(
+                f"Load Test Invalid Sale {i+1}",
+                "POST",
+                "/api/sales",
+                400,  # Should return 400, not crash
+                data=invalid_load_test_data
+            )
+
+            if success:
+                self.tests_passed += 1
+            self.tests_run += 1
+
+        # TEST 9: Verify Sales List Retrieval Still Works
+        self.log("🔍 TEST 9: Sales List Retrieval", "INFO")
+        
+        success, response = self.run_test(
+            "Get Sales List",
+            "GET",
+            "/api/sales",
+            200
+        )
+
+        if success:
+            self.log("✅ Sales list retrieval working correctly")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Sales list retrieval failed")
+        self.tests_run += 1
+
+        # TEST 10: Product API ObjectId Validation
+        self.log("🔍 TEST 10: Product API ObjectId Validation", "INFO")
+        
+        invalid_product_ids_for_get = [
+            "invalid-product-id",
+            "12345",
+            "not-an-objectid"
+        ]
+        
+        for invalid_id in invalid_product_ids_for_get:
+            success, response = self.run_test(
+                f"Get Product with Invalid ID: {invalid_id}",
+                "GET",
+                f"/api/products/{invalid_id}",
+                400,  # Should return 400, not crash
+            )
+
+            if success:
+                self.log(f"✅ Product API properly handles invalid ID '{invalid_id}'")
+                self.tests_passed += 1
+            else:
+                self.log(f"❌ Product API failed to handle invalid ID '{invalid_id}'")
+            self.tests_run += 1
+
+        self.log("=== POS SALES NETWORK ERROR FINAL VERIFICATION COMPLETED ===", "INFO")
+        return True
+
     def test_payment_reference_codes_and_downpayments(self):
         """Quick verification test for enhanced POS system backend after fixing the sales API.
         Focus on testing the two critical issues identified:
