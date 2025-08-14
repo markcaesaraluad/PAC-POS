@@ -105,6 +105,7 @@ function App() {
                       <Route path="reports" element={<Reports />} />
                       <Route path="profit-report" element={<ProfitReport />} />
                       <Route path="settings" element={<BusinessSettings />} />
+                      <Route path="diagnostics" element={<Diagnostics />} />
                     </Routes>
                   </BusinessLayout>
                 </ProtectedRoute>
