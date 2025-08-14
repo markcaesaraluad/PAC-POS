@@ -771,14 +771,14 @@ const POSInterface = () => {
       // HOTFIX 6: Enhanced transaction data to ensure proper saving + Feature 6: Downpayment support
       const transactionData = {
         customer_id: selectedCustomer?.id || null,
-        cashier_id: user?.id || null,
-        cashier_name: user?.email || user?.name || 'Unknown Cashier',
+        cashier_id: user?.id || user?._id || null, // Fix: Ensure cashier_id is never null
+        cashier_name: user?.email || user?.name || user?.cashier_name || 'Unknown Cashier', // Fix: Ensure cashier_name is never null
         items: cart.map(item => ({
           ...item,
           // Ensure all required fields are present
-          sku: item.product_sku || item.sku, // Ensure SKU is included
-          unit_price_snapshot: item.unit_price, // Required field: price at time of sale
-          unit_cost_snapshot: item.unit_cost_snapshot || 0 // Ensure cost snapshot is captured
+          sku: item.product_sku || item.sku || item.id || 'UNKNOWN-SKU', // Fix: Ensure SKU is never null
+          unit_price_snapshot: item.unit_price || item.price || 0, // Fix: Ensure unit_price_snapshot is never null
+          unit_cost_snapshot: item.unit_cost_snapshot || item.cost || 0 // Fix: Ensure cost snapshot is never null
         })),
         subtotal: parseFloat(totals.subtotal),
         tax_amount: parseFloat(totals.taxAmount),
