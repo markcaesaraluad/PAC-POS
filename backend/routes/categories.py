@@ -131,7 +131,9 @@ async def get_category(
         description=category.get("description"),
         color=category.get("color", "#3B82F6"),
         product_count=product_count,
-        created_at=category.get("created_at", datetime.utcnow())
+        is_active=category.get("is_active", True),
+        created_at=category.get("created_at", datetime.utcnow()),
+        updated_at=category.get("updated_at", datetime.utcnow())
     )
 
 @router.put("/{category_id}", response_model=CategoryResponse)
