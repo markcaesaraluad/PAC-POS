@@ -560,6 +560,84 @@ async def generate_unique_sku(business_id: str, base_name: str = "") -> str:
         if counter > 100:  # Safety break
             return f"PROD-{uuid.uuid4().hex[:8].upper()}"
 
+@router.delete("/{product_id}", status_code=204)
+async def delete_product(
+    product_id: str,
+    current_user=Depends(get_business_admin_or_super)
+):
+    """Delete a product - Admin only"""
+    products_collection = await get_collection("products")
+    
+    business_id = current_user["business_id"]
+    if current_user["role"] == "super_admin":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Super admin must specify business context",
+        )
+    
+    # Validate ObjectId format to prevent crashes
+    try:
+        product_object_id = ObjectId(product_id)
+        business_object_id = ObjectId(business_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid product ID format: {product_id}",
+        )
+    
+    # Check if product exists and belongs to business
+    product = await products_collection.find_one({
+        "_id": product_object_id,
+        "business_id": business_object_id
+    })
+    
+    if not product:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Product not found",
+        )
+    
+    # Check if product has been used in any sales (optional - you can remove this if you want to allow deletion)
+    sales_collection = await get_collection("sales")
+    sales_using_product = await sales_collection.count_documents({
+        "business_id": business_object_id,
+        "items.product_id": str(product_object_id)
+    })
+    
+    if sales_using_product > 0:
+        # Instead of deleting, mark as inactive
+        await products_collection.update_one(
+            {
+                "_id": product_object_id,
+                "business_id": business_object_id
+            },
+            {
+                "$set": {
+                    "is_active": False,
+                    "updated_at": datetime.now(timezone.utc)
+                }
+            }
+        )
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Product has been used in sales. It has been marked as inactive instead of deleted.",
+        )
+    
+    # Delete the product
+    result = await products_collection.delete_one({
+        "_id": product_object_id,
+        "business_id": business_object_id
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Product not found or already deleted",
+        )
+    
+    # Return 204 No Content for successful deletion
+    return None
+
 @router.post("/bulk-import")
 async def bulk_import_products(
     file: UploadFile = File(...),
