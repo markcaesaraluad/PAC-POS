@@ -173,7 +173,8 @@ async def update_category(
             "$set": {
                 "name": category_update.name,
                 "description": category_update.description,
-                "color": category_update.color
+                "color": category_update.color,
+                "updated_at": datetime.utcnow()
             }
         }
     )
@@ -183,6 +184,12 @@ async def update_category(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Category not found",
         )
+    
+    # Get updated category
+    updated_category = await categories_collection.find_one({
+        "_id": ObjectId(category_id),
+        "business_id": ObjectId(business_id)
+    })
     
     # Get product count
     product_count = await products_collection.count_documents({
@@ -194,11 +201,13 @@ async def update_category(
     return CategoryResponse(
         id=category_id,
         business_id=str(business_id),
-        name=category_update.name,
-        description=category_update.description,
-        color=category_update.color,
+        name=updated_category["name"],
+        description=updated_category.get("description"),
+        color=updated_category.get("color", "#3B82F6"),
         product_count=product_count,
-        created_at=datetime.utcnow()  # This should be fetched from DB in real implementation
+        is_active=updated_category.get("is_active", True),
+        created_at=updated_category.get("created_at", datetime.utcnow()),
+        updated_at=updated_category.get("updated_at", datetime.utcnow())
     )
 
 @router.delete("/{category_id}")
