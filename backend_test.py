@@ -602,59 +602,145 @@ class POSAPITester:
         self.log("=== SPECIFIC USER REPORTED ISSUES TESTING COMPLETED ===", "INFO")
         return True
 
-    def test_category_creation_error(self):
-        """Test Issue 1: Error when creating new category"""
-        self.log("🔍 ISSUE 1: Testing Category Creation Error", "INFO")
+    def test_category_creation_fix_verification(self):
+        """Test the specific category creation issue that was just fixed"""
+        self.log("🔍 TESTING CATEGORY CREATION FIX VERIFICATION", "INFO")
         
-        # Test 1: Create a new category with valid data
+        # Test 1: Create a new category with valid data (name, description, color)
         category_data = {
-            "name": f"Test Category {datetime.now().strftime('%Y%m%d%H%M%S')}",
-            "description": "Test category for error reproduction",
+            "name": f"Test Category Fix {datetime.now().strftime('%Y%m%d%H%M%S')}",
+            "description": "Test category for fix verification",
             "color": "#FF5733"
         }
         
         success, response = self.run_test(
-            "Create New Category (Issue 1)",
+            "Create New Category with Valid Data",
             "POST",
             "/api/categories",
-            200,  # Expected success
+            200,  # Expected success - should return 200 with proper CategoryResponse
             data=category_data
         )
         
+        created_category_id = None
         if success:
-            self.log("✅ Category creation successful - no error found")
-            category_id = response.get('id')
-            if category_id:
-                self.log(f"Created category ID: {category_id}")
+            self.log("✅ Category creation successful - 500 Internal Server Error (UNKNOWN-003) issue resolved")
+            created_category_id = response.get('id')
+            if created_category_id:
+                self.log(f"Created category ID: {created_category_id}")
+                
+                # Verify CategoryResponse structure includes all required fields
+                required_fields = ['id', 'business_id', 'name', 'description', 'color', 'product_count', 'is_active', 'created_at', 'updated_at']
+                missing_fields = [field for field in required_fields if field not in response]
+                
+                if not missing_fields:
+                    self.log("✅ CategoryResponse includes all required fields: id, business_id, name, description, color, product_count, is_active, created_at, updated_at")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ CategoryResponse missing fields: {missing_fields}")
+                self.tests_run += 1
+                
+                # Verify field values
+                if (response.get('name') == category_data['name'] and 
+                    response.get('description') == category_data['description'] and
+                    response.get('color') == category_data['color']):
+                    self.log("✅ Category data correctly stored and returned")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ Category data not correctly stored or returned")
+                self.tests_run += 1
         else:
-            self.log("❌ CONFIRMED: Category creation error found")
+            self.log("❌ CRITICAL: Category creation still failing - 500 Internal Server Error (UNKNOWN-003) issue NOT resolved")
+            return False
             
-        # Test 2: Try creating category with missing required fields
+        # Test 2: Verify the created category appears in GET /api/categories list
+        success, response = self.run_test(
+            "Get Categories List (Verify New Category Appears)",
+            "GET",
+            "/api/categories",
+            200
+        )
+        
+        if success and isinstance(response, list):
+            category_found = False
+            for category in response:
+                if category.get('id') == created_category_id:
+                    category_found = True
+                    self.log(f"✅ Created category found in categories list: {category.get('name')}")
+                    break
+            
+            if category_found:
+                self.tests_passed += 1
+            else:
+                self.log("❌ Created category not found in categories list")
+            self.tests_run += 1
+        else:
+            self.log("❌ Failed to get categories list")
+            self.tests_run += 1
+            
+        # Test 3: Validation - try creating category with missing name (should return 422)
         invalid_category_data = {
-            "description": "Category without name"
+            "description": "Category without name",
+            "color": "#FF0000"
         }
         
         success, response = self.run_test(
-            "Create Category Missing Name (Should Fail)",
+            "Create Category Missing Name (Should Return 422)",
             "POST",
             "/api/categories",
             422,  # Validation error expected
             data=invalid_category_data
         )
         
-        # Test 3: Try creating category with duplicate name
+        if success:
+            self.log("✅ Validation correctly rejects category with missing name (422 error)")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Should return 422 validation error for missing name")
+        self.tests_run += 1
+        
+        # Test 4: Duplicate name validation (should return 400)
         duplicate_category_data = {
-            "name": "Test Category",  # This might already exist
-            "description": "Duplicate category test"
+            "name": category_data['name'],  # Use the same name we just created
+            "description": "Duplicate category test",
+            "color": "#00FF00"
         }
         
         success, response = self.run_test(
-            "Create Duplicate Category Name",
+            "Create Duplicate Category Name (Should Return 400)",
             "POST",
             "/api/categories",
             400,  # Bad request expected for duplicate
             data=duplicate_category_data
         )
+        
+        if success:
+            self.log("✅ Duplicate name validation working correctly (400 error)")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Should return 400 error for duplicate category name")
+        self.tests_run += 1
+        
+        # Test 5: Create another category to verify system stability
+        another_category_data = {
+            "name": f"Another Test Category {datetime.now().strftime('%Y%m%d%H%M%S')}",
+            "description": "Another test category for stability verification",
+            "color": "#00FFFF"
+        }
+        
+        success, response = self.run_test(
+            "Create Another Category (System Stability Test)",
+            "POST",
+            "/api/categories",
+            200,
+            data=another_category_data
+        )
+        
+        if success:
+            self.log("✅ System stable - can create multiple categories without issues")
+            self.tests_passed += 1
+        else:
+            self.log("❌ System instability - failed to create second category")
+        self.tests_run += 1
         
         return True
 
