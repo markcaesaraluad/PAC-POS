@@ -581,25 +581,31 @@ class POSAPITester:
         self.log("=== SALES HISTORY API FAILURES TESTING COMPLETED ===", "INFO")
         return True
 
-    def test_specific_user_reported_issues(self):
-        """Test the specific issues reported by the user"""
-        self.log("=== TESTING SPECIFIC USER REPORTED ISSUES ===", "INFO")
+    def run_category_creation_tests(self):
+        """Run focused category creation tests as requested"""
+        self.log("=== STARTING CATEGORY CREATION FIX VERIFICATION TESTS ===", "INFO")
         
-        # Switch to business admin token for testing
-        if self.business_admin_token:
-            self.token = self.business_admin_token
-            self.log("Using business admin token for specific issue testing")
+        # Setup authentication first
+        if not self.test_health_check():
+            self.log("❌ Health check failed - cannot proceed", "ERROR")
+            return False
+            
+        if not self.test_super_admin_setup():
+            self.log("❌ Super admin setup failed - cannot proceed", "ERROR")
+            return False
+            
+        if not self.test_business_admin_login():
+            self.log("❌ Business admin login failed - cannot proceed", "ERROR")
+            return False
+            
+        if not self.test_get_current_user():
+            self.log("❌ Get current user failed - cannot proceed", "ERROR")
+            return False
         
-        # Issue 1: Error when creating new category
-        self.test_category_creation_error()
+        # Run the specific category creation fix verification tests
+        self.test_category_creation_fix_verification()
         
-        # Issue 2: Error when importing CSV file for batch import of products  
-        self.test_csv_bulk_import_error()
-        
-        # Issue 3: New product doesn't show in the list when added
-        self.test_product_creation_and_listing()
-        
-        self.log("=== SPECIFIC USER REPORTED ISSUES TESTING COMPLETED ===", "INFO")
+        self.log("=== CATEGORY CREATION FIX VERIFICATION TESTS COMPLETED ===", "INFO")
         return True
 
     def test_category_creation_fix_verification(self):
