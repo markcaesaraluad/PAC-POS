@@ -1,6 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Request
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.proxy_headers import ProxyHeadersMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -23,13 +22,6 @@ app = FastAPI(title="Modern POS System", version="1.0.0")
 
 # Setup global error handling (must be before other middleware)
 setup_error_handling(app)
-
-# Trust proxy configuration for production deployment
-trust_proxy = config("TRUST_PROXY", default="false", cast=bool)
-
-# Add ProxyHeadersMiddleware if behind reverse proxy/load balancer
-if trust_proxy:
-    app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
 
 # CORS middleware - Environment-aware configuration
 cors_origins = config("CORS_ALLOWED_ORIGINS", default="*")
