@@ -12645,7 +12645,357 @@ def main():
         print(f"💥 Unexpected error: {str(e)}")
         return 1
 
+    def test_diagnostic_endpoints(self):
+        """Test the newly created diagnostic endpoints for login debugging"""
+        self.log("=== TESTING DIAGNOSTIC ENDPOINTS ===", "INFO")
+        
+        # TEST 1: Environment Diagnostic Endpoint
+        self.log("🔍 TEST 1: Environment Diagnostic Endpoint", "INFO")
+        
+        success, response = self.run_test(
+            "Get Environment Summary (No Auth Required)",
+            "GET",
+            "/api/_diag/env-summary",
+            200
+        )
+        
+        if success:
+            self.log("✅ Environment diagnostic endpoint accessible")
+            
+            # Verify response structure contains expected sections
+            expected_sections = ['environment', 'api_config', 'cors_config', 'cookie_config', 'auth_config', 'database', 'proxy_headers']
+            missing_sections = [section for section in expected_sections if section not in response]
+            
+            if not missing_sections:
+                self.log("✅ Environment summary includes all expected sections")
+                self.tests_passed += 1
+                
+                # Verify no secrets are exposed
+                response_str = str(response)
+                sensitive_patterns = ['SECRET_KEY', 'MONGO_URL', 'password', 'secret']
+                secrets_found = [pattern for pattern in sensitive_patterns if pattern in response_str and response_str.count(pattern) > 1]
+                
+                if not secrets_found:
+                    self.log("✅ No sensitive information exposed in environment summary")
+                    self.tests_passed += 1
+                else:
+                    self.log(f"❌ Potential secrets exposed: {secrets_found}")
+                self.tests_run += 1
+                
+                # Verify specific configuration details
+                if response.get('cors_config', {}).get('cors_origins'):
+                    self.log("✅ CORS configuration details present")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ CORS configuration missing")
+                self.tests_run += 1
+                
+                if response.get('auth_config', {}).get('jwt_secret_configured') == 'yes':
+                    self.log("✅ JWT secret configuration confirmed (without exposing value)")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ JWT secret configuration not confirmed")
+                self.tests_run += 1
+                
+            else:
+                self.log(f"❌ Environment summary missing sections: {missing_sections}")
+            self.tests_run += 1
+        else:
+            self.log("❌ Environment diagnostic endpoint not accessible")
+            return False
+            
+        return True
+
+    def test_enhanced_login_logging(self):
+        """Test enhanced login logging with correlation IDs"""
+        self.log("=== TESTING ENHANCED LOGIN LOGGING ===", "INFO")
+        
+        # TEST 1: Valid Login with Correlation ID Logging
+        self.log("🔍 TEST 1: Valid Login with Enhanced Logging", "INFO")
+        
+        success, response = self.run_test(
+            "Business Admin Login (Enhanced Logging)",
+            "POST",
+            "/api/auth/login",
+            200,
+            data={
+                "email": "admin@printsandcuts.com",
+                "password": "admin123456",
+                "business_subdomain": "prints-cuts-tagum"
+            }
+        )
+        
+        if success and 'access_token' in response:
+            self.log("✅ Valid login successful with enhanced logging")
+            self.business_admin_token = response['access_token']
+            self.token = self.business_admin_token
+            self.tests_passed += 1
+        else:
+            self.log("❌ Valid login failed")
+        self.tests_run += 1
+        
+        # TEST 2: Invalid Login with Enhanced Error Logging
+        self.log("🔍 TEST 2: Invalid Login with Enhanced Error Logging", "INFO")
+        
+        success, response = self.run_test(
+            "Invalid Login (Enhanced Error Logging)",
+            "POST",
+            "/api/auth/login",
+            401,  # Expected failure
+            data={
+                "email": "admin@printsandcuts.com",
+                "password": "wrongpassword",
+                "business_subdomain": "prints-cuts-tagum"
+            }
+        )
+        
+        if success:
+            self.log("✅ Invalid login properly rejected with enhanced error logging")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Invalid login error handling not working correctly")
+        self.tests_run += 1
+        
+        # TEST 3: Missing Business Context Logging
+        self.log("🔍 TEST 3: Missing Business Context Error Logging", "INFO")
+        
+        success, response = self.run_test(
+            "Login Missing Business Context (Enhanced Logging)",
+            "POST",
+            "/api/auth/login",
+            400,  # Expected bad request
+            data={
+                "email": "admin@printsandcuts.com",
+                "password": "admin123456"
+                # Missing business_subdomain
+            }
+        )
+        
+        if success:
+            self.log("✅ Missing business context properly handled with enhanced logging")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Missing business context error handling not working correctly")
+        self.tests_run += 1
+        
+        # TEST 4: Invalid Business Subdomain Logging
+        self.log("🔍 TEST 4: Invalid Business Subdomain Error Logging", "INFO")
+        
+        success, response = self.run_test(
+            "Login Invalid Business Subdomain (Enhanced Logging)",
+            "POST",
+            "/api/auth/login",
+            404,  # Expected not found
+            data={
+                "email": "admin@printsandcuts.com",
+                "password": "admin123456",
+                "business_subdomain": "nonexistent-business"
+            }
+        )
+        
+        if success:
+            self.log("✅ Invalid business subdomain properly handled with enhanced logging")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Invalid business subdomain error handling not working correctly")
+        self.tests_run += 1
+        
+        return True
+
+    def test_cors_configuration(self):
+        """Test CORS configuration is environment-aware"""
+        self.log("=== TESTING CORS CONFIGURATION ===", "INFO")
+        
+        # TEST 1: CORS Headers in Response
+        self.log("🔍 TEST 1: CORS Headers in API Response", "INFO")
+        
+        # Make a request with Origin header to test CORS
+        cors_headers = {
+            'Origin': 'https://caffd337-99df-4bc9-880e-142df7ab6009.preview.emergentagent.com',
+            'Access-Control-Request-Method': 'POST',
+            'Access-Control-Request-Headers': 'Content-Type, Authorization'
+        }
+        
+        success, response = self.run_test(
+            "Health Check with CORS Headers",
+            "GET",
+            "/api/health",
+            200,
+            headers=cors_headers
+        )
+        
+        if success:
+            self.log("✅ API accepts requests with CORS headers")
+            self.tests_passed += 1
+        else:
+            self.log("❌ API rejects requests with CORS headers")
+        self.tests_run += 1
+        
+        # TEST 2: OPTIONS Preflight Request
+        self.log("🔍 TEST 2: CORS Preflight Request", "INFO")
+        
+        try:
+            import requests
+            url = f"{self.base_url}/api/auth/login"
+            preflight_response = requests.options(url, headers=cors_headers)
+            
+            if preflight_response.status_code in [200, 204]:
+                self.log("✅ CORS preflight request handled correctly")
+                self.tests_passed += 1
+                
+                # Check for CORS headers in response
+                cors_response_headers = preflight_response.headers
+                if 'Access-Control-Allow-Origin' in cors_response_headers:
+                    self.log("✅ CORS Allow-Origin header present")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ CORS Allow-Origin header missing")
+                self.tests_run += 1
+                
+                if 'Access-Control-Allow-Methods' in cors_response_headers:
+                    self.log("✅ CORS Allow-Methods header present")
+                    self.tests_passed += 1
+                else:
+                    self.log("❌ CORS Allow-Methods header missing")
+                self.tests_run += 1
+                
+            else:
+                self.log(f"❌ CORS preflight request failed with status: {preflight_response.status_code}")
+            self.tests_run += 1
+            
+        except Exception as e:
+            self.log(f"❌ CORS preflight test failed: {str(e)}")
+            self.tests_run += 1
+        
+        return True
+
+    def test_proxy_header_handling(self):
+        """Test proxy header handling doesn't break functionality"""
+        self.log("=== TESTING PROXY HEADER HANDLING ===", "INFO")
+        
+        # TEST 1: Request with Proxy Headers
+        self.log("🔍 TEST 1: Request with X-Forwarded Headers", "INFO")
+        
+        proxy_headers = {
+            'X-Forwarded-Proto': 'https',
+            'X-Forwarded-Host': 'caffd337-99df-4bc9-880e-142df7ab6009.preview.emergentagent.com',
+            'X-Forwarded-For': '192.168.1.100'
+        }
+        
+        success, response = self.run_test(
+            "Health Check with Proxy Headers",
+            "GET",
+            "/api/health",
+            200,
+            headers=proxy_headers
+        )
+        
+        if success:
+            self.log("✅ API handles proxy headers without breaking functionality")
+            self.tests_passed += 1
+        else:
+            self.log("❌ API fails with proxy headers")
+        self.tests_run += 1
+        
+        # TEST 2: Login with Proxy Headers
+        self.log("🔍 TEST 2: Login with Proxy Headers", "INFO")
+        
+        success, response = self.run_test(
+            "Login with Proxy Headers",
+            "POST",
+            "/api/auth/login",
+            200,
+            data={
+                "email": "admin@printsandcuts.com",
+                "password": "admin123456",
+                "business_subdomain": "prints-cuts-tagum"
+            },
+            headers=proxy_headers
+        )
+        
+        if success and 'access_token' in response:
+            self.log("✅ Login works correctly with proxy headers")
+            self.tests_passed += 1
+        else:
+            self.log("❌ Login fails with proxy headers")
+        self.tests_run += 1
+        
+        # TEST 3: Business Context with Proxy Headers
+        self.log("🔍 TEST 3: Business Context Resolution with Proxy Headers", "INFO")
+        
+        if success and 'access_token' in response:
+            # Use the token to test business context
+            self.token = response['access_token']
+            
+            success, response = self.run_test(
+                "Get Current User with Proxy Headers",
+                "GET",
+                "/api/auth/me",
+                200,
+                headers=proxy_headers
+            )
+            
+            if success and 'business_id' in response:
+                self.log("✅ Business context resolution works with proxy headers")
+                self.tests_passed += 1
+            else:
+                self.log("❌ Business context resolution fails with proxy headers")
+            self.tests_run += 1
+        
+        return True
+
+    def run_diagnostic_tests(self):
+        """Run focused diagnostic endpoint tests as requested"""
+        self.log("=== STARTING DIAGNOSTIC ENDPOINTS TESTING ===", "INFO")
+        
+        # Setup basic authentication first
+        if not self.test_health_check():
+            self.log("❌ Health check failed - cannot proceed", "ERROR")
+            return False
+        
+        # Run the specific diagnostic tests
+        self.test_diagnostic_endpoints()
+        self.test_enhanced_login_logging()
+        self.test_cors_configuration()
+        self.test_proxy_header_handling()
+        
+        # Print summary
+        self.print_summary()
+        
+        self.log("=== DIAGNOSTIC ENDPOINTS TESTING COMPLETED ===", "INFO")
+        return True
+
 if __name__ == "__main__":
-    # Run the specific login investigation as requested
     tester = POSAPITester()
-    tester.investigate_deployed_login_issues()
+    
+    # Check command line arguments for specific test types
+    import sys
+    if len(sys.argv) > 1:
+        test_type = sys.argv[1].lower()
+        
+        if test_type == "diagnostic":
+            tester.run_diagnostic_tests()
+        elif test_type == "reports":
+            tester.run_reports_today_filter_tests()
+        elif test_type == "category":
+            tester.run_category_creation_tests()
+        elif test_type == "sales":
+            tester.test_sales_api_with_enhanced_item_fields()
+        elif test_type == "payment":
+            tester.test_payment_reference_codes_and_downpayments()
+        elif test_type == "enhanced":
+            tester.test_enhanced_pos_features()
+        elif test_type == "network":
+            tester.test_urgent_payment_network_error_reproduction()
+        elif test_type == "deletion":
+            tester.test_product_deletion_fix_verification()
+        elif test_type == "pos":
+            tester.test_pos_sales_network_error_final_verification()
+        elif test_type == "login":
+            tester.investigate_deployed_login_issues()
+        else:
+            print("Available test types: diagnostic, reports, category, sales, payment, enhanced, network, deletion, pos, login")
+            tester.run_all_tests()
+    else:
+        # Run the specific login investigation as requested
+        tester.investigate_deployed_login_issues()
