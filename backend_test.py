@@ -9974,6 +9974,306 @@ Test Import Product 2,IMP-002,1234567890124,Books,5.00,12.99,25,active,Second im
         self.log("=== PDF GENERATION WEASYPRINT FIX VERIFICATION COMPLETED ===", "INFO")
         return consecutive_successes == len(pdf_tests)
 
+    def test_production_login_debugging(self):
+        """Test login functionality to identify production login failure root cause"""
+        self.log("=== STARTING PRODUCTION LOGIN DEBUGGING TESTS ===", "INFO")
+        
+        # Test 1: Production HTTPS URL Login - Super Admin
+        self.log("🔍 TEST 1: Production HTTPS URL Login - Super Admin", "INFO")
+        
+        production_url = "https://pacpos.meshconnectsystems.com"
+        localhost_url = "http://localhost:8001"
+        
+        # Test with production URL
+        success_prod, response_prod = self.test_login_with_url(
+            production_url,
+            "admin@pos.com",
+            "admin123",
+            "Super Admin Login via Production HTTPS",
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+                "Origin": "https://pacpos.meshconnectsystems.com",
+                "Referer": "https://pacpos.meshconnectsystems.com/login"
+            }
+        )
+        
+        # Test 2: Localhost Login - Super Admin (for comparison)
+        self.log("🔍 TEST 2: Localhost Login - Super Admin (Comparison)", "INFO")
+        
+        success_local, response_local = self.test_login_with_url(
+            localhost_url,
+            "admin@pos.com", 
+            "admin123",
+            "Super Admin Login via Localhost",
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            }
+        )
+        
+        # Test 3: Production HTTPS URL Login - Business Admin
+        self.log("🔍 TEST 3: Production HTTPS URL Login - Business Admin", "INFO")
+        
+        success_biz_prod, response_biz_prod = self.test_login_with_url(
+            production_url,
+            "admin@printsandcuts.com",
+            "admin123456",
+            "Business Admin Login via Production HTTPS",
+            business_subdomain="prints-cuts-tagum",
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+                "Origin": "https://pacpos.meshconnectsystems.com",
+                "Referer": "https://pacpos.meshconnectsystems.com/login",
+                "X-Forwarded-Proto": "https",
+                "X-Forwarded-Host": "pacpos.meshconnectsystems.com"
+            }
+        )
+        
+        # Test 4: Localhost Login - Business Admin (for comparison)
+        self.log("🔍 TEST 4: Localhost Login - Business Admin (Comparison)", "INFO")
+        
+        success_biz_local, response_biz_local = self.test_login_with_url(
+            localhost_url,
+            "admin@printsandcuts.com",
+            "admin123456", 
+            "Business Admin Login via Localhost",
+            business_subdomain="prints-cuts-tagum",
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            }
+        )
+        
+        # Test 5: Different User-Agent Headers
+        self.log("🔍 TEST 5: Testing Different User-Agent Headers", "INFO")
+        
+        user_agents = [
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
+            "PostmanRuntime/7.32.3",
+            "curl/7.68.0"
+        ]
+        
+        for i, user_agent in enumerate(user_agents):
+            self.test_login_with_url(
+                production_url,
+                "admin@pos.com",
+                "admin123",
+                f"Super Admin Login - User-Agent {i+1}",
+                headers={
+                    "User-Agent": user_agent,
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                }
+            )
+        
+        # Test 6: With and Without Proxy Headers
+        self.log("🔍 TEST 6: Testing With and Without Proxy Headers", "INFO")
+        
+        # Without proxy headers
+        self.test_login_with_url(
+            production_url,
+            "admin@pos.com",
+            "admin123",
+            "Super Admin Login - No Proxy Headers",
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            }
+        )
+        
+        # With proxy headers
+        self.test_login_with_url(
+            production_url,
+            "admin@pos.com",
+            "admin123",
+            "Super Admin Login - With Proxy Headers",
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+                "X-Forwarded-Proto": "https",
+                "X-Forwarded-Host": "pacpos.meshconnectsystems.com",
+                "X-Forwarded-For": "203.0.113.195",
+                "X-Real-IP": "203.0.113.195"
+            }
+        )
+        
+        # Test 7: Test Both Admin Types with Various Headers
+        self.log("🔍 TEST 7: Testing Both Admin Types with Various Headers", "INFO")
+        
+        test_scenarios = [
+            {
+                "name": "Standard Browser Headers",
+                "headers": {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                    "Accept": "application/json, text/plain, */*",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "Accept-Encoding": "gzip, deflate, br",
+                    "Content-Type": "application/json",
+                    "Origin": "https://pacpos.meshconnectsystems.com",
+                    "Referer": "https://pacpos.meshconnectsystems.com/login"
+                }
+            },
+            {
+                "name": "Mobile Browser Headers",
+                "headers": {
+                    "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15",
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                }
+            },
+            {
+                "name": "API Client Headers",
+                "headers": {
+                    "User-Agent": "POS-Frontend/1.0",
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
+                }
+            }
+        ]
+        
+        for scenario in test_scenarios:
+            # Test super admin
+            self.test_login_with_url(
+                production_url,
+                "admin@pos.com",
+                "admin123",
+                f"Super Admin - {scenario['name']}",
+                headers=scenario['headers']
+            )
+            
+            # Test business admin
+            self.test_login_with_url(
+                production_url,
+                "admin@printsandcuts.com",
+                "admin123456",
+                f"Business Admin - {scenario['name']}",
+                business_subdomain="prints-cuts-tagum",
+                headers=scenario['headers']
+            )
+        
+        self.log("=== PRODUCTION LOGIN DEBUGGING TESTS COMPLETED ===", "INFO")
+        return True
+    
+    def test_login_with_url(self, base_url, email, password, test_name, business_subdomain=None, headers=None):
+        """Test login with specific URL and headers, monitoring for debug logs"""
+        url = f"{base_url}/api/auth/login"
+        
+        login_data = {
+            "email": email,
+            "password": password
+        }
+        
+        if business_subdomain:
+            login_data["business_subdomain"] = business_subdomain
+        
+        test_headers = {'Content-Type': 'application/json'}
+        if headers:
+            test_headers.update(headers)
+        
+        self.tests_run += 1
+        self.log(f"Testing {test_name}...")
+        self.log(f"URL: {url}")
+        self.log(f"Headers: {json.dumps(test_headers, indent=2)}")
+        self.log(f"Data: {json.dumps(login_data, indent=2)}")
+        
+        try:
+            import time
+            start_time = time.time()
+            
+            response = requests.post(url, json=login_data, headers=test_headers, timeout=30)
+            
+            end_time = time.time()
+            response_time = end_time - start_time
+            
+            self.log(f"Response Time: {response_time:.2f}s")
+            self.log(f"Status Code: {response.status_code}")
+            self.log(f"Response Headers: {dict(response.headers)}")
+            
+            # Check for correlation ID in response headers
+            correlation_id = response.headers.get('X-Correlation-ID') or response.headers.get('x-correlation-id')
+            if correlation_id:
+                self.log(f"🔍 CORRELATION ID FOUND: {correlation_id}")
+            else:
+                self.log("⚠️ No correlation ID found in response headers")
+            
+            try:
+                response_data = response.json() if response.text else {}
+                self.log(f"Response Body: {json.dumps(response_data, indent=2)}")
+                
+                # Check for correlation ID in response body
+                if 'correlationId' in response_data:
+                    self.log(f"🔍 CORRELATION ID IN BODY: {response_data['correlationId']}")
+                
+            except Exception as json_error:
+                self.log(f"Response Text (not JSON): {response.text[:1000]}")
+                response_data = {}
+            
+            # Determine success based on status code
+            if response.status_code == 200:
+                self.tests_passed += 1
+                self.log(f"✅ {test_name} - SUCCESS", "PASS")
+                
+                if 'access_token' in response_data:
+                    self.log("✅ JWT token received successfully")
+                    # Store token for potential follow-up tests
+                    if "Super Admin" in test_name:
+                        self.super_admin_token = response_data['access_token']
+                    elif "Business Admin" in test_name:
+                        self.business_admin_token = response_data['access_token']
+                else:
+                    self.log("⚠️ No access_token in successful response")
+                    
+            else:
+                self.log(f"❌ {test_name} - FAILED with status {response.status_code}", "FAIL")
+                
+                # Look for specific error patterns
+                if response.status_code == 500:
+                    self.log("🚨 CRITICAL: 500 Internal Server Error detected!")
+                    if 'errorCode' in response_data:
+                        self.log(f"🚨 Error Code: {response_data['errorCode']}")
+                    if 'message' in response_data:
+                        self.log(f"🚨 Error Message: {response_data['message']}")
+                elif response.status_code == 401:
+                    self.log("🔒 Authentication failed - Invalid credentials")
+                elif response.status_code == 404:
+                    self.log("🔍 Business not found - Invalid subdomain")
+                elif response.status_code == 400:
+                    self.log("📝 Bad request - Missing required fields")
+                
+            return response.status_code == 200, response_data
+            
+        except requests.exceptions.Timeout:
+            self.log(f"❌ {test_name} - TIMEOUT after 30 seconds", "ERROR")
+            return False, {}
+        except requests.exceptions.ConnectionError as e:
+            self.log(f"❌ {test_name} - CONNECTION ERROR: {str(e)}", "ERROR")
+            return False, {}
+        except Exception as e:
+            self.log(f"❌ {test_name} - UNEXPECTED ERROR: {str(e)}", "ERROR")
+            return False, {}
+
+    def run_production_login_debugging_tests(self):
+        """Run focused production login debugging tests as requested"""
+        self.log("=== STARTING PRODUCTION LOGIN DEBUGGING TEST SUITE ===", "INFO")
+        
+        # Run the production login debugging tests
+        self.test_production_login_debugging()
+        
+        # Print summary
+        self.print_summary()
+        
+        self.log("=== PRODUCTION LOGIN DEBUGGING TEST SUITE COMPLETED ===", "INFO")
+        return self.tests_passed > 0
+
     def run_all_tests(self):
         """Run focused tests for unified error code system"""
         self.log("Starting Unified Error Code System Testing", "START")
