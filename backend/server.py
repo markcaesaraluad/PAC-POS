@@ -16,6 +16,14 @@ from database import connect_to_mongo, close_mongo_connection
 
 # Import error handling middleware
 from middleware.error_handler import setup_error_handling
+from decouple import config
+import os
+
+# DEBUG: Log environment configuration
+print(f"DEBUG: Current working directory: {os.getcwd()}")
+print(f"DEBUG: .env file exists: {os.path.exists('.env')}")
+print(f"DEBUG: CORS_ALLOWED_ORIGINS from config: '{config('CORS_ALLOWED_ORIGINS', default='NOT_FOUND')}'")
+print(f"DEBUG: Environment variables with CORS: {[k for k in os.environ.keys() if 'CORS' in k]}")
 
 app = FastAPI(title="Modern POS System", version="1.0.0")
 
