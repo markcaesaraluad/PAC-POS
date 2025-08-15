@@ -13613,9 +13613,11 @@ if __name__ == "__main__":
             tester.test_pos_sales_network_error_final_verification()
         elif test_type == "login":
             tester.investigate_deployed_login_issues()
+        elif test_type == "production_login":
+            tester.run_production_login_debugging_tests()
         else:
-            print("Available test types: diagnostic, reports, category, sales, payment, enhanced, network, deletion, pos, login")
-            tester.run_all_tests()
+            print("Available test types: diagnostic, reports, category, sales, payment, enhanced, network, deletion, pos, login, production_login")
+            tester.run_production_login_debugging_tests()
     else:
-        # Run the specific login investigation as requested
-        tester.investigate_deployed_login_issues()
+        # Run the production login debugging as requested
+        tester.run_production_login_debugging_tests()
