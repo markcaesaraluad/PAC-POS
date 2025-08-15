@@ -2,6 +2,8 @@ from fastapi import APIRouter
 from decouple import config
 import os
 from typing import Dict, Any
+from database import get_collection
+import logging
 
 router = APIRouter()
 
