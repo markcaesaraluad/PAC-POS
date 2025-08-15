@@ -83,6 +83,7 @@ app.include_router(invoices.router, prefix="/api/invoices", tags=["Invoices"])
 app.include_router(reports.router, prefix="/api/reports", tags=["Reports"])
 app.include_router(profit_reports.router, prefix="/api/reports", tags=["Profit Reports"])
 app.include_router(diagnostics.router, tags=["Diagnostics"])  # Admin-only diagnostics
+app.include_router(diagnostics_env.router, prefix="/api/_diag", tags=["Environment Diagnostics"])  # Deployment debugging
 
 @app.get("/api/health")
 async def health_check():
