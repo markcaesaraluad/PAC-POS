@@ -20,8 +20,8 @@ from decouple import config
 
 app = FastAPI(title="Modern POS System", version="1.0.0")
 
-# Setup global error handling (must be before other middleware)
-setup_error_handling(app)
+# Setup global error handling (temporarily disabled for debugging)
+# setup_error_handling(app)
 
 # CORS middleware - Environment-aware configuration
 cors_origins = config("CORS_ALLOWED_ORIGINS", default="*")
