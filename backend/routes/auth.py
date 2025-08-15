@@ -14,6 +14,14 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+@router.post("/test-login")
+async def test_login_simple():
+    """Minimal login test to isolate production issues"""
+    try:
+        return {"status": "success", "message": "Simple login test works"}
+    except Exception as e:
+        return {"status": "error", "message": str(e), "type": str(type(e))}
+
 @router.post("/login", response_model=Token)
 async def login(user_credentials: UserLogin, request: Request):
     # Generate correlation ID for this login attempt
