@@ -70,6 +70,13 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
             context = self._build_context(request, exc, start_time)
             error_code, error_details = error_code_manager.get_or_create_error_code(context)
             
+            # TEMPORARY DEBUG: Log the full exception details
+            logger.error(f"[{correlation_id}] UNHANDLED_EXCEPTION_DEBUG: {type(exc).__name__}: {str(exc)}")
+            logger.error(f"[{correlation_id}] FULL_TRACEBACK: {traceback.format_exc()}")
+            logger.error(f"[{correlation_id}] REQUEST_URL: {request.url}")
+            logger.error(f"[{correlation_id}] REQUEST_METHOD: {request.method}")
+            logger.error(f"[{correlation_id}] REQUEST_HEADERS: {dict(request.headers)}")
+            
             # Log the error with full stack trace
             log_error_with_context(
                 correlation_id=correlation_id,
