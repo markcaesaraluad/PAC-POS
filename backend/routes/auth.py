@@ -20,6 +20,11 @@ async def login(user_credentials: UserLogin, request: Request):
     correlation_id = str(uuid.uuid4())[:8]
     logger.info(f"[{correlation_id}] LOGIN_START: email={user_credentials.email}, subdomain={getattr(user_credentials, 'business_subdomain', 'none')}")
     
+    # TEMPORARY DEBUG: Log full request details
+    logger.info(f"[{correlation_id}] REQUEST_DEBUG: url={request.url}, method={request.method}")
+    logger.info(f"[{correlation_id}] HEADERS_DEBUG: {dict(request.headers)}")
+    logger.info(f"[{correlation_id}] CLIENT_DEBUG: host={request.client.host if request.client else 'unknown'}")
+    
     users_collection = await get_collection("users")
     businesses_collection = await get_collection("businesses")
     
