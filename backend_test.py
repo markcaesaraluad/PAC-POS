@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
 """
-Backend API Testing for Modern POS System - POS System Enhancements Testing
-Tests Global Filter System, Report Exports, Enhanced Navigation, and Currency Display
+Backend API Testing for Modern POS System - AUTH-006 Production Login Investigation
+Systematic investigation of production login failures with correlation ID tracking
 """
 
 import requests
 import sys
 import json
+import uuid
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 
 class POSAPITester:
-    def __init__(self, base_url="https://pacpos.meshconnectsystems.com"):
+    def __init__(self, base_url="https://pos-upgrade-1.preview.emergentagent.com"):
         self.base_url = base_url
+        self.localhost_url = "http://localhost:8001"
+        self.production_url = "https://pacpos.meshconnectsystems.com"
         self.token = None
         self.business_admin_token = None
         self.super_admin_token = None
@@ -24,6 +27,7 @@ class POSAPITester:
         self.category_id = None
         self.invoice_id = None
         self.sale_id = None
+        self.correlation_ids = []
 
     def log(self, message: str, level: str = "INFO"):
         """Log test messages"""
