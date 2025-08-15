@@ -13962,36 +13962,31 @@ def main():
 if __name__ == "__main__":
     tester = POSAPITester()
     
-    # Check command line arguments for specific test types
-    import sys
+    # Check command line arguments for specific test
     if len(sys.argv) > 1:
         test_type = sys.argv[1].lower()
         
-        if test_type == "diagnostic":
-            tester.run_diagnostic_tests()
-        elif test_type == "reports":
-            tester.run_reports_today_filter_tests()
-        elif test_type == "category":
-            tester.run_category_creation_tests()
-        elif test_type == "sales":
-            tester.test_sales_api_with_enhanced_item_fields()
-        elif test_type == "payment":
-            tester.test_payment_reference_codes_and_downpayments()
-        elif test_type == "enhanced":
-            tester.test_enhanced_pos_features()
-        elif test_type == "network":
-            tester.test_urgent_payment_network_error_reproduction()
-        elif test_type == "deletion":
-            tester.test_product_deletion_fix_verification()
-        elif test_type == "pos":
-            tester.test_pos_sales_network_error_final_verification()
+        if test_type == "auth-006":
+            # Run AUTH-006 production login investigation
+            tester.investigate_auth_006_production_login_failure()
+        elif test_type == "health":
+            # Quick health check
+            tester.test_health_check()
         elif test_type == "login":
-            tester.investigate_deployed_login_issues()
-        elif test_type == "production_login":
-            tester.run_production_login_debugging_tests()
+            # Test login functionality
+            tester.test_super_admin_setup()
+            tester.test_business_admin_login()
         else:
-            print("Available test types: diagnostic, reports, category, sales, payment, enhanced, network, deletion, pos, login, production_login")
-            tester.run_production_login_debugging_tests()
+            print("Available test types:")
+            print("  auth-006  - Investigate AUTH-006 production login failure")
+            print("  health    - Quick health check")
+            print("  login     - Test login functionality")
     else:
-        # Run the production login debugging as requested
-        tester.run_production_login_debugging_tests()
+        # Default: Run AUTH-006 investigation
+        print("Running AUTH-006 Production Login Investigation...")
+        tester.investigate_auth_006_production_login_failure()
+    
+    print(f"\n=== FINAL RESULTS ===")
+    print(f"Tests run: {tester.tests_run}")
+    print(f"Tests passed: {tester.tests_passed}")
+    print(f"Success rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%" if tester.tests_run > 0 else "No tests run")
