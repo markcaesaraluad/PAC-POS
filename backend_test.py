@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 
 class POSAPITester:
-    def __init__(self, base_url="https://caffd337-99df-4bc9-880e-142df7ab6009.preview.emergentagent.com"):
+    def __init__(self, base_url="https://pacpos.meshconnectsystems.com"):
         self.base_url = base_url
         self.token = None
         self.business_admin_token = None
