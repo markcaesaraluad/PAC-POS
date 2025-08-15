@@ -9,7 +9,62 @@ router = APIRouter()
 
 logger = logging.getLogger(__name__)
 
-@router.get("/env-summary")
+@router.get("/auth-check")
+async def get_auth_diagnostic() -> Dict[str, Any]:
+    """
+    Get authentication diagnostic information for debugging production issues.
+    DOES NOT EXPOSE SECRETS - only configuration that helps debug auth failures.
+    """
+    
+    # Test database connectivity
+    db_ok = False
+    try:
+        users_collection = await get_collection("users")
+        # Simple count to test connectivity
+        user_count = await users_collection.count_documents({})
+        db_ok = user_count > 0
+    except Exception as e:
+        logger.error(f"Database connectivity test failed: {str(e)}")
+        db_ok = False
+    
+    # Test if admin user exists
+    admin_exists = False
+    try:
+        users_collection = await get_collection("users")
+        admin_user = await users_collection.find_one({"email": "admin@pos.com"})
+        admin_exists = admin_user is not None
+    except Exception:
+        pass
+    
+    return {
+        "environment": {
+            "NODE_ENV": config("NODE_ENV", default="development"),
+            "ENVIRONMENT": config("ENVIRONMENT", default="preview"),
+            "is_production": config("NODE_ENV", default="development") == "production"
+        },
+        "cors_config": {
+            "cors_origins": config("CORS_ALLOWED_ORIGINS", default="*"),
+            "credentials_enabled": True
+        },
+        "cookie_config": {
+            "secure": config("COOKIE_SECURE", default="false", cast=bool),
+            "same_site": config("COOKIE_SAMESITE", default="Lax"),
+            "domain": config("COOKIE_DOMAIN", default="")
+        },
+        "auth_config": {
+            "jwt_secret_configured": "yes" if config("SECRET_KEY", default="").strip() else "no",
+            "algorithm": config("ALGORITHM", default="HS256"),
+            "token_expire_minutes": config("ACCESS_TOKEN_EXPIRE_MINUTES", default=30, cast=int)
+        },
+        "database": {
+            "connection_ok": db_ok,
+            "admin_user_exists": admin_exists,
+            "mongo_configured": "yes" if config("MONGO_URL", default="").strip() else "no"
+        },
+        "proxy_headers": {
+            "trust_proxy_enabled": config("TRUST_PROXY", default="false", cast=bool)
+        }
+    }
 async def get_environment_summary() -> Dict[str, Any]:
     """
     Get safe environment summary for debugging deployment issues.
