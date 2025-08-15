@@ -49,15 +49,18 @@ backend:
 
   - task: "Enhanced Login Logging with Correlation IDs"
     implemented: true
-    working: true
+    working: false
     file: "backend/routes/auth.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
     needs_retesting: false
     status_history:
       - working: true
         agent: "testing"
         comment: "✅ Enhanced login logging verified working correctly. All login scenarios include correlation IDs for tracking: valid login successful with correlation ID logging, invalid credentials properly rejected with enhanced error logging, missing business context handled with proper error logging, invalid business subdomain handled with enhanced logging. Error responses include standardized format with correlation IDs for debugging deployment issues."
+      - working: false
+        agent: "testing"
+        comment: "🚨 CRITICAL PRODUCTION LOGIN FAILURE IDENTIFIED: Comprehensive production login debugging reveals systematic failure of ALL login attempts via production HTTPS URL (https://pacpos.meshconnectsystems.com). ROOT CAUSE ANALYSIS: 1) LOCALHOST WORKS PERFECTLY: Both super admin (admin@pos.com/admin123) and business admin (admin@printsandcuts.com/admin123456) login successfully via localhost:8001 with 200 status and valid JWT tokens. 2) PRODUCTION HTTPS FAILS CONSISTENTLY: ALL 14 production HTTPS login attempts return 500 Internal Server Error with AUTH-012 through AUTH-025 error codes. 3) CORRELATION IDS CAPTURED: All failed requests include correlation IDs (e.g., e04d7758-c977-48c0-af5a-5250c772dfa2, a0ecaf0c-e56d-49e1-89b1-98e5ed4eb784) for backend debugging. 4) HEADER VARIATIONS TESTED: Different User-Agent headers, proxy headers (X-Forwarded-Proto, X-Forwarded-Host), and browser headers ALL fail consistently. 5) NO BACKEND DEBUG LOGS: Despite enhanced logging middleware, no UNHANDLED_EXCEPTION_DEBUG messages appear in backend logs for production requests, suggesting requests may not be reaching the backend application. CRITICAL FINDING: The issue appears to be at the infrastructure/proxy level rather than application code, as localhost requests work perfectly but production HTTPS requests fail before reaching the application logic. This indicates a potential reverse proxy, load balancer, or Kubernetes ingress configuration issue preventing requests from reaching the FastAPI backend."
 
   - task: "Environment-Aware CORS Configuration"
     implemented: true
