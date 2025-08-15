@@ -16,12 +16,24 @@ router = APIRouter()
 
 @router.post("/login", response_model=Token)
 async def login(user_credentials: UserLogin, request: Request):
+    # Generate correlation ID for this login attempt
+    correlation_id = str(uuid.uuid4())[:8]
+    logger.info(f"[{correlation_id}] LOGIN_START: email={user_credentials.email}, subdomain={getattr(user_credentials, 'business_subdomain', 'none')}")
+    
     users_collection = await get_collection("users")
     businesses_collection = await get_collection("businesses")
     
     # Find user by email
     user = await users_collection.find_one({"email": user_credentials.email})
-    if not user or not verify_password(user_credentials.password, user["password"]):
+    if not user:
+        logger.info(f"[{correlation_id}] LOGIN_FAIL: user_not_found, email={user_credentials.email}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+        )
+        
+    if not verify_password(user_credentials.password, user["password"]):
+        logger.info(f"[{correlation_id}] LOGIN_FAIL: invalid_password, email={user_credentials.email}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
@@ -29,6 +41,7 @@ async def login(user_credentials: UserLogin, request: Request):
     
     # Check if user is active
     if not user.get("is_active", True):
+        logger.info(f"[{correlation_id}] LOGIN_FAIL: user_inactive, email={user_credentials.email}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Account is deactivated",
