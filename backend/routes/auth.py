@@ -116,6 +116,8 @@ async def login(user_credentials: UserLogin, request: Request):
             updated_at=business.get("updated_at", datetime.utcnow())
         )
     
+    logger.info(f"[{correlation_id}] LOGIN_SUCCESS: email={user_credentials.email}, role={user['role']}, business_id={str(business['_id']) if business else 'none'}")
+    
     return Token(
         access_token=access_token,
         token_type="bearer",
