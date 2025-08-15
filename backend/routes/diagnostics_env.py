@@ -7,6 +7,8 @@ import logging
 
 router = APIRouter()
 
+logger = logging.getLogger(__name__)
+
 @router.get("/env-summary")
 async def get_environment_summary() -> Dict[str, Any]:
     """
