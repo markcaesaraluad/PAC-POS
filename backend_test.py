@@ -30,7 +30,7 @@ class POSAPITester:
         timestamp = datetime.now().strftime("%H:%M:%S")
         print(f"[{timestamp}] {level}: {message}")
 
-    def run_test(self, name: str, method: str, endpoint: str, expected_status: int, 
+    def run_test(self, name: str, method: str, endpoint: str, expected_status, 
                  data: Optional[Dict] = None, headers: Optional[Dict] = None, 
                  params: Optional[Dict] = None) -> tuple[bool, Dict]:
         """Run a single API test"""
@@ -60,12 +60,18 @@ class POSAPITester:
             elif method == 'DELETE':
                 response = requests.delete(url, headers=test_headers, params=params)
 
-            success = response.status_code == expected_status
+            # Handle both single status code and list of status codes
+            if isinstance(expected_status, list):
+                success = response.status_code in expected_status
+            else:
+                success = response.status_code == expected_status
+                
             if success:
                 self.tests_passed += 1
                 self.log(f"✅ {name} - Status: {response.status_code}", "PASS")
             else:
-                self.log(f"❌ {name} - Expected {expected_status}, got {response.status_code}", "FAIL")
+                expected_str = str(expected_status) if not isinstance(expected_status, list) else f"one of {expected_status}"
+                self.log(f"❌ {name} - Expected {expected_str}, got {response.status_code}", "FAIL")
                 if response.text:
                     self.log(f"Response: {response.text[:500]}", "ERROR")
 
