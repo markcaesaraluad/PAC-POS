@@ -22,12 +22,20 @@ app = FastAPI(title="Modern POS System", version="1.0.0")
 # Setup global error handling (must be before other middleware)
 setup_error_handling(app)
 
-# CORS middleware
+# CORS middleware - Environment-aware configuration
+cors_origins = config("CORS_ALLOWED_ORIGINS", default="*")
+if cors_origins == "*":
+    # Development/preview mode - allow all origins
+    allowed_origins = ["*"]
+else:
+    # Production mode - use specific origins
+    allowed_origins = [origin.strip() for origin in cors_origins.split(",")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure properly in production
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
