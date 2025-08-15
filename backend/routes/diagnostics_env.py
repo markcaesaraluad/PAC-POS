@@ -65,6 +65,8 @@ async def get_auth_diagnostic() -> Dict[str, Any]:
             "trust_proxy_enabled": config("TRUST_PROXY", default="false", cast=bool)
         }
     }
+
+@router.get("/env-summary")
 async def get_environment_summary() -> Dict[str, Any]:
     """
     Get safe environment summary for debugging deployment issues.
