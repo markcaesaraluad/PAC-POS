@@ -66,25 +66,6 @@ async def startup_event():
 async def shutdown_event():
     await close_mongo_connection()
 
-# Trust proxy configuration for production deployment
-trust_proxy = config("TRUST_PROXY", default="false", cast=bool)
-
-# Middleware for proxy headers (if behind reverse proxy/load balancer)
-@app.middleware("http")
-async def handle_proxy_headers(request: Request, call_next):
-    if trust_proxy:
-        # Handle X-Forwarded-* headers from reverse proxy
-        forwarded_proto = request.headers.get("X-Forwarded-Proto")
-        forwarded_host = request.headers.get("X-Forwarded-Host")
-        
-        if forwarded_proto:
-            request.scope["scheme"] = forwarded_proto
-        if forwarded_host:
-            request.scope["server"] = (forwarded_host, None)
-            
-    response = await call_next(request)
-    return response
-
 # Middleware for multi-tenant support
 @app.middleware("http")
 async def add_business_context(request: Request, call_next):
