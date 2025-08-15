@@ -34,12 +34,22 @@ class POSAPITester:
         timestamp = datetime.now().strftime("%H:%M:%S")
         print(f"[{timestamp}] {level}: {message}")
 
+    def generate_correlation_id(self) -> str:
+        """Generate a unique correlation ID for tracking requests"""
+        correlation_id = str(uuid.uuid4())
+        self.correlation_ids.append(correlation_id)
+        return correlation_id
+
     def run_test(self, name: str, method: str, endpoint: str, expected_status, 
                  data: Optional[Dict] = None, headers: Optional[Dict] = None, 
-                 params: Optional[Dict] = None) -> tuple[bool, Dict]:
-        """Run a single API test"""
-        url = f"{self.base_url}{endpoint}"
+                 params: Optional[Dict] = None, base_url_override: Optional[str] = None) -> tuple[bool, Dict]:
+        """Run a single API test with optional base URL override"""
+        url = f"{base_url_override or self.base_url}{endpoint}"
         test_headers = {'Content-Type': 'application/json'}
+        
+        # Add correlation ID for tracking
+        correlation_id = self.generate_correlation_id()
+        test_headers['X-Correlation-ID'] = correlation_id
         
         if headers:
             test_headers.update(headers)
@@ -50,19 +60,20 @@ class POSAPITester:
         self.tests_run += 1
         self.log(f"Testing {name}...")
         self.log(f"URL: {url}")
+        self.log(f"Correlation ID: {correlation_id}")
         self.log(f"Headers: {test_headers}")
         
         try:
             if method == 'GET':
-                response = requests.get(url, headers=test_headers, params=params)
+                response = requests.get(url, headers=test_headers, params=params, timeout=30)
             elif method == 'POST':
-                response = requests.post(url, json=data, headers=test_headers, params=params)
+                response = requests.post(url, json=data, headers=test_headers, params=params, timeout=30)
             elif method == 'PUT':
-                response = requests.put(url, json=data, headers=test_headers, params=params)
+                response = requests.put(url, json=data, headers=test_headers, params=params, timeout=30)
             elif method == 'PATCH':
-                response = requests.patch(url, json=data, headers=test_headers, params=params)
+                response = requests.patch(url, json=data, headers=test_headers, params=params, timeout=30)
             elif method == 'DELETE':
-                response = requests.delete(url, headers=test_headers, params=params)
+                response = requests.delete(url, headers=test_headers, params=params, timeout=30)
 
             # Handle both single status code and list of status codes
             if isinstance(expected_status, list):
@@ -81,14 +92,373 @@ class POSAPITester:
 
             try:
                 response_data = response.json() if response.text else {}
+                # Log correlation ID from response if present
+                if isinstance(response_data, dict) and 'correlationId' in response_data:
+                    self.log(f"Response Correlation ID: {response_data['correlationId']}")
             except:
                 response_data = {}
 
             return success, response_data
 
+        except requests.exceptions.Timeout:
+            self.log(f"❌ {name} - Request timeout after 30 seconds", "ERROR")
+            return False, {}
+        except requests.exceptions.ConnectionError as e:
+            self.log(f"❌ {name} - Connection error: {str(e)}", "ERROR")
+            return False, {}
         except Exception as e:
             self.log(f"❌ {name} - Error: {str(e)}", "ERROR")
             return False, {}
+
+    def investigate_auth_006_production_login_failure(self):
+        """
+        Systematic investigation of AUTH-006 login failure on production
+        Following the review request requirements
+        """
+        self.log("=== STARTING AUTH-006 PRODUCTION LOGIN FAILURE INVESTIGATION ===", "INFO")
+        
+        # Step 1: Test Production Login Endpoints
+        self.log("STEP 1: Testing Production Login Endpoints", "INFO")
+        
+        # Test 1.1: GET /api/health to verify basic connectivity
+        self.log("1.1 Testing basic connectivity with health endpoint", "INFO")
+        success, response = self.run_test(
+            "Production Health Check",
+            "GET",
+            "/api/health",
+            200,
+            base_url_override=self.production_url
+        )
+        
+        if not success:
+            self.log("❌ CRITICAL: Cannot reach production server - basic connectivity failed", "ERROR")
+            return False
+        else:
+            self.log("✅ Production server is reachable", "PASS")
+        
+        # Test 1.2: GET /api/_diag/auth-check if accessible
+        self.log("1.2 Testing auth diagnostic endpoint", "INFO")
+        success, response = self.run_test(
+            "Production Auth Diagnostic Check",
+            "GET",
+            "/api/_diag/auth-check",
+            [200, 404, 401],  # Accept multiple status codes
+            base_url_override=self.production_url
+        )
+        
+        if success:
+            self.log("✅ Auth diagnostic endpoint accessible", "PASS")
+            if response:
+                self.log(f"Auth diagnostic data: {json.dumps(response, indent=2)}")
+        else:
+            self.log("⚠️ Auth diagnostic endpoint not accessible or returns error", "WARN")
+        
+        # Test 1.3: POST /api/auth/login with admin@pos.com / admin123 credentials
+        self.log("1.3 Testing production login with super admin credentials", "INFO")
+        
+        login_data = {
+            "email": "admin@pos.com",
+            "password": "admin123"
+        }
+        
+        success, response = self.run_test(
+            "Production Super Admin Login (AUTH-006 Investigation)",
+            "POST",
+            "/api/auth/login",
+            [200, 401, 500],  # Accept success, unauthorized, or server error
+            data=login_data,
+            base_url_override=self.production_url
+        )
+        
+        if success and response.get('access_token'):
+            self.log("✅ Production super admin login successful", "PASS")
+            self.super_admin_token = response['access_token']
+        else:
+            self.log("❌ CRITICAL: Production super admin login failed", "ERROR")
+            if response:
+                self.log(f"Login error response: {json.dumps(response, indent=2)}")
+                # Look for correlation ID in error response
+                if 'correlationId' in response:
+                    self.log(f"🔍 ERROR CORRELATION ID: {response['correlationId']}")
+        
+        # Test 1.4: Test business admin login on production
+        self.log("1.4 Testing production login with business admin credentials", "INFO")
+        
+        business_login_data = {
+            "email": "admin@printsandcuts.com",
+            "password": "admin123456",
+            "business_subdomain": "prints-cuts-tagum"
+        }
+        
+        success, response = self.run_test(
+            "Production Business Admin Login (AUTH-006 Investigation)",
+            "POST",
+            "/api/auth/login",
+            [200, 401, 404, 500],  # Accept various status codes
+            data=business_login_data,
+            base_url_override=self.production_url
+        )
+        
+        if success and response.get('access_token'):
+            self.log("✅ Production business admin login successful", "PASS")
+            self.business_admin_token = response['access_token']
+        else:
+            self.log("❌ CRITICAL: Production business admin login failed", "ERROR")
+            if response:
+                self.log(f"Business login error response: {json.dumps(response, indent=2)}")
+                if 'correlationId' in response:
+                    self.log(f"🔍 ERROR CORRELATION ID: {response['correlationId']}")
+        
+        # Step 2: Compare with Localhost Behavior
+        self.log("STEP 2: Comparing with Localhost Behavior", "INFO")
+        
+        # Test 2.1: Test same login request on localhost:8001
+        self.log("2.1 Testing localhost super admin login for comparison", "INFO")
+        
+        success, response = self.run_test(
+            "Localhost Super Admin Login (Comparison)",
+            "POST",
+            "/api/auth/login",
+            [200, 401, 500],
+            data=login_data,
+            base_url_override=self.localhost_url
+        )
+        
+        if success and response.get('access_token'):
+            self.log("✅ Localhost super admin login successful", "PASS")
+        else:
+            self.log("❌ Localhost super admin login also failed", "ERROR")
+            if response:
+                self.log(f"Localhost login error: {json.dumps(response, indent=2)}")
+        
+        # Test 2.2: Test business admin on localhost
+        self.log("2.2 Testing localhost business admin login for comparison", "INFO")
+        
+        success, response = self.run_test(
+            "Localhost Business Admin Login (Comparison)",
+            "POST",
+            "/api/auth/login",
+            [200, 401, 404, 500],
+            data=business_login_data,
+            base_url_override=self.localhost_url
+        )
+        
+        if success and response.get('access_token'):
+            self.log("✅ Localhost business admin login successful", "PASS")
+        else:
+            self.log("❌ Localhost business admin login also failed", "ERROR")
+            if response:
+                self.log(f"Localhost business login error: {json.dumps(response, indent=2)}")
+        
+        # Step 3: Test Current Environment (pos-upgrade-1.preview.emergentagent.com)
+        self.log("STEP 3: Testing Current Environment", "INFO")
+        
+        # Test 3.1: Health check on current environment
+        success, response = self.run_test(
+            "Current Environment Health Check",
+            "GET",
+            "/api/health",
+            200
+        )
+        
+        if success:
+            self.log("✅ Current environment is healthy", "PASS")
+        else:
+            self.log("❌ Current environment health check failed", "ERROR")
+        
+        # Test 3.2: Super admin login on current environment
+        success, response = self.run_test(
+            "Current Environment Super Admin Login",
+            "POST",
+            "/api/auth/login",
+            [200, 401, 500],
+            data=login_data
+        )
+        
+        if success and response.get('access_token'):
+            self.log("✅ Current environment super admin login successful", "PASS")
+            self.token = response['access_token']
+        else:
+            self.log("❌ Current environment super admin login failed", "ERROR")
+            if response:
+                self.log(f"Current env login error: {json.dumps(response, indent=2)}")
+        
+        # Test 3.3: Business admin login on current environment
+        success, response = self.run_test(
+            "Current Environment Business Admin Login",
+            "POST",
+            "/api/auth/login",
+            [200, 401, 404, 500],
+            data=business_login_data
+        )
+        
+        if success and response.get('access_token'):
+            self.log("✅ Current environment business admin login successful", "PASS")
+            self.business_admin_token = response['access_token']
+        else:
+            self.log("❌ Current environment business admin login failed", "ERROR")
+            if response:
+                self.log(f"Current env business login error: {json.dumps(response, indent=2)}")
+        
+        # Step 4: Database and Auth Verification (if we have a working token)
+        if self.token or self.business_admin_token:
+            self.log("STEP 4: Database and Auth Verification", "INFO")
+            
+            # Use business admin token if available, otherwise super admin
+            test_token = self.business_admin_token or self.token
+            original_token = self.token
+            self.token = test_token
+            
+            # Test 4.1: Verify current user
+            success, response = self.run_test(
+                "Verify Current User",
+                "GET",
+                "/api/auth/me",
+                200
+            )
+            
+            if success:
+                self.log("✅ User verification successful", "PASS")
+                self.log(f"User data: {json.dumps(response, indent=2)}")
+                if 'business_id' in response:
+                    self.business_id = response['business_id']
+            else:
+                self.log("❌ User verification failed", "ERROR")
+            
+            # Test 4.2: Test JWT token functionality
+            if self.business_id:
+                success, response = self.run_test(
+                    "Test Business Info Access (JWT Validation)",
+                    "GET",
+                    "/api/business/info",
+                    200
+                )
+                
+                if success:
+                    self.log("✅ JWT token validation working", "PASS")
+                else:
+                    self.log("❌ JWT token validation failed", "ERROR")
+            
+            # Restore original token
+            self.token = original_token
+        
+        # Step 5: Configuration Analysis
+        self.log("STEP 5: Configuration Analysis", "INFO")
+        
+        # Test 5.1: Test CORS configuration
+        self.log("5.1 Testing CORS configuration", "INFO")
+        
+        cors_headers = {
+            'Origin': 'https://pacpos.meshconnectsystems.com',
+            'Access-Control-Request-Method': 'POST',
+            'Access-Control-Request-Headers': 'Content-Type, Authorization'
+        }
+        
+        success, response = self.run_test(
+            "CORS Preflight Test (Production Origin)",
+            "OPTIONS",
+            "/api/auth/login",
+            [200, 204],
+            headers=cors_headers,
+            base_url_override=self.production_url
+        )
+        
+        if success:
+            self.log("✅ CORS preflight successful for production origin", "PASS")
+        else:
+            self.log("❌ CORS preflight failed for production origin", "ERROR")
+        
+        # Step 6: Error Code Investigation
+        self.log("STEP 6: Error Code Investigation", "INFO")
+        
+        # Test 6.1: Multiple login attempts to capture different correlation IDs
+        self.log("6.1 Testing multiple login attempts to capture error patterns", "INFO")
+        
+        for attempt in range(3):
+            self.log(f"Login attempt {attempt + 1}/3", "INFO")
+            
+            success, response = self.run_test(
+                f"Production Login Attempt {attempt + 1} (Error Pattern Analysis)",
+                "POST",
+                "/api/auth/login",
+                [200, 401, 500],
+                data=login_data,
+                base_url_override=self.production_url
+            )
+            
+            if not success and response:
+                if 'correlationId' in response:
+                    self.log(f"🔍 ATTEMPT {attempt + 1} CORRELATION ID: {response['correlationId']}")
+                if 'errorCode' in response:
+                    self.log(f"🔍 ATTEMPT {attempt + 1} ERROR CODE: {response['errorCode']}")
+        
+        # Test 6.2: Test with different headers to simulate browser requests
+        self.log("6.2 Testing with different headers to simulate browser requests", "INFO")
+        
+        browser_headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'same-origin'
+        }
+        
+        success, response = self.run_test(
+            "Production Login with Browser Headers",
+            "POST",
+            "/api/auth/login",
+            [200, 401, 500],
+            data=login_data,
+            headers=browser_headers,
+            base_url_override=self.production_url
+        )
+        
+        if not success and response:
+            self.log("❌ Login with browser headers also failed", "ERROR")
+            if 'correlationId' in response:
+                self.log(f"🔍 BROWSER HEADERS CORRELATION ID: {response['correlationId']}")
+        
+        # Test 6.3: Test with proxy headers
+        self.log("6.3 Testing with proxy headers", "INFO")
+        
+        proxy_headers = {
+            'X-Forwarded-Proto': 'https',
+            'X-Forwarded-Host': 'pacpos.meshconnectsystems.com',
+            'X-Forwarded-For': '203.0.113.1',
+            'X-Real-IP': '203.0.113.1'
+        }
+        
+        success, response = self.run_test(
+            "Production Login with Proxy Headers",
+            "POST",
+            "/api/auth/login",
+            [200, 401, 500],
+            data=login_data,
+            headers=proxy_headers,
+            base_url_override=self.production_url
+        )
+        
+        if not success and response:
+            self.log("❌ Login with proxy headers also failed", "ERROR")
+            if 'correlationId' in response:
+                self.log(f"🔍 PROXY HEADERS CORRELATION ID: {response['correlationId']}")
+        
+        # Summary
+        self.log("=== AUTH-006 INVESTIGATION SUMMARY ===", "INFO")
+        self.log(f"Total tests run: {self.tests_run}")
+        self.log(f"Tests passed: {self.tests_passed}")
+        self.log(f"Success rate: {(self.tests_passed/self.tests_run)*100:.1f}%")
+        
+        if self.correlation_ids:
+            self.log(f"Correlation IDs generated: {len(self.correlation_ids)}")
+            self.log("All correlation IDs for tracking:")
+            for i, cid in enumerate(self.correlation_ids, 1):
+                self.log(f"  {i}. {cid}")
+        
+        return True
 
     def test_health_check(self):
         """Test API health endpoint"""
