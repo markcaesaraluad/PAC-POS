@@ -24,6 +24,13 @@ app = FastAPI(title="Modern POS System", version="1.0.0")
 # Setup global error handling (must be before other middleware)
 setup_error_handling(app)
 
+# Trust proxy configuration for production deployment
+trust_proxy = config("TRUST_PROXY", default="false", cast=bool)
+
+# Add ProxyHeadersMiddleware if behind reverse proxy/load balancer
+if trust_proxy:
+    app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
+
 # CORS middleware - Environment-aware configuration
 cors_origins = config("CORS_ALLOWED_ORIGINS", default="*")
 if cors_origins == "*":
