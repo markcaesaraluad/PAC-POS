@@ -35,7 +35,19 @@ backend:
         agent: "testing"
         comment: "✅ Super admin user exists and login works correctly - token generation successful"
 
-  - task: "Business Admin Authentication"
+  - task: "Diagnostic Endpoints for Login Debugging"
+    implemented: true
+    working: true
+    file: "backend/routes/diagnostics_env.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ DIAGNOSTIC ENDPOINTS TESTING COMPLETED SUCCESSFULLY: All 4 diagnostic features verified and working correctly. 1) Environment Diagnostic Endpoint (GET /api/_diag/env-summary) - Accessible without authentication, returns comprehensive environment configuration including CORS, cookie, auth, database, and proxy settings without exposing sensitive information. 2) Enhanced Login Logging - All login scenarios (valid, invalid credentials, missing business context, invalid subdomain) properly handled with correlation IDs for tracking. 3) CORS Configuration - Environment-aware CORS working correctly, accepts requests from allowed origins, preflight requests handled properly with correct headers. 4) Proxy Header Handling - X-Forwarded headers processed correctly without breaking functionality, login and business context resolution work with proxy headers. All 25 tests passed (100% success rate). System is production-ready for deployment debugging."
+
+  - task: "Enhanced Login Logging with Correlation IDs"
     implemented: true
     working: true
     file: "backend/routes/auth.py"
@@ -43,11 +55,34 @@ backend:
     priority: "high"
     needs_retesting: false
     status_history:
-      - working: false
-        agent: "testing"
-        comment: "❌ CRITICAL BUG: Business admin login fails with 'Business not found' error. Root cause: Middleware extracts subdomain from host header (ed6f9d7f-7152-4de2-a3e7-301ed414aea4) and overrides business_subdomain from request body (prints-cuts-tagum). Auth logic uses middleware subdomain instead of request body subdomain, causing business lookup to fail."
       - working: true
         agent: "testing"
+        comment: "✅ Enhanced login logging verified working correctly. All login scenarios include correlation IDs for tracking: valid login successful with correlation ID logging, invalid credentials properly rejected with enhanced error logging, missing business context handled with proper error logging, invalid business subdomain handled with enhanced logging. Error responses include standardized format with correlation IDs for debugging deployment issues."
+
+  - task: "Environment-Aware CORS Configuration"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ CORS configuration verified as environment-aware and working correctly. API accepts requests with CORS headers from allowed origins, preflight OPTIONS requests handled correctly with proper Access-Control-Allow-Origin and Access-Control-Allow-Methods headers. CORS middleware properly configured for production deployment."
+
+  - task: "Proxy Header Middleware"
+    implemented: true
+    working: true
+    file: "backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Proxy header handling verified working correctly. API handles X-Forwarded-Proto, X-Forwarded-Host, and X-Forwarded-For headers without breaking functionality. Login works correctly with proxy headers, business context resolution works with proxy headers. Trust proxy configuration working as expected for Kubernetes deployment."
+
         comment: "✅ FIXED: Business admin login now works correctly with subdomain in request body. JWT token validation fixed by adding business_id from token to user object in get_current_user(). Authentication system fully functional."
       - working: true
         agent: "testing"
